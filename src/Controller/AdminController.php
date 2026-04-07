@@ -33,7 +33,7 @@ class AdminController extends AbstractController
     {
         return $this->render('admin/reports/index.html.twig');
     }
-
+//route
     #[Route('/docs', name: 'admin_docs')]
     public function docs(): Response
     {
