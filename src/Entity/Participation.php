@@ -46,8 +46,6 @@ class Participation
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $resultat = null;
 
-<<<<<<< Updated upstream
-=======
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
     private ?string $statut = 'en attente';
 
@@ -62,7 +60,6 @@ class Participation
         return $this;
     }
 
->>>>>>> Stashed changes
     public function getResultat(): ?string
     {
         return $this->resultat;

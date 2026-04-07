@@ -1,0 +1,309 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Nouvelle Demande de Congé{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4">
+                <h1 class="fs-3 mb-1">Nouvelle Demande de Congé</h1>
+                <p class="mb-0">Soumettre une nouvelle demande de congé</p>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" id="congeForm" novalidate>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date_debut" class="form-label">Date de début <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="date_debut" name="date_debut" required>
+                                <div class="invalid-feedback" id="error-date_debut">Veuillez sélectionner une date de début valide.</div>
+                                <div class="form-text text-muted">La date doit être aujourd'hui ou dans le futur.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_fin" class="form-label">Date de fin <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="date_fin" name="date_fin" required>
+                                <div class="invalid-feedback" id="error-date_fin">Veuillez sélectionner une date de fin valide.</div>
+                                <div class="form-text text-muted">La date de fin doit être après la date de début.</div>
+                            </div>
+                        </div>
+
+                        {# Section durée calculée #}
+                        <div class="row mb-3" id="dureeSection" style="display: none;">
+                            <div class="col-12">
+                                <div class="alert alert-info d-flex align-items-center">
+                                    <i class="ti ti-calendar-stats fs-4 me-2"></i>
+                                    <div>
+                                        <strong>Durée calculée :</strong> <span id="dureeAffichage">-</span>
+                                        <span id="weekendWarning" class="text-warning ms-2" style="display: none;">
+                                            <i class="ti ti-alert-triangle"></i> Inclut des week-ends
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="type" class="form-label">Type de congé <span class="text-danger">*</span></label>
+                                <select class="form-select" id="type" name="type" required>
+                                    <option value="">Sélectionner un type</option>
+                                    <option value="ANNUEL">Congé annuel</option>
+                                    <option value="MALADIE">Congé maladie</option>
+                                    <option value="MATERNITE">Congé maternité</option>
+                                    <option value="PATERNITE">Congé paternité</option>
+                                    <option value="SANS_SOLDE">Congé sans solde</option>
+                                    <option value="FORMATION">Congé formation</option>
+                                </select>
+                                <div class="invalid-feedback" id="error-type">Veuillez sélectionner un type de congé.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="motif" class="form-label">
+                                    Motif 
+                                    <span id="motifRequiredBadge" style="display: none;" class="text-danger">*</span>
+                                    <span id="motifOptionalBadge" class="text-muted">(optionnel)</span>
+                                </label>
+                                <textarea class="form-control" id="motif" name="motif" rows="3" placeholder="Précisez le motif de votre demande..."></textarea>
+                                <div class="invalid-feedback" id="error-motif">Le motif est obligatoire pour un congé maladie de plus de 3 jours.</div>
+                                <div class="form-text text-muted" id="motifHelp">Obligatoire pour les congés maladie > 3 jours.</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('employ_conges') }}" class="btn btn-secondary">
+                                <i class="ti ti-arrow-left"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-send"></i> Soumettre la demande
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('congeForm');
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+    const typeSelect = document.getElementById('type');
+    const motifField = document.getElementById('motif');
+    const dureeSection = document.getElementById('dureeSection');
+    const dureeAffichage = document.getElementById('dureeAffichage');
+    const weekendWarning = document.getElementById('weekendWarning');
+    const motifRequiredBadge = document.getElementById('motifRequiredBadge');
+    const motifOptionalBadge = document.getElementById('motifOptionalBadge');
+
+    // Afficher/masquer section durée
+    function updateDureeDisplay() {
+        const debut = dateDebut.value ? new Date(dateDebut.value) : null;
+        const fin = dateFin.value ? new Date(dateFin.value) : null;
+
+        if (debut && fin && fin > debut) {
+            const diffTime = Math.abs(fin - debut);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            // Compter les jours ouvrés (sans week-ends)
+            let joursOuvres = 0;
+            let weekendCount = 0;
+            let currentDate = new Date(debut);
+            while (currentDate <= fin) {
+                const dayOfWeek = currentDate.getDay();
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    joursOuvres++;
+                } else {
+                    weekendCount++;
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            dureeAffichage.textContent = diffDays + ' jour(s) (' + joursOuvres + ' jour(s) ouvré(s))';
+            weekendWarning.style.display = weekendCount > 0 ? 'inline' : 'none';
+            dureeSection.style.display = 'block';
+
+            // Vérifier si motif obligatoire (maladie > 3 jours)
+            updateMotifRequirement(diffDays);
+        } else {
+            dureeSection.style.display = 'none';
+        }
+    }
+
+    // Mettre à jour le champ motif selon le type et la durée
+    function updateMotifRequirement(duree = 0) {
+        if (!duree && dateDebut.value && dateFin.value) {
+            const debut = new Date(dateDebut.value);
+            const fin = new Date(dateFin.value);
+            duree = Math.ceil(Math.abs(fin - debut) / (1000 * 60 * 60 * 24));
+        }
+
+        const isMaladie = typeSelect.value === 'MALADIE';
+        const motifObligatoire = isMaladie && duree > 3;
+
+        if (motifObligatoire) {
+            motifField.required = true;
+            motifRequiredBadge.style.display = 'inline';
+            motifOptionalBadge.style.display = 'none';
+            document.getElementById('motifHelp').textContent = 'Obligatoire pour les congés maladie de plus de 3 jours.';
+            document.getElementById('motifHelp').classList.add('text-danger');
+        } else {
+            motifField.required = false;
+            motifRequiredBadge.style.display = 'none';
+            motifOptionalBadge.style.display = 'inline';
+            document.getElementById('motifHelp').textContent = 'Obligatoire pour les congés maladie > 3 jours.';
+            document.getElementById('motifHelp').classList.remove('text-danger');
+        }
+    }
+
+    // Validation date début
+    function validateDateDebut() {
+        const valeur = dateDebut.value;
+        const errorElement = document.getElementById('error-date_debut');
+
+        if (!valeur) {
+            dateDebut.classList.add('is-invalid');
+            errorElement.textContent = 'La date de début est obligatoire.';
+            return false;
+        }
+
+        const dateDebutObj = new Date(valeur);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Vérification année 2027
+        const year = dateDebutObj.getFullYear();
+        if (year >= 2027) {
+            dateDebut.classList.add('is-invalid');
+            errorElement.textContent = 'La date ne peut pas être en 2027 ou au-delà.';
+            return false;
+        }
+
+        if (dateDebutObj < today) {
+            dateDebut.classList.add('is-invalid');
+            errorElement.textContent = 'La date de début ne peut pas être dans le passé.';
+            return false;
+        }
+
+        dateDebut.classList.remove('is-invalid');
+        return true;
+    }
+
+    // Validation date fin
+    function validateDateFin() {
+        const valeur = dateFin.value;
+        const errorElement = document.getElementById('error-date_fin');
+
+        if (!valeur) {
+            dateFin.classList.add('is-invalid');
+            errorElement.textContent = 'La date de fin est obligatoire.';
+            return false;
+        }
+
+        const dateFinObj = new Date(valeur);
+        const dateDebutObj = new Date(dateDebut.value);
+
+        // Vérification année 2027
+        const year = dateFinObj.getFullYear();
+        if (year >= 2027) {
+            dateFin.classList.add('is-invalid');
+            errorElement.textContent = 'La date ne peut pas être en 2027 ou au-delà.';
+            return false;
+        }
+
+        if (dateFinObj <= dateDebutObj) {
+            dateFin.classList.add('is-invalid');
+            errorElement.textContent = 'La date de fin doit être après la date de début.';
+            return false;
+        }
+
+        // Validation durée max 30 jours
+        const diffTime = Math.abs(dateFinObj - dateDebutObj);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays > 30) {
+            dateFin.classList.add('is-invalid');
+            errorElement.textContent = 'La durée maximale est de 30 jours.';
+            return false;
+        }
+
+        dateFin.classList.remove('is-invalid');
+        return true;
+    }
+
+    // Validation type
+    function validateType() {
+        if (!typeSelect.value) {
+            typeSelect.classList.add('is-invalid');
+            return false;
+        }
+        typeSelect.classList.remove('is-invalid');
+        return true;
+    }
+
+    // Validation motif
+    function validateMotif() {
+        const errorElement = document.getElementById('error-motif');
+        const debut = dateDebut.value ? new Date(dateDebut.value) : null;
+        const fin = dateFin.value ? new Date(dateFin.value) : null;
+        let duree = 0;
+        if (debut && fin) {
+            duree = Math.ceil(Math.abs(fin - debut) / (1000 * 60 * 60 * 24));
+        }
+
+        if (typeSelect.value === 'MALADIE' && duree > 3 && !motifField.value.trim()) {
+            motifField.classList.add('is-invalid');
+            errorElement.textContent = 'Le motif est obligatoire pour un congé maladie de plus de 3 jours.';
+            return false;
+        }
+        motifField.classList.remove('is-invalid');
+        return true;
+    }
+
+    // Validation complète
+    function validateForm() {
+        let isValid = true;
+        
+        isValid = validateDateDebut() && isValid;
+        isValid = validateDateFin() && isValid;
+        isValid = validateType() && isValid;
+        isValid = validateMotif() && isValid;
+        
+        return isValid;
+    }
+
+    // Écouteurs d'événements
+    dateDebut.addEventListener('change', function() {
+        validateDateDebut();
+        if (dateFin.value) validateDateFin();
+        updateDureeDisplay();
+    });
+
+    dateFin.addEventListener('change', function() {
+        validateDateFin();
+        if (dateDebut.value) validateDateDebut();
+        updateDureeDisplay();
+    });
+
+    typeSelect.addEventListener('change', function() {
+        validateType();
+        updateMotifRequirement();
+        validateMotif();
+    });
+
+    motifField.addEventListener('input', validateMotif);
+
+    form.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+});
+</script>
+{% endblock %}

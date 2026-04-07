@@ -1,0 +1,49 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Mes Absences{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4">
+                <h1 class="fs-3 mb-1">Mes Absences</h1>
+                <p class="mb-0">Consultez vos absences enregistrées</p>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title mb-0">Liste de mes absences</h5>
+                        <a href="{{ path('employ_dashboard') }}" class="btn btn-secondary btn-sm">
+                            <i class="ti ti-arrow-left"></i> Retour
+                        </a>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date début</th>
+                                    <th>Date fin</th>
+                                    <th>Type</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
+                                        Aucune absence trouvée
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

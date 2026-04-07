@@ -386,43 +386,15 @@
         
         <ul class="sidebar-menu">
             <li class="menu-label">Main</li>
+            {% if app.request.attributes.get('_route') starts with 'admin' or app.request.attributes.get('_route') starts with 'employ' %}
             <li>
-                <a href="{{ path('admin_dashboard') }}" class="{% if app.request.attributes.get('_route') == 'admin_dashboard' %}active{% endif %}">
+                <a href="{% if app.request.attributes.get('_route') starts with 'admin' %}{{ path('admin_dashboard') }}{% else %}{{ path('employ_dashboard') }}{% endif %}" class="{% if app.request.attributes.get('_route') == 'admin_dashboard' or app.request.attributes.get('_route') == 'employ_dashboard' %}active{% endif %}">
                     <i class="ti ti-home"></i>
                     <span>Dashboard</span>
                 </a>
             </li>
-            <li>
-                <a href="{{ path('admin_inventory') }}" class="{% if app.request.attributes.get('_route') == 'admin_inventory' %}active{% endif %}">
-                    <i class="ti ti-box-seam"></i>
-                    <span>Inventory</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('admin_product_create') }}" class="{% if app.request.attributes.get('_route') == 'admin_product_create' %}active{% endif %}">
-                    <i class="ti ti-plus"></i>
-                    <span>Add Product</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('admin_reports') }}" class="{% if app.request.attributes.get('_route') == 'admin_reports' %}active{% endif %}">
-                    <i class="ti ti-receipt"></i>
-                    <span>Reports</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('admin_docs') }}">
-                    <i class="ti ti-file-x"></i>
-                    <span>404 Error</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('admin_docs') }}">
-                    <i class="ti ti-file-text"></i>
-                    <span>Docs</span>
-                </a>
-            </li>
-            
+            {% endif %}
+            {% if app.request.attributes.get('_route') starts with 'admin' %}
             <li>
                 <a href="#congeSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'admin_conge' or app.request.attributes.get('_route') starts with 'admin_absence' %}active{% else %}collapsed{% endif %}">
                     <i class="ti ti-calendar-time"></i>
@@ -437,20 +409,24 @@
                     </li>
                 </ul>
             </li>
+            {% endif %}
             
-            <li class="menu-label">Account</li>
+            {% if app.request.attributes.get('_route') starts with 'employ' %}
             <li>
-                <a href="{{ path('app_login') }}">
-                    <i class="ti ti-login"></i>
-                    <span>Log in</span>
+                <a href="#employeCongeSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'employ_conge' or app.request.attributes.get('_route') starts with 'employ_absence' %}active{% else %}collapsed{% endif %}">
+                    <i class="ti ti-calendar-event"></i>
+                    <span>Congés</span>
                 </a>
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'employ_conge' or app.request.attributes.get('_route') starts with 'employ_absence' %}show{% endif %}" id="employeCongeSubmenu">
+                    <li>
+                        <a href="{{ path('employ_conges') }}" class="{% if app.request.attributes.get('_route') == 'employ_conges' %}active{% endif %}">Mes congés</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('employ_absences') }}" class="{% if app.request.attributes.get('_route') == 'employ_absences' %}active{% endif %}">Mes absences</a>
+                    </li>
+                </ul>
             </li>
-            <li>
-                <a href="{{ path('app_register') }}">
-                    <i class="ti ti-user-plus"></i>
-                    <span>Sign up</span>
-                </a>
-            </li>
+            {% endif %}
         </ul>
     </aside>
     
