@@ -376,7 +376,7 @@
        ========================================== #}
     <aside class="sidebar">
         <div class="sidebar-header">
-            <a href="{{ path('admin_dashboard') }}">
+            <a href="{{ path('employ_dashboard') }}">
                 <div class="logo-icon">
                     <img src="{{ asset('logo/huma.png') }}" alt="HumaDB">
                 </div>
@@ -390,37 +390,43 @@
         <ul class="sidebar-menu">
             <li class="menu-label">Main</li>
             <li>
-                <a href="{{ path('admin_dashboard') }}" class="{% if app.request.attributes.get('_route') == 'admin_dashboard' %}active{% endif %}">
+                <a href="{{ path('employ_dashboard') }}" class="{% if app.request.attributes.get('_route') == 'employ_dashboard' %}active{% endif %}">
                     <i class="ti ti-home"></i>
                     <span>Dashboard</span>
                 </a>
             </li>
             <li>
-                <a href="{{ path('admin_inventory') }}" class="{% if app.request.attributes.get('_route') == 'admin_inventory' %}active{% endif %}">
+                <a href="{{ path('employ_inventory') }}" class="{% if app.request.attributes.get('_route') == 'employ_inventory' %}active{% endif %}">
                     <i class="ti ti-box-seam"></i>
                     <span>Gestion de recrutement</span>
                 </a>
             </li>
             <li>
-                <a href="{{ path('admin_product_create') }}" class="{% if app.request.attributes.get('_route') == 'admin_product_create' %}active{% endif %}">
+                <a href="{{ path('employ_product_create') }}" class="{% if app.request.attributes.get('_route') == 'employ_product_create' %}active{% endif %}">
                     <i class="ti ti-plus"></i>
                     <span>Add Product</span>
                 </a>
             </li>
             <li>
-                <a href="{{ path('admin_reports') }}" class="{% if app.request.attributes.get('_route') == 'admin_reports' %}active{% endif %}">
+                <a href="{{ path('employ_reports') }}" class="{% if app.request.attributes.get('_route') == 'employ_reports' %}active{% endif %}">
                     <i class="ti ti-receipt"></i>
                     <span>Reports</span>
                 </a>
             </li>
             <li>
-                <a href="{{ path('admin_docs') }}">
+                <a href="{{ path('employ_formation_index') }}" class="{% if app.request.attributes.get('_route') in ['employ_formation_index', 'employ_formation_new', 'employ_formation_show', 'employ_formation_edit'] %}active{% endif %}">
+                    <i class="ti ti-school"></i>
+                    <span>Formation</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('employ_docs') }}">
                     <i class="ti ti-file-x"></i>
                     <span>404 Error</span>
                 </a>
             </li>
             <li>
-                <a href="{{ path('admin_docs') }}">
+                <a href="{{ path('employ_docs') }}">
                     <i class="ti ti-file-text"></i>
                     <span>Docs</span>
                 </a>
@@ -428,15 +434,9 @@
             
             <li class="menu-label">Account</li>
             <li>
-                <a href="{{ path('app_login') }}">
-                    <i class="ti ti-login"></i>
-                    <span>Log in</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('app_register') }}">
-                    <i class="ti ti-user-plus"></i>
-                    <span>Sign up</span>
+                <a href="{{ path('app_logout') }}">
+                    <i class="ti ti-logout"></i>
+                    <span>Logout</span>
                 </a>
             </li>
         </ul>

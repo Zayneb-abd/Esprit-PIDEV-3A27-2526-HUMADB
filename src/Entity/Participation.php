@@ -46,20 +46,6 @@ class Participation
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $resultat = null;
 
-    #[ORM\Column(type: 'string', length: 20)]
-    private string $statut = 'en attente';
-
-    public function getStatut(): string
-    {
-        return $this->statut;
-    }
-
-    public function setStatut(string $statut): self
-    {
-        $this->statut = $statut;
-        return $this;
-    }
-
     public function getResultat(): ?string
     {
         return $this->resultat;
@@ -68,6 +54,18 @@ class Participation
     public function setResultat(?string $resultat): self
     {
         $this->resultat = $resultat;
+        return $this;
+    }
+
+    public function getStatut(): string
+    {
+        return $this->resultat ?: 'en attente';
+    }
+
+    public function setStatut(string $statut): self
+    {
+        $this->resultat = $statut;
+
         return $this;
     }
 
