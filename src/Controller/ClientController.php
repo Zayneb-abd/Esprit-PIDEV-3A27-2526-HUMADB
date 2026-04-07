@@ -68,6 +68,7 @@ class ClientController extends AbstractController
     {
         return $this->render('client/pages/price.html.twig');
     }
+//route
 
     #[Route('/quote', name: 'client_quote')]
     public function quote(): Response
