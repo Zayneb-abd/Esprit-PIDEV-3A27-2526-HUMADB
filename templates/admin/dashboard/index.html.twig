@@ -4,73 +4,98 @@
 
 {% block body %}
 
-    <div class="row">
-        <div class="col-12">
-            <div class="mb-6">
-                <h1 class="fs-3 mb-1">Dashboard</h1>
-                <p>Bienvenue dans votre espace d'administration.</p>
-            </div>
-        </div>
+    {# Titre et sous-titre #}
+    <div class="mb-4">
+        <h1 class="fs-4 fw-bold mb-1">Dashboard</h1>
+        <p class="text-muted mb-0">Your main content goes here...</p>
     </div>
 
-    {# ── 4 cartes stats ── #}
-    <div class="row g-3 mb-3">
-
-        <div class="col-lg-3 col-12">
-            <div class="card p-4 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-2">
-                <div class="d-flex gap-3">
-                    <div class="icon-shape icon-md bg-primary text-white rounded-2">
-                        <i class="ti ti-report-analytics fs-4"></i>
+    {# ── 4 cartes stats avec icônes colorées ── #}
+    <div class="row g-3 mb-4">
+        
+        {# Total Sales - Orange #}
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #fff5f0 0%, #ffeee8 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                <i class="ti ti-chart-bar fs-4" style="color: #ff6b4a;"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="text-muted mb-1 small">Total Sales</p>
+                            <h3 class="fw-bold mb-0" style="color: #ff6b4a;">$25,000</h3>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="mb-3 fs-6">Total Sales</h2>
-                        <h3 class="fw-bold mb-0">$25,000</h3>
-                        <p class="text-primary mb-0 small">+5% since last month</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-12">
-            <div class="card p-4 bg-success bg-opacity-10 border border-success border-opacity-25 rounded-2">
-                <div class="d-flex gap-3">
-                    <div class="icon-shape icon-md bg-success text-white rounded-2">
-                        <i class="ti ti-repeat fs-4"></i>
-                    </div>
-                    <div>
-                        <h2 class="mb-3 fs-6">Total Purchase</h2>
-                        <h3 class="fw-bold mb-0">$18,000</h3>
-                        <p class="text-success mb-0 small">+22% since last month</p>
+                    <div class="mt-3">
+                        <span class="small" style="color: #ff6b4a;">+5% since last month</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-3 col-12">
-            <div class="card p-4 bg-info bg-opacity-10 border border-info border-opacity-25 rounded-2">
-                <div class="d-flex gap-3">
-                    <div class="icon-shape icon-md bg-info text-white rounded-2">
-                        <i class="ti ti-currency-dollar fs-4"></i>
+        {# Total Purchase - Vert #}
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f0fff4 0%, #e8fff0 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                <i class="ti ti-refresh fs-4" style="color: #22c55e;"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="text-muted mb-1 small">Total Purchase</p>
+                            <h3 class="fw-bold mb-0" style="color: #22c55e;">$18,000</h3>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="mb-3 fs-6">Total Expenses</h2>
-                        <h3 class="fw-bold mb-0">$9,000</h3>
-                        <p class="text-info mb-0 small">+10% since last month</p>
+                    <div class="mt-3">
+                        <span class="small" style="color: #22c55e;">+22% since last month</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-3 col-12">
-            <div class="card p-4 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-2">
-                <div class="d-flex gap-3">
-                    <div class="icon-shape icon-md bg-warning text-white rounded-2">
-                        <i class="ti ti-notes fs-4"></i>
+        {# Total Expenses - Bleu #}
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                <i class="ti ti-currency-dollar fs-4" style="color: #0ea5e9;"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="text-muted mb-1 small">Total Expenses</p>
+                            <h3 class="fw-bold mb-0" style="color: #0ea5e9;">$9,000</h3>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="mb-3 fs-6">Invoice Due</h2>
-                        <h3 class="fw-bold mb-0">$25,000</h3>
-                        <p class="text-warning mb-0 small">+35% since last month</p>
+                    <div class="mt-3">
+                        <span class="small" style="color: #0ea5e9;">+10% since last month</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Invoice Due - Jaune #}
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                <i class="ti ti-file-invoice fs-4" style="color: #f59e0b;"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="text-muted mb-1 small">Invoice Due</p>
+                            <h3 class="fw-bold mb-0" style="color: #f59e0b;">$25,000</h3>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="small" style="color: #f59e0b;">+35% since last month</span>
                     </div>
                 </div>
             </div>
@@ -78,64 +103,67 @@
 
     </div>
 
-    {# ── 3 cartes résumé ── #}
-    <div class="row g-3 mb-3">
-
-        <div class="col-lg-4 col-12">
-            <div class="card">
+    {# ── 3 cartes résumé avec icônes ── #}
+    <div class="row g-3 mb-4">
+        
+        {# Total Profit #}
+        <div class="col-lg-4 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body p-4">
-                    <div class="d-flex justify-content-between border-bottom pb-5 mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
-                            <h3 class="fw-bold h4">$25,458</h3>
-                            <span>Total Profit</span>
+                            <h3 class="fw-bold mb-1">$25,458</h3>
+                            <p class="text-muted mb-0 small">Total Profit</p>
                         </div>
-                        <div>
-                            <i class="ti ti-layers-subtract fs-1 text-primary"></i>
+                        <div class="bg-primary bg-opacity-10 rounded-3 p-2">
+                            <i class="ti ti-wallet fs-4 text-primary"></i>
                         </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center small">
-                        <div class="text-muted"><span class="text-success">+35%</span> vs Last Month</div>
-                        <div><a href="#" class="link-primary text-decoration-underline">View</a></div>
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <span class="text-success small">+35% vs Last Month</span>
+                        <a href="#" class="text-decoration-none small" style="color: #ff6b4a;">View</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-4 col-12">
-            <div class="card">
+        {# Total Payment Returns #}
+        <div class="col-lg-4 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body p-4">
-                    <div class="d-flex justify-content-between border-bottom pb-5 mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
-                            <h3 class="fw-bold h4">$45,458</h3>
-                            <span>Total Payment Returns</span>
+                            <h3 class="fw-bold mb-1">$45,458</h3>
+                            <p class="text-muted mb-0 small">Total Payment Returns</p>
                         </div>
-                        <div>
-                            <i class="ti ti-credit-card fs-1 text-danger"></i>
+                        <div class="bg-danger bg-opacity-10 rounded-3 p-2">
+                            <i class="ti ti-credit-card fs-4 text-danger"></i>
                         </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center small">
-                        <div class="text-muted"><span class="text-danger">-20%</span> vs Last Month</div>
-                        <div><a href="#" class="link-primary text-decoration-underline">View</a></div>
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <span class="text-danger small">-20% vs Last Month</span>
+                        <a href="#" class="text-decoration-none small" style="color: #ff6b4a;">View</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-4 col-12">
-            <div class="card">
+        {# Total Expenses #}
+        <div class="col-lg-4 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body p-4">
-                    <div class="d-flex justify-content-between border-bottom pb-5 mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
-                            <h3 class="fw-bold h4">$34,458</h3>
-                            <span>Total Expenses</span>
+                            <h3 class="fw-bold mb-1">$34,458</h3>
+                            <p class="text-muted mb-0 small">Total Expenses</p>
                         </div>
-                        <div>
-                            <i class="ti ti-cash-banknote fs-1 text-warning"></i>
+                        <div class="bg-warning bg-opacity-10 rounded-3 p-2">
+                            <i class="ti ti-cash-banknote fs-4" style="color: #f59e0b;"></i>
                         </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center small">
-                        <div class="text-muted"><span class="text-warning">-20%</span> vs Last Month</div>
-                        <div><a href="#" class="link-primary text-decoration-underline">View</a></div>
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <span class="text-warning small">-20% vs Last Month</span>
+                        <a href="#" class="text-decoration-none small" style="color: #ff6b4a;">View</a>
                     </div>
                 </div>
             </div>
@@ -144,60 +172,99 @@
     </div>
 
     {# ── Graphiques ── #}
-    <div class="row g-3 mb-3">
-
-        <div class="col-12 col-lg-6">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center bg-transparent px-4 py-3">
-                    <h3 class="h5 mb-0">Sales vs Purchase</h3>
-                    <div>
-                        <select class="form-select form-select-sm">
-                            <option selected>This Year</option>
-                            <option>This Month</option>
-                            <option>This Week</option>
-                        </select>
-                    </div>
+    <div class="row g-3 mb-4">
+        
+        {# Sales vs Purchase #}
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3 px-4">
+                    <h5 class="mb-0 fw-semibold">Sales vs Purchase</h5>
+                    <select class="form-select form-select-sm" style="width: auto;">
+                        <option selected>This Year</option>
+                        <option>This Month</option>
+                        <option>This Week</option>
+                    </select>
                 </div>
                 <div class="card-body p-4">
-                    <div id="salesPurchaseChart"></div>
+                    {# Graphique en barres stylisé #}
+                    <div class="d-flex align-items-end justify-content-between" style="height: 200px;">
+                        <div class="text-center" style="width: 10%;">
+                            <div style="height: 60px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
+                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Jan</small>
+                        </div>
+                        <div class="text-center" style="width: 10%;">
+                            <div style="height: 90px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
+                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Feb</small>
+                        </div>
+                        <div class="text-center" style="width: 10%;">
+                            <div style="height: 120px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
+                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Mar</small>
+                        </div>
+                        <div class="text-center" style="width: 10%;">
+                            <div style="height: 80px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
+                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Apr</small>
+                        </div>
+                        <div class="text-center" style="width: 10%;">
+                            <div style="height: 140px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
+                            <small class="text-muted d-block mt-2" style="font-size: 10px;">May</small>
+                        </div>
+                        <div class="text-center" style="width: 10%;">
+                            <div style="height: 100px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
+                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Jun</small>
+                        </div>
+                        <div class="text-center" style="width: 10%;">
+                            <div style="height: 160px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
+                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Jul</small>
+                        </div>
+                        <div class="text-center" style="width: 10%;">
+                            <div style="height: 110px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
+                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Aug</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-lg-6">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center bg-transparent px-4 py-3">
-                    <h3 class="h5 mb-0">Overall Information</h3>
-                    <div>
-                        <select class="form-select form-select-sm">
-                            <option selected>Last 6 Months</option>
-                            <option>This Month</option>
-                            <option>This Week</option>
-                        </select>
-                    </div>
+        {# Overall Information - Customers Overview #}
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3 px-4">
+                    <h5 class="mb-0 fw-semibold">Overall Information</h5>
+                    <select class="form-select form-select-sm" style="width: auto;">
+                        <option selected>Last 6 Months</option>
+                        <option>This Month</option>
+                        <option>This Week</option>
+                    </select>
                 </div>
                 <div class="card-body p-4">
-                    <h3 class="h6">Customers Overview</h3>
+                    <p class="text-muted mb-3 small">Customers Overview</p>
                     <div class="row align-items-center">
-                        <div class="col-sm-6">
-                            <div id="customerChart"></div>
+                        {# Donut chart stylisé #}
+                        <div class="col-5">
+                            <div class="position-relative d-flex align-items-center justify-content-center" style="width: 140px; height: 140px; margin: 0 auto;">
+                                <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="12"/>
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#22c55e" stroke-width="12" stroke-dasharray="175.9 251.3" stroke-linecap="round"/>
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="12" stroke-dasharray="75.4 251.3" stroke-dashoffset="-175.9" stroke-linecap="round"/>
+                                </svg>
+                            </div>
                         </div>
-                        <div class="col-sm-6">
-                            <div class="row">
-                                <div class="col-6 border-end">
-                                    <div class="text-center">
-                                        <h2 class="mb-1">5.5K</h2>
-                                        <p class="text-success mb-2">First Time</p>
-                                        <span class="badge bg-success">
+                        <div class="col-7">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="text-center p-2">
+                                        <h2 class="fw-bold mb-1" style="color: #22c55e;">5.5K</h2>
+                                        <p class="text-muted mb-1 small">First Time</p>
+                                        <span class="badge bg-success bg-opacity-10 text-success">
                                             <i class="ti ti-arrow-up-left me-1"></i>25%
                                         </span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="text-center">
-                                        <h2 class="mb-1">3.5K</h2>
-                                        <p class="text-warning mb-2">Return</p>
-                                        <span class="badge bg-success badge-xs d-inline-flex align-items-center">
+                                    <div class="text-center p-2">
+                                        <h2 class="fw-bold mb-1" style="color: #f59e0b;">3.5K</h2>
+                                        <p class="text-muted mb-1 small">Return</p>
+                                        <span class="badge bg-warning bg-opacity-10" style="color: #f59e0b;">
                                             <i class="ti ti-arrow-up-left me-1"></i>21%
                                         </span>
                                     </div>
@@ -205,18 +272,18 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row text-center border-top mt-4 pt-4">
-                        <div class="col-4 border-end">
-                            <h3 class="fw-bold mb-2">6987</h3>
-                            <small class="text-secondary">Suppliers</small>
-                        </div>
-                        <div class="col-4 border-end">
-                            <h3 class="fw-bold mb-2">4896</h3>
-                            <small class="text-secondary">Customers</small>
+                    <div class="row text-center mt-4 pt-3 border-top">
+                        <div class="col-4">
+                            <h4 class="fw-bold mb-1">6987</h4>
+                            <small class="text-muted">Suppliers</small>
                         </div>
                         <div class="col-4">
-                            <h3 class="fw-bold mb-2">487</h3>
-                            <small class="text-secondary">Orders</small>
+                            <h4 class="fw-bold mb-1">4896</h4>
+                            <small class="text-muted">Customers</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="fw-bold mb-1">487</h4>
+                            <small class="text-muted">Orders</small>
                         </div>
                     </div>
                 </div>
@@ -225,204 +292,8 @@
 
     </div>
 
-    {# ── 3 listes produits ── #}
-    <div class="row g-3">
+{% endblock %}
 
-        {# Top Selling Products #}
-        <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center px-4 py-3">
-                    <h4 class="mb-0 h5">Top Selling Products</h4>
-                    <button class="btn btn-sm btn-outline-secondary">
-                        <i class="ti ti-calendar"></i> Today
-                    </button>
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-2.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">Wireless Earphones</p>
-                            <div class="d-flex align-items-center gap-2 text-muted">
-                                <small class="fw-semibold">$89</small><small>•</small><small>1,250 Units</small>
-                            </div>
-                        </div>
-                        <span class="badge bg-danger-subtle text-danger border border-danger">18%</span>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-1.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">Gaming Joy Stick</p>
-                            <div class="d-flex align-items-center gap-2 text-muted">
-                                <small class="fw-semibold">$49</small><small>•</small><small>5,420 Units</small>
-                            </div>
-                        </div>
-                        <span class="badge bg-primary-subtle text-primary border border-primary">32%</span>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-3.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">Smart Watch Pro</p>
-                            <div class="d-flex align-items-center gap-2 text-muted">
-                                <small class="fw-semibold">$98</small><small>•</small><small>862 Units</small>
-                            </div>
-                        </div>
-                        <span class="badge bg-info-subtle text-info border border-info">22%</span>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-4.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">USB-C Fast Charger</p>
-                            <div class="d-flex align-items-center gap-2 text-muted">
-                                <small class="fw-semibold">$35</small><small>•</small><small>3,200 Units</small>
-                            </div>
-                        </div>
-                        <span class="badge bg-success-subtle text-success border border-success">28%</span>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-5.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">Portable Bluetooth Speaker</p>
-                            <div class="d-flex align-items-center gap-2 text-muted">
-                                <small class="fw-semibold">$65</small><small>•</small><small>2,890 Units</small>
-                            </div>
-                        </div>
-                        <span class="badge bg-warning-subtle text-warning border border-warning">25%</span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        {# Low Stock Products #}
-        <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center px-4 py-3">
-                    <h4 class="mb-0 h5">Low Stock Products</h4>
-                    <a href="#" class="small text-primary text-decoration-underline">View All</a>
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-8.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">Wireless Headphones</p>
-                            <small>ID: #554433</small>
-                        </div>
-                        <div class="d-flex flex-column align-items-center">
-                            <span class="fw-semibold text-primary">06</span>
-                            <small class="text-muted">In Stock</small>
-                        </div>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-4.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">USB-C Cable Pack</p>
-                            <small>ID: #887766</small>
-                        </div>
-                        <div class="d-flex flex-column align-items-center">
-                            <span class="fw-semibold text-primary">09</span>
-                            <small class="text-muted">In Stock</small>
-                        </div>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-10.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">Phone Screen Protector</p>
-                            <small>ID: #332211</small>
-                        </div>
-                        <div class="d-flex flex-column align-items-center">
-                            <span class="fw-semibold text-primary">03</span>
-                            <small class="text-muted">In Stock</small>
-                        </div>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-4.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">Portable Charger 20000mAh</p>
-                            <small>ID: #998877</small>
-                        </div>
-                        <div class="d-flex flex-column align-items-center">
-                            <span class="fw-semibold text-primary">07</span>
-                            <small class="text-muted">In Stock</small>
-                        </div>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-6.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">Mechanical Keyboard RGB</p>
-                            <small>ID: #665544</small>
-                        </div>
-                        <div class="d-flex flex-column align-items-center">
-                            <span class="fw-semibold text-primary">02</span>
-                            <small class="text-muted">In Stock</small>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        {# Recent Sales #}
-        <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center px-4 py-3">
-                    <h4 class="mb-0 h5">Recent Sales</h4>
-                    <button class="btn btn-sm btn-outline-secondary">
-                        <i class="ti ti-calendar-event"></i> Weekly
-                    </button>
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-7.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">MacBook Pro 16"</p>
-                            <div class="d-flex align-items-center gap-2 text-muted">
-                                <small class="fw-semibold">Computers</small><small>•</small><small>$2,499</small>
-                            </div>
-                        </div>
-                        <span class="badge bg-success-subtle text-success">Completed</span>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-9.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">AirPods Pro Max</p>
-                            <div class="d-flex align-items-center gap-2 text-muted">
-                                <small class="fw-semibold">Audio</small><small>•</small><small>$549</small>
-                            </div>
-                        </div>
-                        <span class="badge bg-primary-subtle text-primary">Processing</span>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-8.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">iPad Air 11"</p>
-                            <div class="d-flex align-items-center gap-2 text-muted">
-                                <small class="fw-semibold">Tablets</small><small>•</small><small>$799</small>
-                            </div>
-                        </div>
-                        <span class="badge bg-success-subtle text-success">Completed</span>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-3.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">Apple Watch Ultra</p>
-                            <div class="d-flex align-items-center gap-2 text-muted">
-                                <small class="fw-semibold">Wearables</small><small>•</small><small>$799</small>
-                            </div>
-                        </div>
-                        <span class="badge bg-warning-subtle text-warning">Pending</span>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center gap-3">
-                        <img src="{{ asset('admin/images/product-6.png') }}" class="rounded" width="48">
-                        <div class="flex-grow-1">
-                            <p class="mb-1">Magic Keyboard</p>
-                            <div class="d-flex align-items-center gap-2 text-muted">
-                                <small class="fw-semibold">Accessories</small><small>•</small><small>$299</small>
-                            </div>
-                        </div>
-                        <span class="badge bg-danger-subtle text-danger">Cancelled</span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-    </div>
-
+{% block js %}
+  <script src="{{ asset('admin/js/main.js') }}" type="module"></script>
 {% endblock %}
