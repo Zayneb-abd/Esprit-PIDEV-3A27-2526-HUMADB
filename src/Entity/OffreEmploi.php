@@ -6,8 +6,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-
 use App\Repository\OffreEmploiRepository;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: OffreEmploiRepository::class)]
 #[ORM\Table(name: 'offre_emploi')]
@@ -30,6 +30,13 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: "Le titre est obligatoire.")]
+    #[Assert\Length(
+        min: 3,
+        max: 100,
+        minMessage: "Le titre doit contenir au moins {{ limit }} caracteres.",
+        maxMessage: "Le titre ne doit pas depasser {{ limit }} caracteres."
+    )]
     private ?string $titre = null;
 
     public function getTitre(): ?string
@@ -44,6 +51,13 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Assert\NotBlank(message: "La description est obligatoire.")]
+    #[Assert\Length(
+        min: 20,
+        max: 5000,
+        minMessage: "La description doit contenir au moins {{ limit }} caracteres.",
+        maxMessage: "La description ne doit pas depasser {{ limit }} caracteres."
+    )]
     private ?string $description = null;
 
     public function getDescription(): ?string
@@ -58,6 +72,13 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: "Le departement est obligatoire.")]
+    #[Assert\Length(
+        min: 2,
+        max: 100,
+        minMessage: "Le departement doit contenir au moins {{ limit }} caracteres.",
+        maxMessage: "Le departement ne doit pas depasser {{ limit }} caracteres."
+    )]
     private ?string $departement = null;
 
     public function getDepartement(): ?string
@@ -72,6 +93,8 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'date', nullable: true)]
+    #[Assert\NotNull(message: "La date de publication est obligatoire.")]
+    #[Assert\LessThanOrEqual('today', message: "La date de publication ne peut pas etre dans le futur.")]
     private ?\DateTimeInterface $date_publication = null;
 
     public function getDate_publication(): ?\DateTimeInterface
@@ -86,6 +109,11 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: "Le type de contrat est obligatoire.")]
+    #[Assert\Choice(
+        choices: ['CDI', 'CDD', 'Stage', 'Freelance', 'Alternance'],
+        message: "Le type de contrat selectionne est invalide."
+    )]
     private ?string $type_contrat = null;
 
     public function getType_contrat(): ?string
@@ -100,6 +128,12 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'integer', nullable: true)]
+    #[Assert\NotNull(message: "Le nombre de postes est obligatoire.")]
+    #[Assert\Positive(message: "Le nombre de postes doit etre superieur a 0.")]
+    #[Assert\LessThanOrEqual(
+        value: 1000,
+        message: "Le nombre de postes ne doit pas depasser {{ compared_value }}."
+    )]
     private ?int $nombre_postes = null;
 
     public function getNombre_postes(): ?int

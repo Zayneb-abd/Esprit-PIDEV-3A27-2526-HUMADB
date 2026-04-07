@@ -26,10 +26,12 @@ class CandidatPostulationType extends AbstractType
             ])
             ->add('cv', TextType::class, [
                 'label' => 'CV',
-                'required' => false,
+                'required' => true,
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Lien ou nom du fichier CV',
+                    'minlength' => 3,
+                    'maxlength' => 255,
                 ],
             ]);
     }
