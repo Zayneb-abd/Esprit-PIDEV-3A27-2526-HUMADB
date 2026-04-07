@@ -1,0 +1,387 @@
+/* ==========================================================================
+   InApp Admin Dashboard - Styles
+   Organization: assets/admin/app.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Base & Reset
+   -------------------------------------------------------------------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #6366f1;
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --sidebar-width: 260px;
+    --topbar-height: 70px;
+    --body-bg: #f5f6fa;
+    --sidebar-bg: #ffffff;
+    --text-dark: #333333;
+    --text-muted: #6c757d;
+    --text-light: #adb5bd;
+    --border-color: #e9ecef;
+    --hover-bg: #f8f9fa;
+    --active-bg: #f0f3ff;
+    --success: #22c55e;
+    --danger: #dc3545;
+    --warning: #f59e0b;
+    --info: #0ea5e9;
+    --orange: #ff6b4a;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--body-bg);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-dark);
+}
+
+/* --------------------------------------------------------------------------
+   2. Sidebar
+   -------------------------------------------------------------------------- */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    z-index: 1000;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+}
+
+/* Sidebar Header / Logo */
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-dark);
+}
+
+.sidebar-header .logo-icon {
+    width: 35px;
+    height: 35px;
+    background: var(--primary-gradient);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.sidebar-header .logo-text {
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+.sidebar-header .logo-text small {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Sidebar Menu */
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu .menu-label {
+    padding: 15px 20px 5px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-light);
+    letter-spacing: 0.5px;
+}
+
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.sidebar-menu li a:hover {
+    background-color: var(--hover-bg);
+    color: var(--primary);
+}
+
+.sidebar-menu li a.active {
+    background-color: var(--active-bg);
+    color: var(--primary);
+    border-left: 3px solid var(--primary);
+}
+
+.sidebar-menu li a i {
+    margin-right: 12px;
+    font-size: 18px;
+    width: 20px;
+    text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   3. Topbar
+   -------------------------------------------------------------------------- */
+.topbar {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+    right: 0;
+    height: var(--topbar-height);
+    background: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Menu Button */
+.btn-menu {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-menu:hover {
+    background-color: var(--hover-bg);
+}
+
+/* Notification Button */
+.notification-btn {
+    position: relative;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-btn:hover {
+    background-color: var(--hover-bg);
+}
+
+.notification-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 10px;
+    height: 10px;
+    background: var(--danger);
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.notification-badge.with-number {
+    width: auto;
+    height: auto;
+    min-width: 18px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* User Avatar */
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid var(--border-color);
+    transition: border-color 0.3s;
+}
+
+.user-avatar:hover {
+    border-color: var(--primary);
+}
+
+/* --------------------------------------------------------------------------
+   4. Main Content
+   -------------------------------------------------------------------------- */
+.main-content {
+    margin-left: var(--sidebar-width);
+    margin-top: var(--topbar-height);
+    padding: 25px;
+    min-height: calc(100vh - var(--topbar-height));
+}
+
+/* --------------------------------------------------------------------------
+   5. Cards
+   -------------------------------------------------------------------------- */
+.card {
+    background: var(--sidebar-bg);
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Stat Cards - Color Variants */
+.stat-card {
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.stat-card.orange {
+    background: linear-gradient(135deg, #fff5f0 0%, #ffeee8 100%);
+}
+
+.stat-card.green {
+    background: linear-gradient(135deg, #f0fff4 0%, #e8fff0 100%);
+}
+
+.stat-card.blue {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.stat-card.yellow {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-icon.orange { color: var(--orange); }
+.stat-icon.green { color: var(--success); }
+.stat-icon.blue { color: var(--info); }
+.stat-icon.yellow { color: var(--warning); }
+
+/* --------------------------------------------------------------------------
+   6. Dashboard Specific
+   -------------------------------------------------------------------------- */
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: var(--text-dark);
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+/* Chart Bars */
+.chart-bar {
+    border-radius: 4px 4px 0 0;
+    transition: opacity 0.3s;
+}
+
+.chart-bar:hover {
+    opacity: 0.8;
+}
+
+/* --------------------------------------------------------------------------
+   7. Utilities
+   -------------------------------------------------------------------------- */
+.text-orange { color: var(--orange) !important; }
+.text-green { color: var(--success) !important; }
+.text-blue { color: var(--info) !important; }
+.text-yellow { color: var(--warning) !important; }
+
+.bg-orange-light { background-color: rgba(255, 107, 74, 0.1) !important; }
+.bg-green-light { background-color: rgba(34, 197, 94, 0.1) !important; }
+.bg-blue-light { background-color: rgba(14, 165, 233, 0.1) !important; }
+.bg-yellow-light { background-color: rgba(245, 158, 11, 0.1) !important; }
+
+/* --------------------------------------------------------------------------
+   8. Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 991px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .topbar {
+        left: 0;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 767px) {
+    .main-content {
+        padding: 15px;
+    }
+    
+    .topbar {
+        padding: 0 15px;
+    }
+}

@@ -32,4 +32,46 @@ class ClientController extends AbstractController
     {
         return $this->render('client/service/index.html.twig');
     }
+
+    #[Route('/blog', name: 'client_blog')]
+    public function blog(): Response
+    {
+        return $this->render('client/blog/blog.html.twig');
+    }
+
+    #[Route('/blog/detail', name: 'client_blog_detail')]
+    public function blogDetail(): Response
+    {
+        return $this->render('client/blog/detail.html.twig');
+    }
+
+    #[Route('/features', name: 'client_features')]
+    public function features(): Response
+    {
+        return $this->render('client/pages/features.html.twig');
+    }
+
+    #[Route('/team', name: 'client_team')]
+    public function team(): Response
+    {
+        return $this->render('client/pages/team.html.twig');
+    }
+
+    #[Route('/testimonial', name: 'client_testimonial')]
+    public function testimonial(): Response
+    {
+        return $this->render('client/pages/testimonial.html.twig');
+    }
+
+    #[Route('/price', name: 'client_price')]
+    public function price(): Response
+    {
+        return $this->render('client/pages/price.html.twig');
+    }
+
+    #[Route('/quote', name: 'client_quote')]
+    public function quote(): Response
+    {
+        return $this->render('client/pages/quote.html.twig');
+    }
 }

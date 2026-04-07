@@ -85,13 +85,12 @@
                        class="nav-item nav-link {% if app.request.attributes.get('_route') == 'client_about' %}active{% endif %}">
                        About
                     </a>
-                    <a href="{{ path('client_service') }}"
-                       class="nav-item nav-link {% if app.request.attributes.get('_route') == 'client_service' %}active{% endif %}">
+                    <a href="{{ path('client_services') }}"
+                       class="nav-item nav-link {% if app.request.attributes.get('_route') == 'client_services' %}active{% endif %}">
                        Services
                     </a>
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle {% if app.request.attributes.get('_route') starts with 'client_blog' %}active{% endif %}"
-                           data-bs-toggle="dropdown">Blog</a>
+                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Blog</a>
                         <div class="dropdown-menu m-0">
                             <a href="{{ path('client_blog') }}" class="dropdown-item">Blog Grid</a>
                             <a href="{{ path('client_blog_detail') }}" class="dropdown-item">Blog Detail</a>
@@ -101,7 +100,7 @@
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
                         <div class="dropdown-menu m-0">
                             <a href="{{ path('client_price') }}" class="dropdown-item">Pricing Plan</a>
-                            <a href="{{ path('client_feature') }}" class="dropdown-item">Our Features</a>
+                            <a href="{{ path('client_features') }}" class="dropdown-item">Our Features</a>
                             <a href="{{ path('client_team') }}" class="dropdown-item">Team Members</a>
                             <a href="{{ path('client_testimonial') }}" class="dropdown-item">Testimonial</a>
                             <a href="{{ path('client_quote') }}" class="dropdown-item">Free Quote</a>
@@ -197,9 +196,9 @@
                             <div class="link-animated d-flex flex-column justify-content-start">
                                 <a class="text-light mb-2" href="{{ path('client_home') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Home</a>
                                 <a class="text-light mb-2" href="{{ path('client_about') }}"><i class="bi bi-arrow-right text-primary me-2"></i>About Us</a>
-                                <a class="text-light mb-2" href="{{ path('client_service') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Our Services</a>
-                                <a class="text-light mb-2" href="{{ path('client_team') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Meet The Team</a>
-                                <a class="text-light mb-2" href="{{ path('client_blog') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Latest Blog</a>
+                                <a class="text-light mb-2" href="{{ path('client_services') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Our Services</a>
+                                <a class="text-light mb-2" href="#"><i class="bi bi-arrow-right text-primary me-2"></i>Meet The Team</a>
+                                <a class="text-light mb-2" href="#"><i class="bi bi-arrow-right text-primary me-2"></i>Latest Blog</a>
                                 <a class="text-light" href="{{ path('client_contact') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Contact Us</a>
                             </div>
                         </div>
@@ -210,9 +209,9 @@
                             <div class="link-animated d-flex flex-column justify-content-start">
                                 <a class="text-light mb-2" href="{{ path('client_home') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Home</a>
                                 <a class="text-light mb-2" href="{{ path('client_about') }}"><i class="bi bi-arrow-right text-primary me-2"></i>About Us</a>
-                                <a class="text-light mb-2" href="{{ path('client_service') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Our Services</a>
-                                <a class="text-light mb-2" href="{{ path('client_team') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Meet The Team</a>
-                                <a class="text-light mb-2" href="{{ path('client_blog') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Latest Blog</a>
+                                <a class="text-light mb-2" href="{{ path('client_services') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Our Services</a>
+                                <a class="text-light mb-2" href="#"><i class="bi bi-arrow-right text-primary me-2"></i>Meet The Team</a>
+                                <a class="text-light mb-2" href="#"><i class="bi bi-arrow-right text-primary me-2"></i>Latest Blog</a>
                                 <a class="text-light" href="{{ path('client_contact') }}"><i class="bi bi-arrow-right text-primary me-2"></i>Contact Us</a>
                             </div>
                         </div>
