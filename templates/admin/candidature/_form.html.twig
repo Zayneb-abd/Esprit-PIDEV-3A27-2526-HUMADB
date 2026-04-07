@@ -1,0 +1,14 @@
+{{ form_start(form) }}
+    <div class="row g-3">
+        <div class="col-md-6">{{ form_row(form.user) }}</div>
+        <div class="col-md-6">{{ form_row(form.offreEmploi) }}</div>
+        <div class="col-md-4">{{ form_row(form.statut) }}</div>
+        <div class="col-md-4">{{ form_row(form.date_candidature) }}</div>
+        <div class="col-md-4">{{ form_row(form.date_statut) }}</div>
+        <div class="col-12">{{ form_row(form.cv) }}</div>
+    </div>
+    <div class="d-flex gap-2 mt-4">
+        <button class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
+        <a href="{{ path('admin_inventory') }}" class="btn btn-outline-secondary">Retour</a>
+    </div>
+{{ form_end(form) }}

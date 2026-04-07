@@ -31,13 +31,21 @@ class FormationRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?Formation
-    //    {
-    //        return $this->createQueryBuilder('f')
-    //            ->andWhere('f.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    public function searchAndSort(?string $query, ?string $sortField, ?string $sortOrder): array
+    {
+        $qb = $this->createQueryBuilder('f');
+
+        if ($query) {
+            $qb->andWhere('f.sujet LIKE :query OR f.formateur LIKE :query OR f.type LIKE :query OR f.localisation LIKE :query')
+               ->setParameter('query', '%' . $query . '%');
+        }
+
+        if ($sortField) {
+            $qb->orderBy('f.' . $sortField, $sortOrder ?: 'ASC');
+        } else {
+            $qb->orderBy('f.id', 'DESC');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }

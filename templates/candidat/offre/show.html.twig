@@ -1,0 +1,54 @@
+{% extends 'candidat/base_admin.html.twig' %}
+
+{% block title %}Detail offre{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h1 class="fs-3 mb-1">{{ offre.titre ?: 'Offre sans titre' }}</h1>
+            <p class="mb-0 text-secondary">{{ offre.departement ?: 'Departement non renseigne' }} · {{ offre.typeContrat ?: 'Contrat non renseigne' }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('candidat_inventory') }}" class="btn btn-outline-primary">Retour aux offres</a>
+            {% if candidature %}
+                <span class="btn btn-light disabled">Deja postule</span>
+            {% else %}
+                <a href="{{ path('candidat_offer_apply', {id: offre.id}) }}" class="btn btn-primary">Postuler</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">Description de l'offre</h5>
+                    <p class="text-muted mb-0">{{ offre.description ?: 'Aucune description disponible pour cette offre.' }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">Informations utiles</h5>
+                    <p class="mb-2"><strong>Publication:</strong> {{ offre.datePublication ? offre.datePublication|date('d/m/Y') : '-' }}</p>
+                    <p class="mb-2"><strong>Postes ouverts:</strong> {{ offre.nombrePostes ?? 0 }}</p>
+                    <p class="mb-0"><strong>Candidatures recues:</strong> {{ offre.candidatures|length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if candidature %}
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body p-4">
+                <h5 class="mb-3">Votre candidature</h5>
+                <p class="mb-2"><strong>Statut:</strong> {{ candidature.statut ?: 'En attente' }}</p>
+                <p class="mb-2"><strong>Date:</strong> {{ candidature.dateCandidature ? candidature.dateCandidature|date('d/m/Y') : '-' }}</p>
+                <p class="mb-0"><strong>CV:</strong> {{ candidature.cv ?: '-' }}</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

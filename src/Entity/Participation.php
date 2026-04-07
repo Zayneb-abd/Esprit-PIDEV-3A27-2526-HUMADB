@@ -29,17 +29,17 @@ class Participation
         return $this;
     }
 
-    #[ORM\Column(type: 'date', nullable: true)]
-    private ?\DateTimeInterface $date_inscription = null;
+    #[ORM\Column(name: 'date_inscription', type: 'date', nullable: true)]
+    private ?\DateTimeInterface $dateInscription = null;
 
-    public function getDate_inscription(): ?\DateTimeInterface
+    public function getDateInscription(): ?\DateTimeInterface
     {
-        return $this->date_inscription;
+        return $this->dateInscription;
     }
 
-    public function setDate_inscription(?\DateTimeInterface $date_inscription): self
+    public function setDateInscription(?\DateTimeInterface $dateInscription): self
     {
-        $this->date_inscription = $date_inscription;
+        $this->dateInscription = $dateInscription;
         return $this;
     }
 
@@ -54,6 +54,18 @@ class Participation
     public function setResultat(?string $resultat): self
     {
         $this->resultat = $resultat;
+        return $this;
+    }
+
+    public function getStatut(): string
+    {
+        return $this->resultat ?: 'en attente';
+    }
+
+    public function setStatut(string $statut): self
+    {
+        $this->resultat = $statut;
+
         return $this;
     }
 
@@ -86,17 +98,4 @@ class Participation
         $this->formation = $formation;
         return $this;
     }
-
-    public function getDateInscription(): ?\DateTime
-    {
-        return $this->date_inscription;
-    }
-
-    public function setDateInscription(?\DateTime $date_inscription): static
-    {
-        $this->date_inscription = $date_inscription;
-
-        return $this;
-    }
-
 }

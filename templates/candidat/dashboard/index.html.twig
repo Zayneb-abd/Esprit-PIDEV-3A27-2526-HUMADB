@@ -1,0 +1,104 @@
+{% extends 'candidat/base_admin.html.twig' %}
+
+{% block title %}Dashboard candidat{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <h1 class="fs-4 fw-bold mb-1">Espace candidat</h1>
+        <p class="text-muted mb-0">Consultez les opportunites et suivez vos candidatures.</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #fff5f0 0%, #ffeee8 100%);">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-1 small">Offres disponibles</p>
+                    <h3 class="fw-bold mb-0 text-orange">{{ stats.offres }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f0fff4 0%, #e8fff0 100%);">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-1 small">Mes candidatures</p>
+                    <h3 class="fw-bold mb-0 text-green">{{ stats.postulations }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-1 small">En attente</p>
+                    <h3 class="fw-bold mb-0 text-blue">{{ stats.en_attente }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-1 small">Acceptees</p>
+                    <h3 class="fw-bold mb-0 text-yellow">{{ stats.acceptees }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0 fw-semibold">Offres recentes</h5>
+                    </div>
+                    <a href="{{ path('candidat_inventory') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for offre in offres_recentes %}
+                            <div class="list-group-item p-4">
+                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                    <div>
+                                        <h6 class="mb-1">{{ offre.titre ?: 'Offre sans titre' }}</h6>
+                                        <p class="mb-1 text-muted">{{ offre.departement ?: 'Departement non renseigne' }} · {{ offre.typeContrat ?: 'Contrat non renseigne' }}</p>
+                                        <small class="text-secondary">Publiee le {{ offre.datePublication ? offre.datePublication|date('d/m/Y') : 'date inconnue' }}</small>
+                                    </div>
+                                    <a href="{{ path('candidat_offer_show', {id: offre.id}) }}" class="btn btn-sm btn-primary">Consulter</a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="p-4 text-secondary">Aucune offre n'est disponible pour le moment.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h5 class="mb-0 fw-semibold">Mes dernieres candidatures</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for candidature in candidatures_recentes %}
+                            <div class="list-group-item p-4">
+                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                    <div>
+                                        <h6 class="mb-1">{{ candidature.offreEmploi ? candidature.offreEmploi.titre : 'Offre non definie' }}</h6>
+                                        <p class="mb-1 text-muted">{{ candidature.dateCandidature ? candidature.dateCandidature|date('d/m/Y') : '-' }}</p>
+                                    </div>
+                                    <span class="badge text-bg-{{ candidature.statut == 'Acceptee' ? 'success' : (candidature.statut == 'Refusee' ? 'danger' : (candidature.statut == 'En cours' ? 'primary' : 'warning')) }}">
+                                        {{ candidature.statut ?: 'En attente' }}
+                                    </span>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="p-4 text-secondary">Vous n'avez encore postule a aucune offre.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
