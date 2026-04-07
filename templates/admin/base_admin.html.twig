@@ -423,6 +423,21 @@
                 </a>
             </li>
             
+            <li>
+                <a href="#congeSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'admin_conge' or app.request.attributes.get('_route') starts with 'admin_absence' %}active{% else %}collapsed{% endif %}">
+                    <i class="ti ti-calendar-time"></i>
+                    <span>Congés</span>
+                </a>
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'admin_conge' or app.request.attributes.get('_route') starts with 'admin_absence' %}show{% endif %}" id="congeSubmenu">
+                    <li>
+                        <a href="{{ path('admin_conge') }}" class="{% if app.request.attributes.get('_route') == 'admin_conge' %}active{% endif %}">Gestion des congés</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_absence') }}" class="{% if app.request.attributes.get('_route') == 'admin_absence' %}active{% endif %}">Gestion des absences</a>
+                    </li>
+                </ul>
+            </li>
+            
             <li class="menu-label">Account</li>
             <li>
                 <a href="{{ path('app_login') }}">

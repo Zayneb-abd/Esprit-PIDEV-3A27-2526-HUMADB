@@ -46,6 +46,23 @@ class Participation
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $resultat = null;
 
+<<<<<<< Updated upstream
+=======
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
+    private ?string $statut = 'en attente';
+
+    public function getStatut(): ?string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(string $statut): self
+    {
+        $this->statut = $statut;
+        return $this;
+    }
+
+>>>>>>> Stashed changes
     public function getResultat(): ?string
     {
         return $this->resultat;

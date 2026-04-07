@@ -1,0 +1,62 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Gestion des Absences{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="fs-3 mb-1">Gestion des Absences</h1>
+                    <p class="mb-0">Gérez les absences des employés</p>
+                </div>
+                <div>
+                    <a href="#" class="btn btn-primary">Nouvelle absence</a>
+                </div>
+            </div>
+
+            <div class="card p-3 mb-4">
+                <form action="{{ path('admin_absence') }}" method="GET" class="row g-3">
+                    <div class="col-md-10">
+                        <input type="text" name="q" class="form-control" placeholder="Rechercher par employé, type ou statut...">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-secondary w-100">
+                            <i class="ti ti-search"></i> Rechercher
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card table-responsive">
+                <table class="table mb-0 text-nowrap table-hover">
+                    <thead class="table-light border-light">
+                        <tr>
+                            <th>Employé</th>
+                            <th>Type</th>
+                            <th>Date</th>
+                            <th>Motif</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="align-middle">
+                            <td>Jane Smith</td>
+                            <td>Maladie</td>
+                            <td>10/04/2026</td>
+                            <td>Certificat médical</td>
+                            <td><span class="badge bg-success">Justifiée</span></td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-primary"><i class="ti ti-eye"></i></a>
+                                <a href="#" class="btn btn-sm btn-danger"><i class="ti ti-trash"></i></a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
