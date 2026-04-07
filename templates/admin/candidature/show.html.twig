@@ -1,0 +1,44 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Detail candidature{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h1 class="fs-3 mb-1">Candidature #{{ candidature.id }}</h1>
+            <p class="mb-0 text-secondary">Detail complet de la candidature.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('admin_candidature_edit', {id: candidature.id}) }}" class="btn btn-primary">Modifier</a>
+            {% if candidature.offreEmploi %}
+                <a href="{{ path('admin_offre_show', {id: candidature.offreEmploi.id}) }}" class="btn btn-outline-primary">Voir l'offre</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <h2 class="fs-5 mb-3">Candidat</h2>
+                    <p class="mb-2"><strong>Nom:</strong> {{ candidature.user ? candidature.user.prenom ~ ' ' ~ candidature.user.nom : '-' }}</p>
+                    <p class="mb-2"><strong>Email:</strong> {{ candidature.user ? candidature.user.email : '-' }}</p>
+                    <p class="mb-0"><strong>CV:</strong> {{ candidature.cv ?: '-' }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <h2 class="fs-5 mb-3">Traitement</h2>
+                    <p class="mb-2"><strong>Offre:</strong> {{ candidature.offreEmploi ? candidature.offreEmploi.titre : '-' }}</p>
+                    <p class="mb-2"><strong>Statut:</strong> {{ candidature.statut ?: '-' }}</p>
+                    <p class="mb-2"><strong>Date de candidature:</strong> {{ candidature.dateCandidature ? candidature.dateCandidature|date('d/m/Y') : '-' }}</p>
+                    <p class="mb-0"><strong>Date du statut:</strong> {{ candidature.dateStatut ? candidature.dateStatut|date('d/m/Y') : '-' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

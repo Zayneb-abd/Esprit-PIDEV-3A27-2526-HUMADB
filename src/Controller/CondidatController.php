@@ -5,38 +5,37 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/condidat')]
+#[Route('/candidat')]
 class CondidatController extends AbstractController
 {
-    #[Route('/', name: 'condidat_dashboard')]
+    #[Route('', name: 'candidat_dashboard')]
     public function dashboard(): Response
     {
-        return $this->render('condidat/dashboard/index.html.twig');
+        return $this->render('candidat/dashboard/index.html.twig');
     }
 
-    #[Route('/inventory', name: 'condidat_inventory')]
+    #[Route('/inventory', name: 'candidat_inventory')]
     public function inventory(): Response
     {
-        return $this->render('condidat/inventory/index.html.twig');
+        return $this->render('candidat/inventory/index.html.twig');
     }
 
-    #[Route('/product/create', name: 'condidat_product_create')]
+    #[Route('/product/create', name: 'candidat_product_create')]
     public function createProduct(): Response
     {
-        return $this->render('condidat/product/create.html.twig');
+        return $this->render('candidat/product/create.html.twig');
     }
 
-    #[Route('/reports', name: 'condidat_reports')]
+    #[Route('/reports', name: 'candidat_reports')]
     public function reports(): Response
     {
-        return $this->render('condidat/reports/index.html.twig');
+        return $this->render('candidat/reports/index.html.twig');
     }
 
-    #[Route('/docs', name: 'condidat_docs')]
+    #[Route('/docs', name: 'candidat_docs')]
     public function docs(): Response
     {
-        return $this->render('condidat/docs/index.html.twig');
+        return $this->render('candidat/docs/index.html.twig');
     }
 }
