@@ -44,11 +44,6 @@
                     <thead class="table-light border-light">
                         <tr>
                             <th>
-                                <a href="{{ path('employ_formation_index', {q: query, sort: 'id', order: sort == 'id' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
-                                    ID {% if sort == 'id' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
-                                </a>
-                            </th>
-                            <th>
                                 <a href="{{ path('employ_formation_index', {q: query, sort: 'sujet', order: sort == 'sujet' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
                                     Sujet {% if sort == 'sujet' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
                                 </a>
@@ -79,7 +74,6 @@
                     <tbody>
                     {% for formation in formations %}
                         <tr class="align-middle">
-                            <td>{{ formation.id }}</td>
                             <td>{{ formation.sujet }}</td>
                             <td>{{ formation.formateur }}</td>
                             <td>{{ formation.type }}</td>
