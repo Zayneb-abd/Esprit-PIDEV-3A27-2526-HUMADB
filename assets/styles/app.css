@@ -1,0 +1,7 @@
+/* Styles principaux de l'application */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+}

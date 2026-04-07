@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="text-center">Inscription</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            <div class="mb-3">
+                                <label for="inputNom" class="form-label">Nom</label>
+                                <input type="text" name="nom" id="inputNom" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="inputPrenom" class="form-label">Prénom</label>
+                                <input type="text" name="prenom" id="inputPrenom" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="inputEmail" class="form-label">Email</label>
+                                <input type="email" name="email" id="inputEmail" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="inputPassword" class="form-label">Mot de passe</label>
+                                <input type="password" name="password" id="inputPassword" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="inputDateNaissance" class="form-label">Date de naissance</label>
+                                <input type="date" name="date_naissance" id="inputDateNaissance" class="form-control">
+                            </div>
+
+                            <div class="d-grid">
+                                <button class="btn btn-success" type="submit">
+                                    S'inscrire
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-footer text-center">
+                        <small>Déjà un compte ? <a href="{{ path('app_login') }}">Se connecter</a></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
