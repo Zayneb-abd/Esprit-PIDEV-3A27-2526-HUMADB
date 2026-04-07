@@ -1,299 +1,104 @@
-{% extends 'admin/base_admin.html.twig' %}
+{% extends 'candidat/base_admin.html.twig' %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard candidat{% endblock %}
 
 {% block body %}
-
-    {# Titre et sous-titre #}
+<div class="container-fluid">
     <div class="mb-4">
-        <h1 class="fs-4 fw-bold mb-1">Dashboard</h1>
-        <p class="text-muted mb-0">Your main content goes here...</p>
+        <h1 class="fs-4 fw-bold mb-1">Espace candidat</h1>
+        <p class="text-muted mb-0">Consultez les opportunites et suivez vos candidatures.</p>
     </div>
 
-    {# ── 4 cartes stats avec icônes colorées ── #}
     <div class="row g-3 mb-4">
-        
-        {# Total Sales - Orange #}
         <div class="col-lg-3 col-md-6">
             <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #fff5f0 0%, #ffeee8 100%);">
                 <div class="card-body p-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="flex-shrink-0">
-                            <div class="bg-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
-                                <i class="ti ti-chart-bar fs-4" style="color: #ff6b4a;"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <p class="text-muted mb-1 small">Total Sales</p>
-                            <h3 class="fw-bold mb-0" style="color: #ff6b4a;">$25,000</h3>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <span class="small" style="color: #ff6b4a;">+5% since last month</span>
-                    </div>
+                    <p class="text-muted mb-1 small">Offres disponibles</p>
+                    <h3 class="fw-bold mb-0 text-orange">{{ stats.offres }}</h3>
                 </div>
             </div>
         </div>
-
-        {# Total Purchase - Vert #}
         <div class="col-lg-3 col-md-6">
             <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f0fff4 0%, #e8fff0 100%);">
                 <div class="card-body p-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="flex-shrink-0">
-                            <div class="bg-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
-                                <i class="ti ti-refresh fs-4" style="color: #22c55e;"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <p class="text-muted mb-1 small">Total Purchase</p>
-                            <h3 class="fw-bold mb-0" style="color: #22c55e;">$18,000</h3>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <span class="small" style="color: #22c55e;">+22% since last month</span>
-                    </div>
+                    <p class="text-muted mb-1 small">Mes candidatures</p>
+                    <h3 class="fw-bold mb-0 text-green">{{ stats.postulations }}</h3>
                 </div>
             </div>
         </div>
-
-        {# Total Expenses - Bleu #}
         <div class="col-lg-3 col-md-6">
             <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
                 <div class="card-body p-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="flex-shrink-0">
-                            <div class="bg-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
-                                <i class="ti ti-currency-dollar fs-4" style="color: #0ea5e9;"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <p class="text-muted mb-1 small">Total Expenses</p>
-                            <h3 class="fw-bold mb-0" style="color: #0ea5e9;">$9,000</h3>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <span class="small" style="color: #0ea5e9;">+10% since last month</span>
-                    </div>
+                    <p class="text-muted mb-1 small">En attente</p>
+                    <h3 class="fw-bold mb-0 text-blue">{{ stats.en_attente }}</h3>
                 </div>
             </div>
         </div>
-
-        {# Invoice Due - Jaune #}
         <div class="col-lg-3 col-md-6">
             <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);">
                 <div class="card-body p-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="flex-shrink-0">
-                            <div class="bg-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
-                                <i class="ti ti-file-invoice fs-4" style="color: #f59e0b;"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <p class="text-muted mb-1 small">Invoice Due</p>
-                            <h3 class="fw-bold mb-0" style="color: #f59e0b;">$25,000</h3>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <span class="small" style="color: #f59e0b;">+35% since last month</span>
-                    </div>
+                    <p class="text-muted mb-1 small">Acceptees</p>
+                    <h3 class="fw-bold mb-0 text-yellow">{{ stats.acceptees }}</h3>
                 </div>
             </div>
         </div>
-
     </div>
 
-    {# ── 3 cartes résumé avec icônes ── #}
-    <div class="row g-3 mb-4">
-        
-        {# Total Profit #}
-        <div class="col-lg-4 col-md-4">
+    <div class="row g-4">
+        <div class="col-lg-7">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h3 class="fw-bold mb-1">$25,458</h3>
-                            <p class="text-muted mb-0 small">Total Profit</p>
-                        </div>
-                        <div class="bg-primary bg-opacity-10 rounded-3 p-2">
-                            <i class="ti ti-wallet fs-4 text-primary"></i>
-                        </div>
+                <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0 fw-semibold">Offres recentes</h5>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                        <span class="text-success small">+35% vs Last Month</span>
-                        <a href="#" class="text-decoration-none small" style="color: #ff6b4a;">View</a>
-                    </div>
+                    <a href="{{ path('candidat_inventory') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
                 </div>
-            </div>
-        </div>
-
-        {# Total Payment Returns #}
-        <div class="col-lg-4 col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h3 class="fw-bold mb-1">$45,458</h3>
-                            <p class="text-muted mb-0 small">Total Payment Returns</p>
-                        </div>
-                        <div class="bg-danger bg-opacity-10 rounded-3 p-2">
-                            <i class="ti ti-credit-card fs-4 text-danger"></i>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                        <span class="text-danger small">-20% vs Last Month</span>
-                        <a href="#" class="text-decoration-none small" style="color: #ff6b4a;">View</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {# Total Expenses #}
-        <div class="col-lg-4 col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h3 class="fw-bold mb-1">$34,458</h3>
-                            <p class="text-muted mb-0 small">Total Expenses</p>
-                        </div>
-                        <div class="bg-warning bg-opacity-10 rounded-3 p-2">
-                            <i class="ti ti-cash-banknote fs-4" style="color: #f59e0b;"></i>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                        <span class="text-warning small">-20% vs Last Month</span>
-                        <a href="#" class="text-decoration-none small" style="color: #ff6b4a;">View</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    {# ── Graphiques ── #}
-    <div class="row g-3 mb-4">
-        
-        {# Sales vs Purchase #}
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3 px-4">
-                    <h5 class="mb-0 fw-semibold">Sales vs Purchase</h5>
-                    <select class="form-select form-select-sm" style="width: auto;">
-                        <option selected>This Year</option>
-                        <option>This Month</option>
-                        <option>This Week</option>
-                    </select>
-                </div>
-                <div class="card-body p-4">
-                    {# Graphique en barres stylisé #}
-                    <div class="d-flex align-items-end justify-content-between" style="height: 200px;">
-                        <div class="text-center" style="width: 10%;">
-                            <div style="height: 60px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
-                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Jan</small>
-                        </div>
-                        <div class="text-center" style="width: 10%;">
-                            <div style="height: 90px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
-                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Feb</small>
-                        </div>
-                        <div class="text-center" style="width: 10%;">
-                            <div style="height: 120px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
-                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Mar</small>
-                        </div>
-                        <div class="text-center" style="width: 10%;">
-                            <div style="height: 80px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
-                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Apr</small>
-                        </div>
-                        <div class="text-center" style="width: 10%;">
-                            <div style="height: 140px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
-                            <small class="text-muted d-block mt-2" style="font-size: 10px;">May</small>
-                        </div>
-                        <div class="text-center" style="width: 10%;">
-                            <div style="height: 100px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
-                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Jun</small>
-                        </div>
-                        <div class="text-center" style="width: 10%;">
-                            <div style="height: 160px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
-                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Jul</small>
-                        </div>
-                        <div class="text-center" style="width: 10%;">
-                            <div style="height: 110px; background: linear-gradient(to top, #ff6b4a, #ff8a6c); border-radius: 4px 4px 0 0;"></div>
-                            <small class="text-muted d-block mt-2" style="font-size: 10px;">Aug</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {# Overall Information - Customers Overview #}
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3 px-4">
-                    <h5 class="mb-0 fw-semibold">Overall Information</h5>
-                    <select class="form-select form-select-sm" style="width: auto;">
-                        <option selected>Last 6 Months</option>
-                        <option>This Month</option>
-                        <option>This Week</option>
-                    </select>
-                </div>
-                <div class="card-body p-4">
-                    <p class="text-muted mb-3 small">Customers Overview</p>
-                    <div class="row align-items-center">
-                        {# Donut chart stylisé #}
-                        <div class="col-5">
-                            <div class="position-relative d-flex align-items-center justify-content-center" style="width: 140px; height: 140px; margin: 0 auto;">
-                                <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; transform: rotate(-90deg);">
-                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="12"/>
-                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#22c55e" stroke-width="12" stroke-dasharray="175.9 251.3" stroke-linecap="round"/>
-                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="12" stroke-dasharray="75.4 251.3" stroke-dashoffset="-175.9" stroke-linecap="round"/>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="col-7">
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <div class="text-center p-2">
-                                        <h2 class="fw-bold mb-1" style="color: #22c55e;">5.5K</h2>
-                                        <p class="text-muted mb-1 small">First Time</p>
-                                        <span class="badge bg-success bg-opacity-10 text-success">
-                                            <i class="ti ti-arrow-up-left me-1"></i>25%
-                                        </span>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for offre in offres_recentes %}
+                            <div class="list-group-item p-4">
+                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                    <div>
+                                        <h6 class="mb-1">{{ offre.titre ?: 'Offre sans titre' }}</h6>
+                                        <p class="mb-1 text-muted">{{ offre.departement ?: 'Departement non renseigne' }} · {{ offre.typeContrat ?: 'Contrat non renseigne' }}</p>
+                                        <small class="text-secondary">Publiee le {{ offre.datePublication ? offre.datePublication|date('d/m/Y') : 'date inconnue' }}</small>
                                     </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="text-center p-2">
-                                        <h2 class="fw-bold mb-1" style="color: #f59e0b;">3.5K</h2>
-                                        <p class="text-muted mb-1 small">Return</p>
-                                        <span class="badge bg-warning bg-opacity-10" style="color: #f59e0b;">
-                                            <i class="ti ti-arrow-up-left me-1"></i>21%
-                                        </span>
-                                    </div>
+                                    <a href="{{ path('candidat_offer_show', {id: offre.id}) }}" class="btn btn-sm btn-primary">Consulter</a>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="row text-center mt-4 pt-3 border-top">
-                        <div class="col-4">
-                            <h4 class="fw-bold mb-1">6987</h4>
-                            <small class="text-muted">Suppliers</small>
-                        </div>
-                        <div class="col-4">
-                            <h4 class="fw-bold mb-1">4896</h4>
-                            <small class="text-muted">Customers</small>
-                        </div>
-                        <div class="col-4">
-                            <h4 class="fw-bold mb-1">487</h4>
-                            <small class="text-muted">Orders</small>
-                        </div>
+                        {% else %}
+                            <div class="p-4 text-secondary">Aucune offre n'est disponible pour le moment.</div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
-
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h5 class="mb-0 fw-semibold">Mes dernieres candidatures</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for candidature in candidatures_recentes %}
+                            <div class="list-group-item p-4">
+                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                    <div>
+                                        <h6 class="mb-1">{{ candidature.offreEmploi ? candidature.offreEmploi.titre : 'Offre non definie' }}</h6>
+                                        <p class="mb-1 text-muted">{{ candidature.dateCandidature ? candidature.dateCandidature|date('d/m/Y') : '-' }}</p>
+                                    </div>
+                                    <span class="badge text-bg-{{ candidature.statut == 'Acceptee' ? 'success' : (candidature.statut == 'Refusee' ? 'danger' : (candidature.statut == 'En cours' ? 'primary' : 'warning')) }}">
+                                        {{ candidature.statut ?: 'En attente' }}
+                                    </span>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="p-4 text-secondary">Vous n'avez encore postule a aucune offre.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-{% endblock %}
-
-{% block js %}
-  <script src="{{ asset('admin/js/main.js') }}" type="module"></script>
+</div>
 {% endblock %}

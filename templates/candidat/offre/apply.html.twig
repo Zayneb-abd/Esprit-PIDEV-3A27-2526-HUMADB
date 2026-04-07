@@ -1,25 +1,22 @@
 {% extends 'candidat/base_admin.html.twig' %}
 
-{% block title %}Nouvelle candidature{% endblock %}
+{% block title %}Postuler{% endblock %}
 
 {% block body %}
 <div class="container-fluid">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
-            <h1 class="fs-3 mb-1">Postuler a une offre</h1>
-            <p class="mb-0 text-secondary">Selectionnez une offre et joignez votre CV pour envoyer votre candidature.</p>
+            <h1 class="fs-3 mb-1">Postuler a {{ offre.titre ?: 'cette offre' }}</h1>
+            <p class="mb-0 text-secondary">{{ offre.departement ?: 'Departement non renseigne' }} · {{ offre.typeContrat ?: 'Contrat non renseigne' }}</p>
         </div>
-        <a href="{{ path('candidat_inventory') }}" class="btn btn-outline-primary">Retour aux offres</a>
+        <a href="{{ path('candidat_offer_show', {id: offre.id}) }}" class="btn btn-outline-primary">Retour au detail</a>
     </div>
 
     <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
             {{ form_start(form) }}
-                <div class="row g-3">
-                    <div class="col-md-8">{{ form_row(form.offreEmploi) }}</div>
-                    <div class="col-md-12">{{ form_row(form.cv) }}</div>
-                </div>
-                <div class="d-flex gap-2 mt-4">
+                <div class="mb-3">{{ form_row(form.cv) }}</div>
+                <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">Envoyer ma candidature</button>
                     <a href="{{ path('candidat_reports') }}" class="btn btn-outline-secondary">Mes candidatures</a>
                 </div>

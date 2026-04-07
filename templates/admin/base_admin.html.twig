@@ -78,17 +78,20 @@
         }
         
         .sidebar-header .logo-icon {
-            width: 35px;
-            height: 35px;
-            background: var(--primary-gradient);
-            border-radius: 8px;
+            width: 58px;
+            height: 58px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 18px;
             margin-right: 10px;
             flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-header .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         
         .sidebar-header .logo-text {
@@ -375,11 +378,11 @@
         <div class="sidebar-header">
             <a href="{{ path('admin_dashboard') }}">
                 <div class="logo-icon">
-                    <i class="ti ti-box"></i>
+                    <img src="{{ asset('logo/huma.png') }}" alt="HumaDB">
                 </div>
                 <div class="logo-text">
-                    InApp
-                    <small>Inventory App</small>
+                    HumaDB
+                    <small>Gestion de recrutement</small>
                 </div>
             </a>
         </div>
@@ -425,15 +428,9 @@
             
             <li class="menu-label">Account</li>
             <li>
-                <a href="{{ path('app_login') }}">
-                    <i class="ti ti-login"></i>
-                    <span>Log in</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('app_register') }}">
-                    <i class="ti ti-user-plus"></i>
-                    <span>Sign up</span>
+                <a href="{{ path('app_logout') }}">
+                    <i class="ti ti-logout"></i>
+                    <span>Logout</span>
                 </a>
             </li>
         </ul>

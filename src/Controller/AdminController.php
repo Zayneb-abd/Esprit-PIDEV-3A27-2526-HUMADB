@@ -25,10 +25,59 @@ class AdminController extends AbstractController
     }
 
     #[Route('/inventory', name: 'admin_inventory')]
-    public function inventory(OffreEmploiRepository $offreEmploiRepository, CandidatureRepository $candidatureRepository): Response
+    public function inventory(Request $request, OffreEmploiRepository $offreEmploiRepository, CandidatureRepository $candidatureRepository): Response
     {
         $offres = $offreEmploiRepository->findBy([], ['date_publication' => 'DESC', 'id' => 'DESC']);
         $candidatures = $candidatureRepository->findBy([], ['date_candidature' => 'DESC', 'id' => 'DESC']);
+        $search = trim((string) $request->query->get('q', ''));
+
+        if ($search !== '') {
+            $searchLower = mb_strtolower($search);
+
+            $offres = array_values(array_filter(
+                $offres,
+                static function (OffreEmploi $offre) use ($searchLower): bool {
+                    $haystacks = [
+                        $offre->getTitre(),
+                        $offre->getDepartement(),
+                        $offre->getTypeContrat(),
+                        $offre->getDescription(),
+                    ];
+
+                    foreach ($haystacks as $value) {
+                        if ($value !== null && str_contains(mb_strtolower($value), $searchLower)) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+            ));
+
+            $candidatures = array_values(array_filter(
+                $candidatures,
+                static function (Candidature $candidature) use ($searchLower): bool {
+                    $user = $candidature->getUser();
+                    $offre = $candidature->getOffreEmploi();
+                    $haystacks = [
+                        $candidature->getStatut(),
+                        $candidature->getCv(),
+                        $user?->getNom(),
+                        $user?->getPrenom(),
+                        $user?->getEmail(),
+                        $offre?->getTitre(),
+                    ];
+
+                    foreach ($haystacks as $value) {
+                        if ($value !== null && str_contains(mb_strtolower($value), $searchLower)) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+            ));
+        }
 
         $totalPostes = array_reduce(
             $offres,
@@ -44,6 +93,7 @@ class AdminController extends AbstractController
         return $this->render('admin/inventory/index.html.twig', [
             'offres' => $offres,
             'candidatures' => $candidatures,
+            'search' => $search,
             'stats' => [
                 'offres' => count($offres),
                 'candidatures' => count($candidatures),
@@ -57,7 +107,7 @@ class AdminController extends AbstractController
     public function newOffre(Request $request, EntityManagerInterface $entityManager): Response
     {
         $offre = new OffreEmploi();
-        $offre->setDatePublication(new \DateTimeImmutable());
+        $offre->setDatePublication(new \DateTime());
 
         $user = $this->getUser();
         if ($user instanceof User) {
@@ -137,8 +187,8 @@ class AdminController extends AbstractController
     public function newCandidature(Request $request, EntityManagerInterface $entityManager): Response
     {
         $candidature = new Candidature();
-        $candidature->setDateCandidature(new \DateTimeImmutable());
-        $candidature->setDateStatut(new \DateTimeImmutable());
+        $candidature->setDateCandidature(new \DateTime());
+        $candidature->setDateStatut(new \DateTime());
         $candidature->setStatut('En attente');
 
         $form = $this->createForm(CandidatureType::class, $candidature);

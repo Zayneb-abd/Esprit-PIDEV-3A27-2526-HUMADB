@@ -78,17 +78,20 @@
         }
         
         .sidebar-header .logo-icon {
-            width: 35px;
-            height: 35px;
-            background: var(--primary-gradient);
-            border-radius: 8px;
+            width: 58px;
+            height: 58px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 18px;
             margin-right: 10px;
             flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-header .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         
         .sidebar-header .logo-text {
@@ -375,11 +378,11 @@
         <div class="sidebar-header">
             <a href="{{ path('admin_dashboard') }}">
                 <div class="logo-icon">
-                    <i class="ti ti-box"></i>
+                    <img src="{{ asset('logo/huma.png') }}" alt="HumaDB">
                 </div>
                 <div class="logo-text">
-                    InApp
-                    <small>Inventory App</small>
+                    HumaDB
+                    <small>Gestion de recrutement</small>
                 </div>
             </a>
         </div>
@@ -395,7 +398,7 @@
             <li>
                 <a href="{{ path('admin_inventory') }}" class="{% if app.request.attributes.get('_route') == 'admin_inventory' %}active{% endif %}">
                     <i class="ti ti-box-seam"></i>
-                    <span>Inventory</span>
+                    <span>Gestion de recrutement</span>
                 </a>
             </li>
             <li>

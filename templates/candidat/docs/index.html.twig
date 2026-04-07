@@ -1,102 +1,38 @@
-{% extends 'admin/base_admin.html.twig' %}
+{% extends 'candidat/base_admin.html.twig' %}
 
-{% block title %}Documentation{% endblock %}
+{% block title %}Guide candidat{% endblock %}
 
 {% block body %}
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
-                <div>
-                    <h1 class="fs-3 mb-1">Documentation</h1>
-                    <p>This documentation will guide you through the setup and usage of the InApp Inventory Dashboard template.</p>
+    <div class="mb-4">
+        <h1 class="fs-3 mb-1">Guide candidat</h1>
+        <p class="mb-0 text-secondary">Utilisez cet espace pour comprendre rapidement comment consulter les offres et postuler.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">1. Explorer les offres</h5>
+                    <p class="mb-0 text-muted">Ouvrez l'onglet Offres disponibles pour voir tous les postes publies, le type de contrat et le departement.</p>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="row">
-        <div class="col-12">
-            <!-- Prerequisites -->
-            <div class="mb-4">
-                <div class="mb-2">
-                    <h2 class="h5 mb-1">Prerequisites</h2>
-                    <p>Before you begin, ensure you have the following installed:</p>
+        <div class="col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">2. Postuler</h5>
+                    <p class="mb-0 text-muted">Depuis le detail d'une offre ou via le formulaire de candidature, ajoutez votre CV et envoyez votre dossier.</p>
                 </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item ps-0">Node.js (v14 or higher)</li>
-                    <li class="list-group-item ps-0">npm or yarn package manager</li>
-                    <li class="list-group-item ps-0">[Any other specific tools/dependencies]</li>
-                </ul>
-            </div>
-
-            <!-- Installation -->
-            <div class="mb-4">
-                <h2 class="h5 mb-2">Installation</h2>
-                <ol class="list-group list-group-numbered list-group-flush">
-                    <li class="list-group-item ps-0">Clone the repository or download the template</li>
-                    <li class="list-group-item ps-0">Navigate to the project directory</li>
-                    <li class="list-group-item ps-0">
-                        Install dependencies:
-                        <pre class="bg-light border rounded p-3 mt-2"><code>npm install</code></pre>
-                    </li>
-                </ol>
-            </div>
-
-            <!-- Usage -->
-            <div class="mb-6">
-                <h2 class="h5 mb-2">Run the app</h2>
-                <p>To start the development server:</p>
-                <pre class="bg-light border rounded p-3"><code>npm run dev</code></pre>
-            </div>
-
-            <!-- Next Steps -->
-            <div class="mb-4">
-                <h2 class="h5 mb-2">Next Steps</h2>
-                <ol class="list-group list-group-numbered list-group-flush">
-                    <li class="list-group-item ps-0">Review the main entry point in <code>src/js/main.js</code></li>
-                    <li class="list-group-item ps-0">Customize components according to your needs</li>
-                    <li class="list-group-item ps-0">
-                        Build for production:
-                        <pre class="bg-light border rounded p-3 mt-4"><code>npm run build</code></pre>
-                    </li>
-                </ol>
-            </div>
-
-            <!-- Project Structure -->
-            <div class="mb-4">
-                <h2 class="h5 mb-0">Project Structure</h2>
-                <pre><code>
-inapp/
-├── src/
-│   ├── assest/         # Static assets
-│   │   ├── images/     # Images
-│   │   ├── js/         # JS
-│   │   ├── scss/       # CSS and styling
-│   └── Pages           # All Pages
-├── vite.config.js/     # Config Files
-├── package.json        # Project dependencies
-├── README.md           # Documentation
-└── .gitignore          # Git ignore file
-                </code></pre>
-            </div>
-
-            <!-- Support -->
-            <div class="mb-2">
-                <h2 class="h5">Support</h2>
-                <p>
-                    For issues or questions, please refer to the documentation or create an issue in the repository. Also you can contact
-                    us at <a href="#!" class="text-primary">CodesCandy</a>.
-                </p>
             </div>
         </div>
-    </div>
-
-    <div class="row">
-        <div class="col-12">
-            <footer class="text-center py-2 mt-6 text-secondary">
-                <p class="mb-0">Copyright &copy; 2026 InApp Inventory Dashboard. Developed by <a href="https://codescandy.com/" target="_blank" class="text-primary">CodesCandy</a> &bull; Distributed by <a href="https://themewagon.com/" target="_blank" class="text-primary">ThemeWagon</a></p>
-            </footer>
+        <div class="col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">3. Suivre vos candidatures</h5>
+                    <p class="mb-0 text-muted">Consultez Mes candidatures pour verifier le statut de chaque demande et savoir si elle est en attente, en cours ou acceptee.</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>

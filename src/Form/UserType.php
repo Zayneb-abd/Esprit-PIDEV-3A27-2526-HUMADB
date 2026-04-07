@@ -32,7 +32,9 @@ class UserType extends AbstractType
             ->add('mdp', PasswordType::class, [
                 'label' => 'Mot de passe',
                 'attr' => ['class' => 'form-control'],
-                'required' => $options['password_required']
+                'required' => $options['password_required'],
+                'mapped' => false,
+                'empty_data' => '',
             ])
             ->add('date_naissance', DateType::class, [
                 'label' => 'Date de naissance',
@@ -43,14 +45,17 @@ class UserType extends AbstractType
             ->add('roles', ChoiceType::class, [
                 'label' => 'Rôles',
                 'choices' => [
-                    'Utilisateur' => 'ROLE_USER',
-                    'Administrateur' => 'ROLE_ADMIN',
-                    'Employe' => 'ROLE_EMPLOYE',
-                    'Candidat' => 'ROLE_CANDIDAT',
+                    'Administrateur RH' => 'ADMIN_RH',
+                    'Manager' => 'MANAGER',
+                    'Employe' => 'EMPLOYE',
+                    'Candidat' => 'CANDIDAT',
                 ],
-                'multiple' => true,
-                'expanded' => true,
-                'attr' => ['class' => 'form-check']
+                'multiple' => false,
+                'expanded' => false,
+                'mapped' => false,
+                'data' => $options['data'] instanceof User ? $options['data']->getRole() : null,
+                'placeholder' => 'Choisir un role',
+                'attr' => ['class' => 'form-select']
             ])
         ;
     }

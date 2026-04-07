@@ -5,6 +5,7 @@ namespace App\Form;
 use App\Entity\Candidature;
 use App\Entity\OffreEmploi;
 use App\Entity\User;
+use App\Repository\UserRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -23,6 +24,13 @@ class CandidatureType extends AbstractType
                 'label' => 'Candidat',
                 'required' => false,
                 'placeholder' => 'Choisir un candidat',
+                'query_builder' => static function (UserRepository $userRepository) {
+                    return $userRepository->createQueryBuilder('u')
+                        ->andWhere('u.role = :role')
+                        ->setParameter('role', 'CANDIDAT')
+                        ->orderBy('u.prenom', 'ASC')
+                        ->addOrderBy('u.nom', 'ASC');
+                },
                 'choice_label' => static function (User $user): string {
                     return trim(sprintf('%s %s - %s', $user->getPrenom(), $user->getNom(), $user->getEmail()));
                 },
