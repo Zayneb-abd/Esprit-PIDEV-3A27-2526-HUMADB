@@ -19,17 +19,17 @@ class OffreEmploiType extends AbstractType
         $builder
             ->add('titre', TextType::class, [
                 'label' => 'Titre',
-                'required' => false,
-                'attr' => ['class' => 'form-control'],
+                'required' => true,
+                'attr' => ['class' => 'form-control', 'minlength' => 3, 'maxlength' => 100],
             ])
             ->add('departement', TextType::class, [
                 'label' => 'Departement',
-                'required' => false,
-                'attr' => ['class' => 'form-control'],
+                'required' => true,
+                'attr' => ['class' => 'form-control', 'minlength' => 2, 'maxlength' => 100],
             ])
             ->add('type_contrat', ChoiceType::class, [
                 'label' => 'Type de contrat',
-                'required' => false,
+                'required' => true,
                 'choices' => [
                     'CDI' => 'CDI',
                     'CDD' => 'CDD',
@@ -43,18 +43,18 @@ class OffreEmploiType extends AbstractType
             ->add('date_publication', DateType::class, [
                 'label' => 'Date de publication',
                 'widget' => 'single_text',
-                'required' => false,
+                'required' => true,
                 'attr' => ['class' => 'form-control'],
             ])
             ->add('nombre_postes', IntegerType::class, [
                 'label' => 'Nombre de postes',
-                'required' => false,
-                'attr' => ['class' => 'form-control', 'min' => 1],
+                'required' => true,
+                'attr' => ['class' => 'form-control', 'min' => 1, 'max' => 1000],
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description',
-                'required' => false,
-                'attr' => ['class' => 'form-control', 'rows' => 6],
+                'required' => true,
+                'attr' => ['class' => 'form-control', 'rows' => 6, 'minlength' => 20, 'maxlength' => 5000],
             ]);
     }
 
