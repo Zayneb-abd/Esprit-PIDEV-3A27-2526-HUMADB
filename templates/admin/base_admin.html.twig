@@ -149,6 +149,23 @@
             text-align: center;
         }
         
+        .sidebar-menu li ul li a {
+            padding: 8px 20px 8px 52px;
+            font-size: 13px;
+        }
+        
+        .sidebar-menu li a[data-bs-toggle="collapse"]::after {
+            content: "\eb2e";
+            font-family: 'tabler-icons';
+            margin-left: auto;
+            transition: transform 0.3s;
+            font-size: 14px;
+        }
+        
+        .sidebar-menu li a[data-bs-toggle="collapse"]:not(.collapsed)::after {
+            transform: rotate(90deg);
+        }
+
         /* ==========================================
            TOPBAR
            ========================================== */
@@ -411,16 +428,18 @@
                 </a>
             </li>
             <li>
-                <a href="{{ path('admin_docs') }}">
-                    <i class="ti ti-file-x"></i>
-                    <span>404 Error</span>
+                <a href="#formationSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'admin_formation' or app.request.attributes.get('_route') starts with 'admin_participation' %}active{% else %}collapsed{% endif %}">
+                    <i class="ti ti-school"></i>
+                    <span>Formations</span>
                 </a>
-            </li>
-            <li>
-                <a href="{{ path('admin_docs') }}">
-                    <i class="ti ti-file-text"></i>
-                    <span>Docs</span>
-                </a>
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'admin_formation' or app.request.attributes.get('_route') starts with 'admin_participation' %}show{% endif %}" id="formationSubmenu">
+                    <li>
+                        <a href="{{ path('admin_formation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_formation' %}active{% endif %}">Gestion des formations</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_participation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_participation' %}active{% endif %}">Gestion des participations</a>
+                    </li>
+                </ul>
             </li>
             
             <li class="menu-label">Account</li>
