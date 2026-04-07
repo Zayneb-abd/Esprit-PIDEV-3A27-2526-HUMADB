@@ -21,6 +21,12 @@ class SecurityController extends AbstractController
         ]);
     }
 
+    #[Route('/logout', name: 'app_logout')]
+    public function logout(): never
+    {
+        throw new \LogicException('This method is intercepted by the firewall logout handler.');
+    }
+
     #[Route('/register', name: 'app_register')]
     public function register(): Response
     {

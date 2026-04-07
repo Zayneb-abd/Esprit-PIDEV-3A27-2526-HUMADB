@@ -1,229 +1,194 @@
 {% extends 'admin/base_admin.html.twig' %}
 
-{% block title %}Inventory{% endblock %}
+{% block title %}Recrutement{% endblock %}
 
 {% block body %}
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="fs-3 mb-1">Inventory</h1>
-                    <p class="mb-0">Manage your product inventory</p>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h1 class="fs-3 mb-1">Recrutement</h1>
+            <p class="mb-0 text-secondary">Gestion complete des offres d'emploi et des candidatures.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ path('admin_offre_new') }}" class="btn btn-primary">
+                <i class="ti ti-briefcase me-1"></i> Nouvelle offre
+            </a>
+            <a href="{{ path('admin_candidature_new') }}" class="btn btn-outline-primary">
+                <i class="ti ti-user-plus me-1"></i> Nouvelle candidature
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-2">Offres publiees</p>
+                    <h3 class="mb-0">{{ stats.offres }}</h3>
                 </div>
-                <div>
-                    <a href="{{ path('admin_product_create') }}" class="btn btn-primary">Add Product</a>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-2">Candidatures</p>
+                    <h3 class="mb-0">{{ stats.candidatures }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-2">Postes ouverts</p>
+                    <h3 class="mb-0">{{ stats.postes }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-2">En attente</p>
+                    <h3 class="mb-0">{{ stats.candidatures_en_attente }}</h3>
                 </div>
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="col-12">
-            <div>
-                <div class="d-flex gap-2 mb-3 flex-wrap justify-content-between">
-                    <input type="text" class="form-control" placeholder="Search products..." style="max-width: 250px;">
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-outline-secondary">
-                            <i class="ti ti-filter"></i> Filter
-                        </button>
-                        <button class="btn btn-outline-secondary">
-                            <i class="ti ti-file-excel"></i> Excel
-                        </button>
-                        <button class="btn btn-outline-secondary">
-                            <i class="ti ti-file-pdf"></i> PDF
-                        </button>
-                    </div>
+
+    <div class="card mb-4">
+        <div class="card-body p-4">
+            <form method="get" action="{{ path('admin_inventory') }}" class="row g-3 align-items-end">
+                <div class="col-lg-8">
+                    <label for="recrutement-search" class="form-label">Recherche</label>
+                    <input
+                        id="recrutement-search"
+                        type="search"
+                        name="q"
+                        value="{{ search|default('') }}"
+                        class="form-control"
+                        placeholder="Rechercher par offre, departement, candidat, email, statut..."
+                    >
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <button type="submit" class="btn btn-primary w-100">Rechercher</button>
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <a href="{{ path('admin_inventory') }}" class="btn btn-outline-secondary w-100">Reinitialiser</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body p-0">
+            <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+                <div>
+                    <h2 class="fs-5 mb-1">Offres d'emploi</h2>
+                    <p class="mb-0 text-secondary">Liste complete des offres disponibles.</p>
                 </div>
             </div>
-            <div class="card table-responsive">
-                <table class="table mb-0 text-nowrap table-hover">
-                    <thead class="table-light border-light">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>Image</th>
-                            <th>Code</th>
-                            <th>Category</th>
-                            <th>Brand</th>
-                            <th>Price</th>
-                            <th>Unit</th>
-                            <th>Quantity</th>
-                            <th>Action</th>
+                            <th>Titre</th>
+                            <th>Departement</th>
+                            <th>Contrat</th>
+                            <th>Publication</th>
+                            <th>Postes</th>
+                            <th>Candidatures</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="align-middle">
-                            <td>
-                                <a href="">
-                                    <img src="{{ asset('admin/images/product-1.png') }}" alt="" class="avatar avatar-md rounded" />
-                                    <span class="ms-3">Gaming Joy Stick</span>
-                                </a>
-                            </td>
-                            <td>PRD001</td>
-                            <td>Electronics</td>
-                            <td>Brand Name</td>
-                            <td>$99.99</td>
-                            <td>pcs</td>
-                            <td>150</td>
-                            <td>
-                                <a href="#"><i class="ti ti-edit"></i></a>
-                                <a href="#" class="link-danger"><i class="ti ti-trash ms-2"></i></a>
-                            </td>
-                        </tr>
-                        <tr class="align-middle">
-                            <td>
-                                <a href="">
-                                    <img src="{{ asset('admin/images/product-2.png') }}" alt="" class="avatar avatar-md rounded" />
-                                    <span class="ms-3">Wireless Earphones</span>
-                                </a>
-                            </td>
-                            <td>PRD002</td>
-                            <td>Electronics</td>
-                            <td>Tech Pro</td>
-                            <td>$89.99</td>
-                            <td>pcs</td>
-                            <td>320</td>
-                            <td>
-                                <a href="#"><i class="ti ti-edit"></i></a>
-                                <a href="#" class="link-danger"><i class="ti ti-trash ms-2"></i></a>
-                            </td>
-                        </tr>
-                        <tr class="align-middle">
-                            <td>
-                                <a href="">
-                                    <img src="{{ asset('admin/images/product-3.png') }}" alt="" class="avatar avatar-md rounded" />
-                                    <span class="ms-3">Smart Watch Pro</span>
-                                </a>
-                            </td>
-                            <td>PRD003</td>
-                            <td>Electronics</td>
-                            <td>Tech Pro</td>
-                            <td>$98.00</td>
-                            <td>pcs</td>
-                            <td>200</td>
-                            <td>
-                                <a href="#"><i class="ti ti-edit"></i></a>
-                                <a href="#" class="link-danger"><i class="ti ti-trash ms-2"></i></a>
-                            </td>
-                        </tr>
-                        <tr class="align-middle">
-                            <td>
-                                <a href="">
-                                    <img src="{{ asset('admin/images/product-4.png') }}" alt="" class="avatar avatar-md rounded" />
-                                    <span class="ms-3">USB-C Fast Charger</span>
-                                </a>
-                            </td>
-                            <td>PRD004</td>
-                            <td>Electronics</td>
-                            <td>Tech Pro</td>
-                            <td>$86.00</td>
-                            <td>pcs</td>
-                            <td>80</td>
-                            <td>
-                                <a href="#"><i class="ti ti-edit"></i></a>
-                                <a href="#" class="link-danger"><i class="ti ti-trash ms-2"></i></a>
-                            </td>
-                        </tr>
-                        <tr class="align-middle">
-                            <td>
-                                <a href="">
-                                    <img src="{{ asset('admin/images/product-5.png') }}" alt="" class="avatar avatar-md rounded" />
-                                    <span class="ms-3">Portable Bluetooth Speaker</span>
-                                </a>
-                            </td>
-                            <td>PRD005</td>
-                            <td>Electronics</td>
-                            <td>Tech Pro</td>
-                            <td>$32.00</td>
-                            <td>pcs</td>
-                            <td>110</td>
-                            <td>
-                                <a href="#"><i class="ti ti-edit"></i></a>
-                                <a href="#" class="link-danger"><i class="ti ti-trash ms-2"></i></a>
-                            </td>
-                        </tr>
-                        <tr class="align-middle">
-                            <td>
-                                <a href="">
-                                    <img src="{{ asset('admin/images/product-6.png') }}" alt="" class="avatar avatar-md rounded" />
-                                    <span class="ms-3">Magic Keyboard</span>
-                                </a>
-                            </td>
-                            <td>PRD006</td>
-                            <td>Electronics</td>
-                            <td>Tech Pro</td>
-                            <td>$49.00</td>
-                            <td>pcs</td>
-                            <td>10</td>
-                            <td>
-                                <a href="#"><i class="ti ti-edit"></i></a>
-                                <a href="#" class="link-danger"><i class="ti ti-trash ms-2"></i></a>
-                            </td>
-                        </tr>
-                        <tr class="align-middle">
-                            <td>
-                                <a href="">
-                                    <img src="{{ asset('admin/images/product-7.png') }}" alt="" class="avatar avatar-md rounded" />
-                                    <span class="ms-3">MacBook Pro 16"</span>
-                                </a>
-                            </td>
-                            <td>PRD007</td>
-                            <td>Electronics</td>
-                            <td>Tech Pro</td>
-                            <td>$99.00</td>
-                            <td>pcs</td>
-                            <td>10</td>
-                            <td>
-                                <a href="#"><i class="ti ti-edit"></i></a>
-                                <a href="#" class="link-danger"><i class="ti ti-trash ms-2"></i></a>
-                            </td>
-                        </tr>
-                        <tr class="align-middle">
-                            <td>
-                                <a href="">
-                                    <img src="{{ asset('admin/images/product-8.png') }}" alt="" class="avatar avatar-md rounded" />
-                                    <span class="ms-3">Wireless Earphones</span>
-                                </a>
-                            </td>
-                            <td>PRD008</td>
-                            <td>Electronics</td>
-                            <td>Tech Pro</td>
-                            <td>$109.00</td>
-                            <td>pcs</td>
-                            <td>200</td>
-                            <td>
-                                <a href="#"><i class="ti ti-edit"></i></a>
-                                <a href="#" class="link-danger"><i class="ti ti-trash ms-2"></i></a>
-                            </td>
-                        </tr>
+                        {% for offre in offres %}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">{{ offre.titre ?: 'Sans titre' }}</div>
+                                    <small class="text-secondary">ID #{{ offre.id }}</small>
+                                </td>
+                                <td>{{ offre.departement ?: '-' }}</td>
+                                <td>{{ offre.typeContrat ?: '-' }}</td>
+                                <td>{{ offre.datePublication ? offre.datePublication|date('d/m/Y') : '-' }}</td>
+                                <td>{{ offre.nombrePostes ?? 0 }}</td>
+                                <td>{{ offre.candidatures|length }}</td>
+                                <td class="text-end">
+                                    <a href="{{ path('admin_offre_show', {id: offre.id}) }}" class="btn btn-sm btn-light">Voir</a>
+                                    <a href="{{ path('admin_offre_edit', {id: offre.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                                    <form method="post" action="{{ path('admin_offre_delete', {id: offre.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_offre_' ~ offre.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette offre ?');">Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-secondary">Aucune offre d'emploi disponible.</td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
-                    <tfoot>
-                        <tr>
-                            <td class="border-bottom-0">Showing product per page</td>
-                            <td colspan="9" class="border-bottom-0">
-                                <nav aria-label="Page navigation" class="d-flex justify-content-end">
-                                    <ul class="pagination mb-0">
-                                        <li class="page-item disabled">
-                                            <a class="page-link" href="#" tabindex="-1">Previous</a>
-                                        </li>
-                                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                        <li class="page-item">
-                                            <a class="page-link" href="#">Next</a>
-                                        </li>
-                                    </ul>
-                                </nav>
-                            </td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="col-12">
-            <footer class="text-center py-2 mt-6 text-secondary">
-                <p class="mb-0">Copyright &copy; 2026 InApp Inventory Dashboard. Developed by <a href="https://codescandy.com/" target="_blank" class="text-primary">CodesCandy</a> &bull; Distributed by <a href="https://themewagon.com/" target="_blank" class="text-primary">ThemeWagon</a></p>
-            </footer>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+                <div>
+                    <h2 class="fs-5 mb-1">Candidatures</h2>
+                    <p class="mb-0 text-secondary">Suivi des candidatures associees aux offres.</p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Candidat</th>
+                            <th>Offre</th>
+                            <th>Statut</th>
+                            <th>Date candidature</th>
+                            <th>Date statut</th>
+                            <th>CV</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for candidature in candidatures %}
+                            <tr>
+                                <td>
+                                    {% if candidature.user %}
+                                        <div class="fw-semibold">{{ candidature.user.prenom }} {{ candidature.user.nom }}</div>
+                                        <small class="text-secondary">{{ candidature.user.email }}</small>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ candidature.offreEmploi ? candidature.offreEmploi.titre : '-' }}</td>
+                                <td>
+                                    <span class="badge text-bg-{{ candidature.statut == 'Acceptee' ? 'success' : (candidature.statut == 'Refusee' ? 'danger' : (candidature.statut == 'En cours' ? 'primary' : 'warning')) }}">
+                                        {{ candidature.statut ?: 'Non defini' }}
+                                    </span>
+                                </td>
+                                <td>{{ candidature.dateCandidature ? candidature.dateCandidature|date('d/m/Y') : '-' }}</td>
+                                <td>{{ candidature.dateStatut ? candidature.dateStatut|date('d/m/Y') : '-' }}</td>
+                                <td>{{ candidature.cv ?: '-' }}</td>
+                                <td class="text-end">
+                                    <a href="{{ path('admin_candidature_show', {id: candidature.id}) }}" class="btn btn-sm btn-light">Voir</a>
+                                    <a href="{{ path('admin_candidature_edit', {id: candidature.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                                    <form method="post" action="{{ path('admin_candidature_delete', {id: candidature.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_candidature_' ~ candidature.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette candidature ?');">Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-secondary">Aucune candidature enregistree.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

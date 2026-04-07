@@ -1,0 +1,85 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Detail offre{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h1 class="fs-3 mb-1">{{ offre.titre ?: 'Offre sans titre' }}</h1>
+            <p class="mb-0 text-secondary">Consultation detaillee de l'offre #{{ offre.id }}.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('admin_offre_edit', {id: offre.id}) }}" class="btn btn-primary">Modifier</a>
+            <a href="{{ path('admin_candidature_new') }}" class="btn btn-outline-primary">Ajouter une candidature</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <h2 class="fs-5 mb-3">Informations generales</h2>
+                    <div class="row g-3">
+                        <div class="col-md-6"><strong>Departement:</strong> {{ offre.departement ?: '-' }}</div>
+                        <div class="col-md-6"><strong>Contrat:</strong> {{ offre.typeContrat ?: '-' }}</div>
+                        <div class="col-md-6"><strong>Date de publication:</strong> {{ offre.datePublication ? offre.datePublication|date('d/m/Y') : '-' }}</div>
+                        <div class="col-md-6"><strong>Nombre de postes:</strong> {{ offre.nombrePostes ?? 0 }}</div>
+                        <div class="col-12">
+                            <strong>Description:</strong>
+                            <div class="mt-2 text-secondary">{{ offre.description ?: 'Aucune description.' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <h2 class="fs-5 mb-3">Suivi</h2>
+                    <p class="mb-2"><strong>Responsable:</strong> {{ offre.user ? offre.user.prenom ~ ' ' ~ offre.user.nom : 'Non assigne' }}</p>
+                    <p class="mb-2"><strong>Email:</strong> {{ offre.user ? offre.user.email : '-' }}</p>
+                    <p class="mb-0"><strong>Candidatures associees:</strong> {{ offre.candidatures|length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body p-0">
+            <div class="p-4 border-bottom">
+                <h2 class="fs-5 mb-1">Candidatures liees</h2>
+                <p class="mb-0 text-secondary">Toutes les candidatures rattachees a cette offre.</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Candidat</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for candidature in offre.candidatures %}
+                            <tr>
+                                <td>{{ candidature.user ? candidature.user.prenom ~ ' ' ~ candidature.user.nom : '-' }}</td>
+                                <td>{{ candidature.statut ?: '-' }}</td>
+                                <td>{{ candidature.dateCandidature ? candidature.dateCandidature|date('d/m/Y') : '-' }}</td>
+                                <td class="text-end">
+                                    <a href="{{ path('admin_candidature_show', {id: candidature.id}) }}" class="btn btn-sm btn-outline-primary">Voir</a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-secondary">Aucune candidature liee.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -78,17 +78,20 @@
         }
         
         .sidebar-header .logo-icon {
-            width: 35px;
-            height: 35px;
-            background: var(--primary-gradient);
-            border-radius: 8px;
+            width: 58px;
+            height: 58px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 18px;
             margin-right: 10px;
             flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-header .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         
         .sidebar-header .logo-text {
@@ -149,6 +152,23 @@
             text-align: center;
         }
         
+        .sidebar-menu li ul li a {
+            padding: 8px 20px 8px 52px;
+            font-size: 13px;
+        }
+        
+        .sidebar-menu li a[data-bs-toggle="collapse"]::after {
+            content: "\eb2e";
+            font-family: 'tabler-icons';
+            margin-left: auto;
+            transition: transform 0.3s;
+            font-size: 14px;
+        }
+        
+        .sidebar-menu li a[data-bs-toggle="collapse"]:not(.collapsed)::after {
+            transform: rotate(90deg);
+        }
+
         /* ==========================================
            TOPBAR
            ========================================== */
@@ -375,11 +395,11 @@
         <div class="sidebar-header">
             <a href="{{ path('admin_dashboard') }}">
                 <div class="logo-icon">
-                    <i class="ti ti-box"></i>
+                    <img src="{{ asset('logo/huma.png') }}" alt="HumaDB">
                 </div>
                 <div class="logo-text">
-                    InApp
-                    <small>Inventory App</small>
+                    HumaDB
+                    <small>Gestion de recrutement</small>
                 </div>
             </a>
         </div>
@@ -396,6 +416,7 @@
             {% endif %}
             {% if app.request.attributes.get('_route') starts with 'admin' %}
             <li>
+<<<<<<< HEAD
                 <a href="#congeSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'admin_conge' or app.request.attributes.get('_route') starts with 'admin_absence' %}active{% else %}collapsed{% endif %}">
                     <i class="ti ti-calendar-time"></i>
                     <span>Congés</span>
@@ -406,6 +427,36 @@
                     </li>
                     <li>
                         <a href="{{ path('admin_absence') }}" class="{% if app.request.attributes.get('_route') == 'admin_absence' %}active{% endif %}">Gestion des absences</a>
+=======
+                <a href="{{ path('admin_inventory') }}" class="{% if app.request.attributes.get('_route') in ['admin_inventory', 'admin_offre_new', 'admin_offre_show', 'admin_offre_edit', 'admin_candidature_new', 'admin_candidature_show', 'admin_candidature_edit'] %}active{% endif %}">
+                    <i class="ti ti-box-seam"></i>
+                    <span>Recrutement</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('admin_product_create') }}" class="{% if app.request.attributes.get('_route') == 'admin_product_create' %}active{% endif %}">
+                    <i class="ti ti-plus"></i>
+                    <span>Add Product</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('admin_reports') }}" class="{% if app.request.attributes.get('_route') == 'admin_reports' %}active{% endif %}">
+                    <i class="ti ti-receipt"></i>
+                    <span>Reports</span>
+                </a>
+            </li>
+            <li>
+                <a href="#formationSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'admin_formation' or app.request.attributes.get('_route') starts with 'admin_participation' %}active{% else %}collapsed{% endif %}">
+                    <i class="ti ti-school"></i>
+                    <span>Formations</span>
+                </a>
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'admin_formation' or app.request.attributes.get('_route') starts with 'admin_participation' %}show{% endif %}" id="formationSubmenu">
+                    <li>
+                        <a href="{{ path('admin_formation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_formation' %}active{% endif %}">Gestion des formations</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_participation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_participation' %}active{% endif %}">Gestion des participations</a>
+>>>>>>> main
                     </li>
                 </ul>
             </li>
@@ -413,9 +464,15 @@
             
             {% if app.request.attributes.get('_route') starts with 'employ' %}
             <li>
+<<<<<<< HEAD
                 <a href="#employeCongeSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'employ_conge' or app.request.attributes.get('_route') starts with 'employ_absence' %}active{% else %}collapsed{% endif %}">
                     <i class="ti ti-calendar-event"></i>
                     <span>Congés</span>
+=======
+                <a href="{{ path('app_logout') }}">
+                    <i class="ti ti-logout"></i>
+                    <span>Logout</span>
+>>>>>>> main
                 </a>
                 <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'employ_conge' or app.request.attributes.get('_route') starts with 'employ_absence' %}show{% endif %}" id="employeCongeSubmenu">
                     <li>
@@ -537,9 +594,17 @@
     {# ==========================================
        MAIN CONTENT
        ========================================== #}
-    <main class="main-content">
-        {% block body %}{% endblock %}
-    </main>
+        <main class="main-content">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+            {% block body %}{% endblock %}
+        </main>
     
     {# Bootstrap JS #}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -1,0 +1,96 @@
+{% extends 'employ/base_admin.html.twig' %}
+
+{% block title %}S'inscrire à une Formation{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4 d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                <div>
+                    <h1 class="fs-3 mb-1">S'inscrire à une Formation</h1>
+                    <p class="mb-0">Choisissez une formation parmi celles proposées</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ path('employ_formation_index') }}" class="btn btn-outline-primary">Formations</a>
+                    <a href="{{ path('employ_participation_index') }}" class="btn btn-outline-secondary">Mes participations</a>
+                </div>
+            </div>
+
+            <div class="card p-3 mb-4">
+                <form action="{{ path('employ_participation_formations') }}" method="GET" class="row g-3">
+                    <div class="col-md-10">
+                        <input type="text" name="q" class="form-control" placeholder="Rechercher une formation par sujet, formateur, type..." value="{{ query }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-secondary w-100">
+                            <i class="ti ti-search"></i> Rechercher
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-3 d-flex gap-2 align-items-center">
+                    <span class="small text-muted">Trier par :</span>
+                    <a href="{{ path('employ_participation_formations', {q: query, sort: 'sujet', order: sort == 'sujet' and order == 'ASC' ? 'DESC' : 'ASC'}) }}" class="btn btn-sm btn-outline-primary">
+                        Sujet {% if sort == 'sujet' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                    </a>
+                    <a href="{{ path('employ_participation_formations', {q: query, sort: 'dateDebut', order: sort == 'dateDebut' and order == 'ASC' ? 'DESC' : 'ASC'}) }}" class="btn btn-sm btn-outline-primary">
+                        Date {% if sort == 'dateDebut' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                    </a>
+                    <a href="{{ path('employ_participation_formations', {q: query, sort: 'type', order: sort == 'type' and order == 'ASC' ? 'DESC' : 'ASC'}) }}" class="btn btn-sm btn-outline-primary">
+                        Type {% if sort == 'type' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                    </a>
+                </div>
+            </div>
+            
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            {% for message in app.flashes('warning') %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            {% for message in app.flashes('danger') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row">
+        {% for formation in formations %}
+            <div class="col-md-4 col-12 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">{{ formation.sujet }}</h5>
+                        <p class="card-text">
+                            <strong>Formateur :</strong> {{ formation.formateur }}<br>
+                            <strong>Type :</strong> {{ formation.type }}<br>
+                            <strong>Date de début :</strong> {{ formation.dateDebut ? formation.dateDebut|date('d/m/Y') : 'Non définie' }}<br>
+                            <strong>Durée :</strong> {{ formation.duree }} jours<br>
+                            <strong>Lieu/Localisation :</strong> {{ formation.localisation }}
+                        </p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <form action="{{ path('employ_participation_inscrire', {'id': formation.id}) }}" method="POST">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="ti ti-check"></i> Participer
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">Aucune formation disponible pour le moment.</div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

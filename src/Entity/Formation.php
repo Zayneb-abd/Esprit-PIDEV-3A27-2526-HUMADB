@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
 use App\Repository\FormationRepository;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FormationRepository::class)]
 #[ORM\Table(name: 'formation')]
@@ -30,6 +31,8 @@ class Formation
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: 'Le sujet ne peut pas être vide.')]
+    #[Assert\Length(min: 3, max: 255, minMessage: 'Le sujet doit comporter au moins {{ limit }} caractères.')]
     private ?string $sujet = null;
 
     public function getSujet(): ?string
@@ -44,6 +47,8 @@ class Formation
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: 'Le nom du formateur ne peut pas être vide.')]
+    #[Assert\Length(min: 3, max: 100, minMessage: 'Le nom du formateur doit comporter au moins {{ limit }} caractères.')]
     private ?string $formateur = null;
 
     public function getFormateur(): ?string
@@ -58,6 +63,8 @@ class Formation
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: 'Le type de formation ne peut pas être vide.')]
+    #[Assert\Choice(choices: ['En ligne', 'Présentiel', 'Hybride'], message: 'Le type de formation doit être l\'un des suivants : En ligne, Présentiel, Hybride.')]
     private ?string $type = null;
 
     public function getType(): ?string
@@ -71,21 +78,25 @@ class Formation
         return $this;
     }
 
-    #[ORM\Column(type: 'date', nullable: true)]
-    private ?\DateTimeInterface $date_debut = null;
+    #[ORM\Column(name: 'date_debut', type: 'date', nullable: true)]
+    #[Assert\NotBlank(message: 'La date de début ne peut pas être vide.')]
+    #[Assert\Type("\DateTimeInterface")]
+    private ?\DateTimeInterface $dateDebut = null;
 
-    public function getDate_debut(): ?\DateTimeInterface
+    public function getDateDebut(): ?\DateTimeInterface
     {
-        return $this->date_debut;
+        return $this->dateDebut;
     }
 
-    public function setDate_debut(?\DateTimeInterface $date_debut): self
+    public function setDateDebut(?\DateTimeInterface $dateDebut): self
     {
-        $this->date_debut = $date_debut;
+        $this->dateDebut = $dateDebut;
         return $this;
     }
 
     #[ORM\Column(type: 'integer', nullable: true)]
+    #[Assert\NotBlank(message: 'La durée ne peut pas être vide.')]
+    #[Assert\Positive(message: 'La durée doit être un nombre positif.')]
     private ?int $duree = null;
 
     public function getDuree(): ?int
@@ -100,6 +111,7 @@ class Formation
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: 'La localisation ne peut pas être vide.')]
     private ?string $localisation = null;
 
     public function getLocalisation(): ?string
@@ -160,17 +172,4 @@ class Formation
         $this->getParticipations()->removeElement($participation);
         return $this;
     }
-
-    public function getDateDebut(): ?\DateTime
-    {
-        return $this->date_debut;
-    }
-
-    public function setDateDebut(?\DateTime $date_debut): static
-    {
-        $this->date_debut = $date_debut;
-
-        return $this;
-    }
-
 }
