@@ -18,8 +18,15 @@
     <div class="card-body py-3">
         <form method="get" action="{{ path('admin_users') }}" class="d-flex gap-2">
             <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm" placeholder="Rechercher par nom, prénom ou email…" id="searchInput">
+            <select name="role" class="form-select form-select-sm" style="max-width: 180px;">
+                <option value="">Tous les rôles</option>
+                <option value="ADMIN_RH" {% if role == 'ADMIN_RH' %}selected{% endif %}>ADMIN_RH</option>
+                <option value="MANAGER" {% if role == 'MANAGER' %}selected{% endif %}>MANAGER</option>
+                <option value="EMPLOYE" {% if role == 'EMPLOYE' %}selected{% endif %}>EMPLOYE</option>
+                <option value="CANDIDAT" {% if role == 'CANDIDAT' %}selected{% endif %}>CANDIDAT</option>
+            </select>
             <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-search"></i></button>
-            {% if search %}
+            {% if search or role %}
                 <a href="{{ path('admin_users') }}" class="btn btn-sm btn-outline-secondary">Réinitialiser</a>
             {% endif %}
         </form>
@@ -125,17 +132,17 @@
             <ul class="pagination pagination-sm mb-0">
                 {% if page > 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ path('admin_users', {page: page - 1, q: search}) }}">‹ Précédent</a>
+                        <a class="page-link" href="{{ path('admin_users', {page: page - 1, q: search, role: role}) }}">‹ Précédent</a>
                     </li>
                 {% endif %}
                 {% for p in 1..pages %}
                     <li class="page-item {% if p == page %}active{% endif %}">
-                        <a class="page-link" href="{{ path('admin_users', {page: p, q: search}) }}">{{ p }}</a>
+                        <a class="page-link" href="{{ path('admin_users', {page: p, q: search, role: role}) }}">{{ p }}</a>
                     </li>
                 {% endfor %}
                 {% if page < pages %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ path('admin_users', {page: page + 1, q: search}) }}">Suivant ›</a>
+                        <a class="page-link" href="{{ path('admin_users', {page: page + 1, q: search, role: role}) }}">Suivant ›</a>
                     </li>
                 {% endif %}
             </ul>

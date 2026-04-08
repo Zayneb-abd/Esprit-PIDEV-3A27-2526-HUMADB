@@ -22,6 +22,24 @@
     {% endfor %}
 {% endfor %}
 
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+        <form method="get" action="{{ path('employ_feedback_index') }}" class="d-flex gap-2">
+            <input
+                type="text"
+                name="q"
+                value="{{ query|default('') }}"
+                class="form-control form-control-sm"
+                placeholder="Rechercher par message, categorie ou statut..."
+            >
+            <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-search"></i></button>
+            {% if query is defined and query %}
+                <a href="{{ path('employ_feedback_index') }}" class="btn btn-sm btn-outline-secondary">Réinitialiser</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
     {% for feedback in feedbacks %}
         <div class="col">
@@ -50,7 +68,10 @@
                 
                 <div class="card-footer bg-transparent border-top-0 px-4 pb-4 pt-0 d-flex justify-content-between align-items-center">
                     <small class="text-muted"><i class="ti ti-calendar me-1"></i>{{ feedback.dateEnvoi ? feedback.dateEnvoi|date('d/m/Y') : '' }}</small>
-                    <div>
+                    <div class="d-flex gap-2">
+                        {% if feedback.status == 'nouveau' %}
+                            <a href="{{ path('employ_feedback_edit', {'id': feedback.id}) }}" class="btn btn-sm btn-outline-secondary rounded-pill">Modifier</a>
+                        {% endif %}
                         <a href="{{ path('employ_feedback_show', {'id': feedback.id}) }}" class="btn btn-sm btn-outline-primary rounded-pill">Détails</a>
                     </div>
                 </div>

@@ -46,6 +46,9 @@
     </div>
     <div class="card-footer bg-white border-top-0 pt-0 text-end">
         {% if feedback.status == 'nouveau' %}
+            <a href="{{ path('employ_feedback_edit', {'id': feedback.id}) }}" class="btn btn-outline-secondary shadow-sm px-4 me-2">
+                <i class="ti ti-edit me-2"></i>Modifier
+            </a>
             <form method="post" action="{{ path('employ_feedback_delete', {'id': feedback.id}) }}" class="d-inline-block" onsubmit="return confirm('Voulez-vous vraiment annuler et supprimer ce feedback ?');">
                 <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ feedback.id) }}">
                 <button type="submit" class="btn btn-outline-danger shadow-sm px-4">

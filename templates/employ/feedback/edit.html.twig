@@ -1,0 +1,59 @@
+{% extends 'employ/base_admin.html.twig' %}
+
+{% block title %}Modifier Feedback{% endblock %}
+
+{% block body %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="fs-4 fw-bold mb-1">Modifier mon Feedback</h1>
+        <p class="text-muted mb-0">Mettez a jour votre feedback avant son traitement.</p>
+    </div>
+    <a href="{{ path('employ_feedback_show', {'id': feedback.id}) }}" class="btn btn-outline-secondary">
+        <i class="ti ti-arrow-left me-2"></i>Retour
+    </a>
+</div>
+
+{% for label, messages in app.flashes %}
+    {% for message in messages %}
+        <div class="alert alert-{{ label == 'success' ? 'success' : (label == 'warning' ? 'warning' : 'danger') }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endfor %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4">
+            <div class="card-body">
+                {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+                <div class="mb-4">
+                    {{ form_label(form.category, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                    {{ form_widget(form.category, {'attr': {'class': 'form-select form-select-lg'}}) }}
+                    <div class="text-danger small mt-1">{{ form_errors(form.category) }}</div>
+                </div>
+
+                <div class="mb-4">
+                    {{ form_label(form.contenu, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                    {{ form_widget(form.contenu, {'attr': {'class': 'form-control', 'style': 'resize: none;'}}) }}
+                    <div class="text-danger small mt-1">{{ form_errors(form.contenu) }}</div>
+                </div>
+
+                <div class="form-check form-switch mb-4">
+                    {{ form_widget(form.est_anonyme, {'attr': {'class': 'form-check-input', 'role': 'switch'}}) }}
+                    {{ form_label(form.est_anonyme, null, {'label_attr': {'class': 'form-check-label ms-2'}}) }}
+                </div>
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+                        <i class="ti ti-device-floppy me-2"></i>Enregistrer
+                    </button>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

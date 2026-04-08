@@ -3,15 +3,20 @@
 namespace App\Controller;
 
 use App\Entity\Candidature;
+use App\Entity\Commentaire;
 use App\Entity\Log;
 use App\Entity\OffreEmploi;
+use App\Entity\Publication;
 use App\Entity\User;
 use App\Form\AdminUserType;
 use App\Form\CandidatureType;
+use App\Form\CommentaireType;
 use App\Form\OffreEmploiType;
+use App\Form\PublicationType;
 use App\Repository\CandidatureRepository;
 use App\Repository\LogRepository;
 use App\Repository\OffreEmploiRepository;
+use App\Repository\PublicationRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -48,16 +53,18 @@ class AdminController extends AbstractController
     public function listUsers(Request $request, UserRepository $userRepository): Response
     {
         $search = trim((string) $request->query->get('q', ''));
+        $role   = trim((string) $request->query->get('role', ''));
         $page   = max(1, (int) $request->query->get('page', 1));
         $limit  = 10;
 
-        $users = $userRepository->searchPaginated($search, $page, $limit);
-        $total = $userRepository->countSearch($search);
+        $users = $userRepository->searchPaginated($search, $role, $page, $limit);
+        $total = $userRepository->countSearch($search, $role);
         $pages = (int) ceil($total / $limit);
 
         return $this->render('admin/users.html.twig', [
             'users'  => $users,
             'search' => $search,
+            'role'   => $role,
             'page'   => $page,
             'pages'  => $pages,
             'total'  => $total,
@@ -377,7 +384,7 @@ class AdminController extends AbstractController
     #[Route('/product/create', name: 'admin_product_create')]
     public function createProduct(): Response
     {
-        return $this->render('admin/product/create.html.twig');
+        return $this->redirectToRoute('admin_publication_index');
     }
 
     #[Route('/reports', name: 'admin_reports')]
@@ -390,5 +397,152 @@ class AdminController extends AbstractController
     public function docs(): Response
     {
         return $this->render('admin/docs/index.html.twig');
+    }
+
+    #[Route('/publications', name: 'admin_publication_index', methods: ['GET'])]
+    public function publicationIndex(Request $request, PublicationRepository $publicationRepository): Response
+    {
+        $search = trim((string) $request->query->get('q', ''));
+
+        return $this->render('admin/publication/index.html.twig', [
+            'publications' => $publicationRepository->searchByKeyword($search),
+            'search' => $search,
+        ]);
+    }
+
+    #[Route('/publications/new', name: 'admin_publication_new', methods: ['GET', 'POST'])]
+    public function publicationNew(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $publication = new Publication();
+        $form = $this->createForm(PublicationType::class, $publication);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $publication->setDatePublication(new \DateTime());
+            $user = $this->getUser();
+            if ($user instanceof User) {
+                $publication->setUser($user);
+            }
+
+            $entityManager->persist($publication);
+            $entityManager->flush();
+            $this->addFlash('success', 'Publication creee avec succes.');
+
+            return $this->redirectToRoute('admin_publication_index');
+        }
+
+        return $this->render('admin/publication/new.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/publications/{id}/edit', name: 'admin_publication_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    public function publicationEdit(Request $request, Publication $publication, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(PublicationType::class, $publication);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            if (!$publication->getDatePublication()) {
+                $publication->setDatePublication(new \DateTime());
+            }
+
+            $entityManager->flush();
+            $this->addFlash('success', 'Publication mise a jour.');
+
+            return $this->redirectToRoute('admin_publication_index');
+        }
+
+        return $this->render('admin/publication/edit.html.twig', [
+            'form' => $form->createView(),
+            'publication' => $publication,
+        ]);
+    }
+
+    #[Route('/publications/{id}/delete', name: 'admin_publication_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function publicationDelete(Request $request, Publication $publication, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete_publication_' . $publication->getId(), (string) $request->request->get('_token'))) {
+            $entityManager->remove($publication);
+            $entityManager->flush();
+            $this->addFlash('success', 'Publication supprimee.');
+        }
+
+        return $this->redirectToRoute('admin_publication_index');
+    }
+
+    #[Route('/commentaires/new', name: 'admin_commentaire_new', methods: ['GET', 'POST'])]
+    public function commentaireNew(Request $request, EntityManagerInterface $entityManager, PublicationRepository $publicationRepository): Response
+    {
+        $commentaire = new Commentaire();
+        $publicationId = (int) $request->query->get('publication');
+        if ($publicationId > 0) {
+            $publication = $publicationRepository->find($publicationId);
+            if ($publication instanceof Publication) {
+                $commentaire->setPublication($publication);
+            }
+        }
+
+        $form = $this->createForm(CommentaireType::class, $commentaire);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            if (!$commentaire->getPublication()) {
+                $this->addFlash('danger', 'Selectionnez une publication.');
+                return $this->redirectToRoute('admin_publication_index');
+            }
+
+            $commentaire->setDateCommentaire(new \DateTime());
+            $user = $this->getUser();
+            if ($user instanceof User) {
+                $commentaire->setUser($user);
+            }
+
+            $entityManager->persist($commentaire);
+            $entityManager->flush();
+            $this->addFlash('success', 'Commentaire ajoute.');
+
+            return $this->redirectToRoute('admin_publication_index');
+        }
+
+        return $this->render('admin/commentaire/new.html.twig', [
+            'form' => $form->createView(),
+            'publication' => $commentaire->getPublication(),
+        ]);
+    }
+
+    #[Route('/commentaires/{id}/edit', name: 'admin_commentaire_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    public function commentaireEdit(Request $request, Commentaire $commentaire, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(CommentaireType::class, $commentaire);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            if (!$commentaire->getDateCommentaire()) {
+                $commentaire->setDateCommentaire(new \DateTime());
+            }
+
+            $entityManager->flush();
+            $this->addFlash('success', 'Commentaire mis a jour.');
+
+            return $this->redirectToRoute('admin_publication_index');
+        }
+
+        return $this->render('admin/commentaire/edit.html.twig', [
+            'form' => $form->createView(),
+            'commentaire' => $commentaire,
+        ]);
+    }
+
+    #[Route('/commentaires/{id}/delete', name: 'admin_commentaire_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function commentaireDelete(Request $request, Commentaire $commentaire, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete_commentaire_' . $commentaire->getId(), (string) $request->request->get('_token'))) {
+            $entityManager->remove($commentaire);
+            $entityManager->flush();
+            $this->addFlash('success', 'Commentaire supprime.');
+        }
+
+        return $this->redirectToRoute('admin_publication_index');
     }
 }

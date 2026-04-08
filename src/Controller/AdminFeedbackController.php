@@ -15,12 +15,14 @@ use Symfony\Component\Routing\Annotation\Route;
 class AdminFeedbackController extends AbstractController
 {
     #[Route('/', name: 'admin_feedback_index', methods: ['GET'])]
-    public function index(FeedbackRepository $feedbackRepository): Response
+    public function index(Request $request, FeedbackRepository $feedbackRepository): Response
     {
-        $feedbacks = $feedbackRepository->findBy([], ['date_envoi' => 'DESC']);
+        $query = trim((string) $request->query->get('q', ''));
+        $feedbacks = $feedbackRepository->searchForAdmin($query);
 
         return $this->render('admin/feedback/index.html.twig', [
             'feedbacks' => $feedbacks,
+            'query' => $query,
         ]);
     }
 
@@ -39,6 +41,10 @@ class AdminFeedbackController extends AbstractController
             $this->addFlash('success', 'Statut du feedback mis à jour.');
 
             return $this->redirectToRoute('admin_feedback_index');
+        }
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('danger', 'Impossible de mettre a jour ce feedback. Verifiez les champs du formulaire.');
         }
 
         return $this->render('admin/feedback/edit.html.twig', [

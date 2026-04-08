@@ -16,28 +16,30 @@ class PublicationRepository extends ServiceEntityRepository
         parent::__construct($registry, Publication::class);
     }
 
-    //    /**
-    //     * @return Publication[] Returns an array of Publication objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('p.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * @return Publication[]
+     */
+    public function searchByKeyword(string $keyword): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.user', 'u')
+            ->addSelect('u')
+            ->orderBy('p.date_publication', 'DESC')
+            ->addOrderBy('p.id', 'DESC');
 
-    //    public function findOneBySomeField($value): ?Publication
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        $keyword = trim($keyword);
+        if ($keyword !== '') {
+            $qb->andWhere('
+                LOWER(p.contenu) LIKE :q
+                OR LOWER(p.type) LIKE :q
+                OR LOWER(u.nom) LIKE :q
+                OR LOWER(u.prenom) LIKE :q
+                OR LOWER(u.email) LIKE :q
+            ')
+            ->setParameter('q', '%' . mb_strtolower($keyword) . '%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
 }

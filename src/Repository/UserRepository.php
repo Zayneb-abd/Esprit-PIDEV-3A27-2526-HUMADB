@@ -35,7 +35,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      *
      * @return User[]
      */
-    public function searchPaginated(string $search = '', int $page = 1, int $limit = 10): array
+    public function searchPaginated(string $search = '', ?string $role = null, int $page = 1, int $limit = 10): array
     {
         $qb = $this->createQueryBuilder('u')
             ->orderBy('u.id', 'DESC');
@@ -43,6 +43,11 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         if ($search !== '') {
             $qb->andWhere('u.nom LIKE :search OR u.prenom LIKE :search OR u.email LIKE :search')
                ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($role !== null && $role !== '') {
+            $qb->andWhere('u.role = :role')
+                ->setParameter('role', $role);
         }
 
         return $qb->setMaxResults($limit)
@@ -54,7 +59,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     /**
      * Count users matching search.
      */
-    public function countSearch(string $search = ''): int
+    public function countSearch(string $search = '', ?string $role = null): int
     {
         $qb = $this->createQueryBuilder('u')
             ->select('COUNT(u.id)');
@@ -62,6 +67,11 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         if ($search !== '') {
             $qb->andWhere('u.nom LIKE :search OR u.prenom LIKE :search OR u.email LIKE :search')
                ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($role !== null && $role !== '') {
+            $qb->andWhere('u.role = :role')
+                ->setParameter('role', $role);
         }
 
         return (int) $qb->getQuery()->getSingleScalarResult();

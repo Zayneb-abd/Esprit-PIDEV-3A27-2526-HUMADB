@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\UserRepository;
 
@@ -32,6 +33,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Le nom ne peut pas etre vide.')]
+    #[Assert\Length(min: 2, max: 100, minMessage: 'Le nom doit contenir au moins {{ limit }} caracteres.')]
     private ?string $nom = null;
 
     public function getNom(): ?string
@@ -46,6 +49,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Le prenom ne peut pas etre vide.')]
+    #[Assert\Length(min: 2, max: 100, minMessage: 'Le prenom doit contenir au moins {{ limit }} caracteres.')]
     private ?string $prenom = null;
 
     public function getPrenom(): ?string
@@ -60,6 +65,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'L email ne peut pas etre vide.')]
+    #[Assert\Email(message: 'Veuillez saisir une adresse email valide.')]
     private ?string $email = null;
 
     public function getEmail(): ?string
@@ -88,6 +95,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ORM\Column(name: 'role', type: 'string', length: 20, nullable: true)]
+    #[Assert\Choice(
+        choices: ['ADMIN_RH', 'MANAGER', 'EMPLOYE', 'CANDIDAT'],
+        message: 'Le role doit etre ADMIN_RH, MANAGER, EMPLOYE ou CANDIDAT.'
+    )]
     private ?string $role = null;
 
     public function getRoles(): array
@@ -148,6 +159,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ORM\Column(type: 'date', nullable: true)]
+    #[Assert\LessThan('today', message: 'La date de naissance doit etre dans le passe.')]
     private ?\DateTimeInterface $date_naissance = null;
 
     public function getDate_naissance(): ?\DateTimeInterface
@@ -161,7 +173,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    #[ORM\Column(type: 'blob', nullable: true)]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $face_image = null;
 
     public function getFace_image(): ?string
@@ -204,6 +216,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    #[Assert\PositiveOrZero(message: 'Le score de reputation doit etre positif ou nul.')]
     private int $reputation_score = 0;
 
     public function getReputationScore(): int

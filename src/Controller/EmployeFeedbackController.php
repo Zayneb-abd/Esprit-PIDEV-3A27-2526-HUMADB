@@ -15,22 +15,19 @@ use Symfony\Component\Routing\Annotation\Route;
 class EmployeFeedbackController extends AbstractController
 {
     #[Route('/', name: 'employ_feedback_index', methods: ['GET'])]
-    public function index(FeedbackRepository $feedbackRepository): Response
+    public function index(Request $request, FeedbackRepository $feedbackRepository): Response
     {
         $user = $this->getUser();
         if (!$user) {
             return $this->redirectToRoute('app_login');
         }
 
-        // Fetch feedbacks submitted by this user (employee)
-        // Since employe_id is an integer (not a full relation) in the database:
-        $feedbacks = $feedbackRepository->findBy(
-            ['employe_id' => $user->getId()],
-            ['date_envoi' => 'DESC']
-        );
+        $query = trim((string) $request->query->get('q', ''));
+        $feedbacks = $feedbackRepository->searchForEmployee($user->getId(), $query);
 
         return $this->render('employ/feedback/index.html.twig', [
             'feedbacks' => $feedbacks,
+            'query' => $query,
         ]);
     }
 
@@ -80,6 +77,39 @@ class EmployeFeedbackController extends AbstractController
 
         return $this->render('employ/feedback/show.html.twig', [
             'feedback' => $feedback,
+        ]);
+    }
+
+    #[Route('/{id}/edit', name: 'employ_feedback_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Feedback $feedback, EntityManagerInterface $entityManager): Response
+    {
+        $user = $this->getUser();
+        if (!$user || $feedback->getEmployeId() !== $user->getId()) {
+            throw $this->createAccessDeniedException("Action non autorisée.");
+        }
+
+        // Employee can only edit feedback while it's still new.
+        if ($feedback->getStatus() !== 'nouveau') {
+            $this->addFlash('warning', 'Ce feedback ne peut plus etre modifie.');
+            return $this->redirectToRoute('employ_feedback_show', ['id' => $feedback->getId()]);
+        }
+
+        $form = $this->createForm(FeedbackType::class, $feedback);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            $this->addFlash('success', 'Feedback mis a jour avec succes.');
+            return $this->redirectToRoute('employ_feedback_show', ['id' => $feedback->getId()]);
+        }
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('danger', 'Veuillez corriger les erreurs du formulaire.');
+        }
+
+        return $this->render('employ/feedback/edit.html.twig', [
+            'feedback' => $feedback,
+            'form' => $form->createView(),
         ]);
     }
 
