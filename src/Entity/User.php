@@ -203,6 +203,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private int $reputation_score = 0;
+
+    public function getReputationScore(): int
+    {
+        return $this->reputation_score;
+    }
+
+    public function setReputationScore(int $reputation_score): self
+    {
+        $this->reputation_score = $reputation_score;
+        return $this;
+    }
+
+    public function getReputationBadge(): string
+    {
+        if ($this->reputation_score >= 500) {
+            return 'Gold';
+        }
+        if ($this->reputation_score >= 100) {
+            return 'Silver';
+        }
+        return 'Bronze';
+    }
+
     #[ORM\OneToMany(targetEntity: Absence::class, mappedBy: 'user')]
     private Collection $absences;
 

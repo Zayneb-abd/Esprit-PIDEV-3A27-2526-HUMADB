@@ -1,0 +1,78 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Modifier — {{ user.prenom }} {{ user.nom }}{% endblock %}
+
+{% block body %}
+<div class="mb-4">
+    <a href="{{ path('admin_users') }}" class="text-muted text-decoration-none small">
+        <i class="ti ti-arrow-left me-1"></i> Retour à la liste
+    </a>
+    <h4 class="fw-bold mt-1">Modifier l'utilisateur</h4>
+    <small class="text-muted">{{ user.email }}</small>
+</div>
+
+<div class="card" style="max-width: 680px;">
+    <div class="card-body p-4">
+        {# Current avatar preview #}
+        {% if user.faceImage %}
+        <div class="mb-3">
+            <label class="form-label">Photo actuelle</label><br>
+            <img src="{{ asset('uploads/faces/' ~ user.faceImage) }}"
+                 class="rounded-circle border" style="width:72px;height:72px;object-fit:cover;" alt="avatar">
+        </div>
+        {% endif %}
+
+        {{ form_start(form, { attr: { novalidate: 'novalidate', enctype: 'multipart/form-data' } }) }}
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Nom</label>
+                {{ form_widget(form.nom, { attr: { class: 'form-control' } }) }}
+                {{ form_errors(form.nom) }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Prénom</label>
+                {{ form_widget(form.prenom, { attr: { class: 'form-control' } }) }}
+                {{ form_errors(form.prenom) }}
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Email</label>
+                {{ form_widget(form.email, { attr: { class: 'form-control' } }) }}
+                {{ form_errors(form.email) }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Rôle</label>
+                {{ form_widget(form.role, { attr: { class: 'form-select' } }) }}
+                {{ form_errors(form.role) }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Nouveau mot de passe <small class="text-muted">(laisser vide)</small></label>
+                {{ form_widget(form.plainPassword, { attr: { class: 'form-control' } }) }}
+                {{ form_errors(form.plainPassword) }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Date de naissance</label>
+                {{ form_widget(form.date_naissance, { attr: { class: 'form-control' } }) }}
+                {{ form_errors(form.date_naissance) }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Score de réputation</label>
+                {{ form_widget(form.reputation_score, { attr: { class: 'form-control' } }) }}
+                {{ form_errors(form.reputation_score) }}
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Changer la photo</label>
+                {{ form_widget(form.faceImageFile, { attr: { class: 'form-control' } }) }}
+                {{ form_errors(form.faceImageFile) }}
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary px-4">Enregistrer</button>
+            <a href="{{ path('admin_users') }}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

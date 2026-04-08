@@ -58,7 +58,7 @@
                     <div class="mb-3">
                         <label for="inputPassword" class="form-label d-flex justify-content-between">
                             <span>Password</span>
-                            <a href="#" class="small link-primary">Forgot Password?</a>
+                            <a href="{{ path('app_forgot_password') }}" class="small link-primary">Forgot Password?</a>
                         </label>
                         <input type="password" name="password" id="inputPassword" 
                                class="form-control" placeholder="Password" required autocomplete="current-password">
@@ -78,7 +78,7 @@
                 </form>
 
                 <div class="text-center mt-3 small text-muted">
-                    Don't have an account? <a href="{{ path('app_register') }}" class="link-primary">Sign up</a>
+                    Don't have an account? <a href="{{ path('app_signup') }}" class="link-primary">Sign up</a>
                 </div>
             </div>
         </div>

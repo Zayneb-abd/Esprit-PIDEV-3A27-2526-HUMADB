@@ -396,6 +396,12 @@
                 </a>
             </li>
             <li>
+                <a href="{{ path('employ_feedback_index') }}" class="{% if 'employ_feedback' in app.request.attributes.get('_route') %}active{% endif %}">
+                    <i class="ti ti-message-report"></i>
+                    <span>Mes Feedbacks</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ path('employ_inventory') }}" class="{% if app.request.attributes.get('_route') == 'employ_inventory' %}active{% endif %}">
                     <i class="ti ti-box-seam"></i>
                     <span>Gestion de recrutement</span>
