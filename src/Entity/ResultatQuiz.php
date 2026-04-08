@@ -59,7 +59,7 @@ class ResultatQuiz
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
+    #[ORM\Column(type: 'decimal', precision: 5, scale: 2, nullable: true)]
     private ?float $score_pourcentage = null;
 
     public function getScore_pourcentage(): ?float

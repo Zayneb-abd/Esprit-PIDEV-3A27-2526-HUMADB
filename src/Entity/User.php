@@ -87,19 +87,48 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    #[ORM\Column(type: 'json')]
-    private array $roles = [];
+    #[ORM\Column(name: 'role', type: 'string', length: 20, nullable: true)]
+    private ?string $role = null;
 
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        $roles[] = 'ROLE_USER';
-        return array_unique($roles);
+        $roles = ['ROLE_USER'];
+
+        if ($this->role === 'ADMIN_RH') {
+            $roles[] = 'ROLE_ADMIN';
+        }
+
+        if ($this->role === 'MANAGER') {
+            $roles[] = 'ROLE_MANAGER';
+        }
+
+        if ($this->role === 'EMPLOYE') {
+            $roles[] = 'ROLE_EMPLOYE';
+        }
+
+        if ($this->role === 'CANDIDAT') {
+            $roles[] = 'ROLE_CANDIDAT';
+        }
+
+        return array_values(array_unique($roles));
     }
 
     public function setRoles(array $roles): self
     {
-        $this->roles = $roles;
+        $this->role = $this->normalizeSecurityRolesToDatabaseRole($roles);
+
+        return $this;
+    }
+
+    public function getRole(): ?string
+    {
+        return $this->role;
+    }
+
+    public function setRole(?string $role): self
+    {
+        $this->role = $role;
+
         return $this;
     }
 
@@ -600,6 +629,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getPassword(): string
     {
         return $this->mdp;
+    }
+
+    private function normalizeSecurityRolesToDatabaseRole(array $roles): ?string
+    {
+        foreach ($roles as $role) {
+            if (in_array($role, ['ADMIN_RH', 'ROLE_ADMIN'], true)) {
+                return 'ADMIN_RH';
+            }
+
+            if (in_array($role, ['MANAGER', 'ROLE_MANAGER'], true)) {
+                return 'MANAGER';
+            }
+
+            if (in_array($role, ['EMPLOYE', 'ROLE_EMPLOYE'], true)) {
+                return 'EMPLOYE';
+            }
+
+            if (in_array($role, ['CANDIDAT', 'ROLE_CANDIDAT', 'ROLE_CONDIDAT'], true)) {
+                return 'CANDIDAT';
+            }
+        }
+
+        return $this->role;
     }
 
 }

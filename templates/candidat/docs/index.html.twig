@@ -1,0 +1,39 @@
+{% extends 'candidat/base_admin.html.twig' %}
+
+{% block title %}Guide candidat{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <h1 class="fs-3 mb-1">Guide candidat</h1>
+        <p class="mb-0 text-secondary">Utilisez cet espace pour comprendre rapidement comment consulter les offres et postuler.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">1. Explorer les offres</h5>
+                    <p class="mb-0 text-muted">Ouvrez l'onglet Offres disponibles pour voir tous les postes publies, le type de contrat et le departement.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">2. Postuler</h5>
+                    <p class="mb-0 text-muted">Depuis le detail d'une offre ou via le formulaire de candidature, ajoutez votre CV et envoyez votre dossier.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">3. Suivre vos candidatures</h5>
+                    <p class="mb-0 text-muted">Consultez Mes candidatures pour verifier le statut de chaque demande et savoir si elle est en attente, en cours ou acceptee.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

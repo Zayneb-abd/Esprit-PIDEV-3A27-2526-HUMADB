@@ -1,0 +1,92 @@
+{% extends 'employ/base_admin.html.twig' %}
+
+{% block title %}Mes Participations{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4 d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                <div>
+                    <h1 class="fs-3 mb-1">Mes Participations</h1>
+                    <p class="mb-0">Suivez l'état de vos demandes d'inscription aux formations</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ path('employ_formation_index') }}" class="btn btn-outline-primary">Formations</a>
+                    <a href="{{ path('employ_participation_formations') }}" class="btn btn-outline-secondary">Gestion des participations</a>
+                </div>
+            </div>
+
+            <div class="card p-3 mb-4">
+                <form action="{{ path('employ_participation_index') }}" method="GET" class="row g-3">
+                    <div class="col-md-10">
+                        <input type="text" name="q" class="form-control" placeholder="Rechercher par formation ou statut..." value="{{ query }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-secondary w-100">
+                            <i class="ti ti-search"></i> Rechercher
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ type }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card table-responsive">
+                <table class="table mb-0 text-nowrap table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <a href="{{ path('employ_participation_index', {q: query, sort: 'formation', order: sort == 'formation' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
+                                    Formation {% if sort == 'formation' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ path('employ_participation_index', {q: query, sort: 'dateInscription', order: sort == 'dateInscription' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
+                                    Date Demande {% if sort == 'dateInscription' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ path('employ_participation_index', {q: query, sort: 'statut', order: sort == 'statut' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
+                                    Statut {% if sort == 'statut' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                                </a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for participation in participations %}
+                        <tr class="align-middle">
+                            <td>{{ participation.formation.sujet }}</td>
+                            <td>{{ participation.dateInscription ? participation.dateInscription|date('d/m/Y H:i') : '' }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if participation.statut == 'accepté' %}bg-success
+                                    {% elseif participation.statut == 'refusé' %}bg-danger
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ participation.statut|capitalize }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center py-4">Vous n'avez encore aucune demande d'inscription.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
