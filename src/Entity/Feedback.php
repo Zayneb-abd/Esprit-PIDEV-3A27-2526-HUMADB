@@ -6,6 +6,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\FeedbackRepository;
 
@@ -30,6 +31,13 @@ class Feedback
     }
 
     #[ORM\Column(type: 'text', nullable: false)]
+    #[Assert\NotBlank(message: 'Le contenu du feedback ne peut pas etre vide.')]
+    #[Assert\Length(
+        min: 10,
+        max: 2000,
+        minMessage: 'Le message doit contenir au moins {{ limit }} caracteres.',
+        maxMessage: 'Le message ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private ?string $contenu = null;
 
     public function getContenu(): ?string
@@ -58,6 +66,7 @@ class Feedback
     }
 
     #[ORM\Column(type: 'boolean', nullable: true)]
+    #[Assert\Type(type: 'bool', message: 'Le champ anonyme doit etre un booleen.')]
     private ?bool $est_anonyme = null;
 
     public function isEst_anonyme(): ?bool
@@ -72,6 +81,7 @@ class Feedback
     }
 
     #[ORM\Column(type: 'integer', nullable: true)]
+    #[Assert\Positive(message: 'L identifiant employe doit etre positif.')]
     private ?int $employe_id = null;
 
     public function getEmploye_id(): ?int
@@ -101,6 +111,11 @@ class Feedback
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: 'La categorie est obligatoire.')]
+    #[Assert\Choice(
+        choices: ['Soutien technique', 'Suggestion', 'Plainte', 'Culture de l\'entreprise', 'Autre'],
+        message: 'Categorie invalide.'
+    )]
     private ?string $category = null;
 
     public function getCategory(): ?string
@@ -115,6 +130,10 @@ class Feedback
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Choice(
+        choices: ['nouveau', 'en_cours', 'traite', 'rejete'],
+        message: 'Statut invalide.'
+    )]
     private ?string $status = null;
 
     public function getStatus(): ?string
