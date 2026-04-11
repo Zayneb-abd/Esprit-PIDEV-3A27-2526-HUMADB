@@ -40,4 +40,33 @@ class CongeRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    public function searchAndSort(?string $query, ?string $sortField, ?string $sortOrder): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->leftJoin('c.absence', 'a')
+            ->leftJoin('a.user', 'u');
+
+        if ($query) {
+            $qb->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->like('c.commentaire_validation', ':query'),
+                    $qb->expr()->like('c.statut', ':query'),
+                    $qb->expr()->like('a.type_absence', ':query'),
+                    $qb->expr()->like('u.nom', ':query'),
+                    $qb->expr()->like('u.prenom', ':query')
+                )
+            )
+            ->setParameter('query', '%' . $query . '%');
+        }
+
+        $allowedSortFields = ['date_demande', 'statut', 'commentaire_validation'];
+        if ($sortField && in_array($sortField, $allowedSortFields, true)) {
+            $qb->orderBy('c.' . $sortField, $sortOrder === 'DESC' ? 'DESC' : 'ASC');
+        } else {
+            $qb->orderBy('c.date_demande', 'DESC');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }

@@ -71,18 +71,6 @@ class Participation
         return $this;
     }
 
-    public function getStatut(): string
-    {
-        return $this->resultat ?: 'en attente';
-    }
-
-    public function setStatut(string $statut): self
-    {
-        $this->resultat = $statut;
-
-        return $this;
-    }
-
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'participations')]
     #[ORM\JoinColumn(name: 'employe_id', referencedColumnName: 'id')]
     private ?User $user = null;

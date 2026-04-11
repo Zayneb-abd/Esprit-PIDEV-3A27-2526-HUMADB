@@ -32,12 +32,34 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">
-                                        <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
-                                        Aucune absence trouvée
-                                    </td>
-                                </tr>
+                                {% for absence in absences %}
+                                    <tr>
+                                        <td>{{ absence.getDate_debut() ? absence.getDate_debut()|date('d/m/Y') : '-' }}</td>
+                                        <td>{{ absence.getDate_fin() ? absence.getDate_fin()|date('d/m/Y') : '-' }}</td>
+                                        <td>{{ absence.getType_absence() ? absence.getType_absence()|replace({'_': ' '})|title : '-' }}</td>
+                                        <td>
+                                            {% if absence.getStatut() == 'EN_ATTENTE' %}
+                                                <span class="badge bg-warning">En attente</span>
+                                            {% elseif absence.getStatut() == 'APPROUVE' or absence.getStatut() == 'approuve' %}
+                                                <span class="badge bg-success">Approuvé</span>
+                                            {% elseif absence.getStatut() == 'REFUSE' or absence.getStatut() == 'refuse' %}
+                                                <span class="badge bg-danger">Refusé</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ absence.getStatut() }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="text-muted">-</span>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
+                                            Aucune absence trouvée
+                                        </td>
+                                    </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>

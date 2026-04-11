@@ -168,24 +168,124 @@ class EmployeController extends AbstractController
         return $this->render('employ/conge/show.html.twig', ['id' => $id]);
     }
 
-    #[Route('/conges/{id}/edit', name: 'employ_conges_edit')]
-    public function editConge(int $id): Response
+    #[Route('/conges/{id}/edit', name: 'employ_conges_edit', methods: ['GET', 'POST'])]
+    public function editConge(int $id, Request $request, EntityManagerInterface $em): Response
     {
-        return $this->render('employ/conge/edit.html.twig', ['id' => $id]);
+        $conge = $em->getRepository(Conge::class)->find($id);
+
+        if (!$conge) {
+            $this->addFlash('error', 'Demande de congé non trouvée.');
+            return $this->redirectToRoute('employ_conges');
+        }
+
+        // Vérifier que l'utilisateur est bien le propriétaire
+        $currentUser = $this->getUser();
+        if ($conge->getUser() !== $currentUser) {
+            $this->addFlash('error', 'Vous ne pouvez pas modifier cette demande.');
+            return $this->redirectToRoute('employ_conges');
+        }
+
+        // Récupérer l'absence liée
+        $absence = $conge->getAbsence();
+
+        // Traitement du formulaire (POST)
+        if ($request->isMethod('POST')) {
+            $dateDebut = $request->request->get('date_debut');
+            $dateFin = $request->request->get('date_fin');
+            $type = $request->request->get('type');
+            $motif = $request->request->get('motif');
+
+            // Validation des données
+            $errors = [];
+
+            if (empty($dateDebut)) {
+                $errors[] = 'La date de début est obligatoire.';
+            }
+            if (empty($dateFin)) {
+                $errors[] = 'La date de fin est obligatoire.';
+            }
+            if (empty($type)) {
+                $errors[] = 'Le type de congé est obligatoire.';
+            }
+
+            // Si pas d'erreurs, mettre à jour
+            if (empty($errors)) {
+                if ($absence) {
+                    $absence->setDate_debut(new \DateTime($dateDebut));
+                    $absence->setDate_fin(new \DateTime($dateFin));
+                    $absence->setType_absence($type);
+                }
+
+                // Mettre à jour le motif dans le congé
+                $conge->setCommentaire_validation($motif);
+
+                $em->flush();
+
+                $this->addFlash('success', 'Demande de congé modifiée avec succès.');
+                return $this->redirectToRoute('employ_conges');
+            }
+
+            // Afficher les erreurs
+            foreach ($errors as $error) {
+                $this->addFlash('error', $error);
+            }
+        }
+
+        return $this->render('employ/conge/edit.html.twig', [
+            'id' => $id,
+            'conge' => $conge,
+            'absence' => $absence,
+        ]);
     }
 
     #[Route('/conges/{id}/delete', name: 'employ_conges_delete', methods: ['POST'])]
-    public function deleteConge(int $id): Response
+    public function deleteConge(int $id, EntityManagerInterface $em): Response
     {
-        // Logique de suppression à implémenter
+        $conge = $em->getRepository(Conge::class)->find($id);
+
+        if (!$conge) {
+            $this->addFlash('error', 'Demande de congé non trouvée.');
+            return $this->redirectToRoute('employ_conges');
+        }
+
+        // Vérifier que l'utilisateur est bien le propriétaire de la demande
+        $currentUser = $this->getUser();
+        if ($conge->getUser() !== $currentUser) {
+            $this->addFlash('error', 'Vous ne pouvez pas supprimer cette demande.');
+            return $this->redirectToRoute('employ_conges');
+        }
+
+        // Supprimer d'abord l'absence liée si elle existe
+        $absence = $conge->getAbsence();
+        if ($absence) {
+            $em->remove($absence);
+        }
+
+        $em->remove($conge);
+        $em->flush();
+
         $this->addFlash('success', 'Demande de congé supprimée avec succès.');
         return $this->redirectToRoute('employ_conges');
     }
 
     #[Route('/absences', name: 'employ_absences')]
-    public function mesAbsences(): Response
+    public function mesAbsences(EntityManagerInterface $em): Response
     {
-        return $this->render('employ/absence/index.html.twig');
+        $user = $this->getUser();
+
+        // Récupérer les absences de l'employé connecté
+        $qb = $em->createQueryBuilder();
+        $qb->select('a')
+            ->from(Absence::class, 'a')
+            ->where('a.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('a.date_debut', 'DESC');
+
+        $absences = $qb->getQuery()->getResult();
+
+        return $this->render('employ/absence/index.html.twig', [
+            'absences' => $absences,
+        ]);
     }
 
     #[Route('/docs', name: 'employ_docs')]

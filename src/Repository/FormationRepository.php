@@ -20,7 +20,6 @@ class FormationRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('f');
 
-<<<<<<< HEAD
         if ($query) {
             $qb->andWhere(
                 $qb->expr()->orX(
@@ -33,26 +32,11 @@ class FormationRepository extends ServiceEntityRepository
             ->setParameter('query', '%' . $query . '%');
         }
 
-        $allowedSortFields = ['sujet', 'formateur', 'type', 'date_debut', 'duree', 'localisation'];
+        $allowedSortFields = ['sujet', 'formateur', 'type', 'dateDebut', 'duree', 'localisation'];
         if ($sortField && in_array($sortField, $allowedSortFields, true)) {
             $qb->orderBy('f.' . $sortField, $sortOrder === 'DESC' ? 'DESC' : 'ASC');
         } else {
-            $qb->orderBy('f.date_debut', 'DESC');
-=======
-    public function searchAndSort(?string $query, ?string $sortField, ?string $sortOrder): array
-    {
-        $qb = $this->createQueryBuilder('f');
-
-        if ($query) {
-            $qb->andWhere('f.sujet LIKE :query OR f.formateur LIKE :query OR f.type LIKE :query OR f.localisation LIKE :query')
-               ->setParameter('query', '%' . $query . '%');
-        }
-
-        if ($sortField) {
-            $qb->orderBy('f.' . $sortField, $sortOrder ?: 'ASC');
-        } else {
-            $qb->orderBy('f.id', 'DESC');
->>>>>>> main
+            $qb->orderBy('f.dateDebut', 'DESC');
         }
 
         return $qb->getQuery()->getResult();

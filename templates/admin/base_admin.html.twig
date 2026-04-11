@@ -416,7 +416,6 @@
             {% endif %}
             {% if app.request.attributes.get('_route') starts with 'admin' %}
             <li>
-<<<<<<< HEAD
                 <a href="#congeSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'admin_conge' or app.request.attributes.get('_route') starts with 'admin_absence' %}active{% else %}collapsed{% endif %}">
                     <i class="ti ti-calendar-time"></i>
                     <span>Congés</span>
@@ -427,54 +426,43 @@
                     </li>
                     <li>
                         <a href="{{ path('admin_absence') }}" class="{% if app.request.attributes.get('_route') == 'admin_absence' %}active{% endif %}">Gestion des absences</a>
-=======
-                <a href="{{ path('admin_inventory') }}" class="{% if app.request.attributes.get('_route') in ['admin_inventory', 'admin_offre_new', 'admin_offre_show', 'admin_offre_edit', 'admin_candidature_new', 'admin_candidature_show', 'admin_candidature_edit'] %}active{% endif %}">
-                    <i class="ti ti-box-seam"></i>
-                    <span>Recrutement</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('admin_product_create') }}" class="{% if app.request.attributes.get('_route') == 'admin_product_create' %}active{% endif %}">
-                    <i class="ti ti-plus"></i>
-                    <span>Add Product</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('admin_reports') }}" class="{% if app.request.attributes.get('_route') == 'admin_reports' %}active{% endif %}">
-                    <i class="ti ti-receipt"></i>
-                    <span>Reports</span>
-                </a>
+                    </li>
+                </ul>
             </li>
             <li>
                 <a href="#formationSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'admin_formation' or app.request.attributes.get('_route') starts with 'admin_participation' %}active{% else %}collapsed{% endif %}">
                     <i class="ti ti-school"></i>
-                    <span>Formations</span>
+                    <span>Formation</span>
                 </a>
                 <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'admin_formation' or app.request.attributes.get('_route') starts with 'admin_participation' %}show{% endif %}" id="formationSubmenu">
                     <li>
-                        <a href="{{ path('admin_formation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_formation' %}active{% endif %}">Gestion des formations</a>
+                        <a href="{{ path('admin_formation') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_formation' %}active{% endif %}">Gestion des formations</a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="#recrutementSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') == 'admin_inventory' or app.request.attributes.get('_route') starts with 'admin_offre' or app.request.attributes.get('_route') starts with 'admin_candidature' %}active{% else %}collapsed{% endif %}">
+                    <i class="ti ti-briefcase"></i>
+                    <span>Gestion de recrutement</span>
+                </a>
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') == 'admin_inventory' or app.request.attributes.get('_route') starts with 'admin_offre' or app.request.attributes.get('_route') starts with 'admin_candidature' %}show{% endif %}" id="recrutementSubmenu">
+                    <li>
+                        <a href="{{ path('admin_inventory') }}" class="{% if app.request.attributes.get('_route') == 'admin_inventory' or app.request.attributes.get('_route') starts with 'admin_offre' %}active{% endif %}">Offres d'emploi</a>
                     </li>
                     <li>
-                        <a href="{{ path('admin_participation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_participation' %}active{% endif %}">Gestion des participations</a>
->>>>>>> main
+                        <a href="{{ path('admin_inventory') }}" class="{% if app.request.attributes.get('_route') == 'admin_inventory' or app.request.attributes.get('_route') starts with 'admin_candidature' %}active{% endif %}">Candidatures</a>
                     </li>
                 </ul>
             </li>
             {% endif %}
             
-            {% if app.request.attributes.get('_route') starts with 'employ' %}
+            {% if app.request.attributes.get('_route') starts with 'employ' or app.request.attributes.get('_route') == 'employ_dashboard' %}
             <li>
-<<<<<<< HEAD
-                <a href="#employeCongeSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'employ_conge' or app.request.attributes.get('_route') starts with 'employ_absence' %}active{% else %}collapsed{% endif %}">
+                <a href="#employeCongeSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'employ_conge' or app.request.attributes.get('_route') starts with 'employ_absence' or app.request.attributes.get('_route') == 'employ_dashboard' %}active{% else %}collapsed{% endif %}">
                     <i class="ti ti-calendar-event"></i>
                     <span>Congés</span>
-=======
-                <a href="{{ path('app_logout') }}">
-                    <i class="ti ti-logout"></i>
-                    <span>Logout</span>
->>>>>>> main
                 </a>
-                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'employ_conge' or app.request.attributes.get('_route') starts with 'employ_absence' %}show{% endif %}" id="employeCongeSubmenu">
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'employ_conge' or app.request.attributes.get('_route') starts with 'employ_absence' or app.request.attributes.get('_route') == 'employ_dashboard' %}show{% endif %}" id="employeCongeSubmenu">
                     <li>
                         <a href="{{ path('employ_conges') }}" class="{% if app.request.attributes.get('_route') == 'employ_conges' %}active{% endif %}">Mes congés</a>
                     </li>

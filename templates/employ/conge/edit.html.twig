@@ -17,13 +17,13 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="date_debut" class="form-label">Date de début <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="date_debut" name="date_debut" required>
+                                <input type="date" class="form-control" id="date_debut" name="date_debut" value="{{ absence ? absence.getDate_debut()|date('Y-m-d') : '' }}" required>
                                 <div class="invalid-feedback">Veuillez sélectionner une date de début valide.</div>
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label for="date_fin" class="form-label">Date de fin <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="date_fin" name="date_fin" required>
+                                <input type="date" class="form-control" id="date_fin" name="date_fin" value="{{ absence ? absence.getDate_fin()|date('Y-m-d') : '' }}" required>
                                 <div class="invalid-feedback">Veuillez sélectionner une date de fin valide.</div>
                             </div>
                         </div>
@@ -33,19 +33,19 @@
                                 <label for="type" class="form-label">Type de congé <span class="text-danger">*</span></label>
                                 <select class="form-select" id="type" name="type" required>
                                     <option value="">Sélectionner un type</option>
-                                    <option value="ANNUEL">Congé annuel</option>
-                                    <option value="MALADIE">Congé maladie</option>
-                                    <option value="MATERNITE">Congé maternité</option>
-                                    <option value="PATERNITE">Congé paternité</option>
-                                    <option value="SANS_SOLDE">Congé sans solde</option>
-                                    <option value="FORMATION">Congé formation</option>
+                                    <option value="ANNUEL" {{ absence and absence.getType_absence() == 'ANNUEL' ? 'selected' : '' }}>Congé annuel</option>
+                                    <option value="MALADIE" {{ absence and absence.getType_absence() == 'MALADIE' ? 'selected' : '' }}>Congé maladie</option>
+                                    <option value="MATERNITE" {{ absence and absence.getType_absence() == 'MATERNITE' ? 'selected' : '' }}>Congé maternité</option>
+                                    <option value="PATERNITE" {{ absence and absence.getType_absence() == 'PATERNITE' ? 'selected' : '' }}>Congé paternité</option>
+                                    <option value="SANS_SOLDE" {{ absence and absence.getType_absence() == 'SANS_SOLDE' ? 'selected' : '' }}>Congé sans solde</option>
+                                    <option value="FORMATION" {{ absence and absence.getType_absence() == 'FORMATION' ? 'selected' : '' }}>Congé formation</option>
                                 </select>
                                 <div class="invalid-feedback">Veuillez sélectionner un type de congé.</div>
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label for="motif" class="form-label">Motif (optionnel)</label>
-                                <textarea class="form-control" id="motif" name="motif" rows="3" placeholder="Précisez le motif de votre demande..."></textarea>
+                                <textarea class="form-control" id="motif" name="motif" rows="3" placeholder="Précisez le motif de votre demande...">{{ conge.getCommentaire_validation() ?? '' }}</textarea>
                             </div>
                         </div>
 

@@ -14,10 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-<<<<<<< HEAD
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\HttpFoundation\Request;
-use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\CongeRepository;
 use App\Repository\UserRepository;
 use App\Repository\AbsenceRepository;
@@ -25,8 +22,6 @@ use App\Repository\FormationRepository;
 use App\Entity\Conge;
 use App\Entity\Absence;
 use App\Entity\Formation;
-=======
->>>>>>> main
 
 #[Route('/admin')]
 class AdminController extends AbstractController
@@ -558,7 +553,15 @@ class AdminController extends AbstractController
 
             $conges = $qb->getQuery()->getResult();
         } else {
-            $conges = $congeRepository->findAll();
+            // Récupérer tous les congés avec leurs relations absence et user
+            $qb = $em->createQueryBuilder();
+            $qb->select('c', 'a', 'u')
+                ->from(Conge::class, 'c')
+                ->leftJoin('c.absence', 'a')
+                ->leftJoin('a.user', 'u')
+                ->orderBy('c.date_demande', 'DESC');
+
+            $conges = $qb->getQuery()->getResult();
         }
 
         return $this->render('admin/conge/index.html.twig', [
