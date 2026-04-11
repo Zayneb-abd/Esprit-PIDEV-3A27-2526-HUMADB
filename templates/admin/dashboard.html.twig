@@ -1,0 +1,130 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Dashboard Utilisateurs{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0 fw-bold">Tableau de bord</h4>
+        <small class="text-muted">Vue d'ensemble des utilisateurs</small>
+    </div>
+    <a href="{{ path('admin_user_add') }}" class="btn btn-sm btn-primary">
+        <i class="ti ti-plus me-1"></i> Nouvel utilisateur
+    </a>
+</div>
+
+{# ── STAT CARDS ── #}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card-blue">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon"><i class="ti ti-users text-blue fs-5"></i></div>
+                <div>
+                    <p class="mb-0 small text-muted">Total utilisateurs</p>
+                    <h3 class="mb-0 fw-bold">{{ total_users }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% for role, count in count_by_role %}
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card-orange">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon"><i class="ti ti-shield text-orange fs-5"></i></div>
+                <div>
+                    <p class="mb-0 small text-muted">{{ role ?? 'Inconnu' }}</p>
+                    <h3 class="mb-0 fw-bold">{{ count }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{# ── RECENT USERS ── #}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
+        <h6 class="mb-0 fw-semibold">Inscriptions récentes</h6>
+        <a href="{{ path('admin_users') }}" class="btn btn-sm btn-outline-primary">Voir tous <i class="ti ti-arrow-right ms-1"></i></a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4">Utilisateur</th>
+                        <th>Email</th>
+                        <th>Rôle</th>
+                        <th>Réputation</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in recent_users %}
+                    <tr>
+                        <td class="px-4">
+                            <div class="d-flex align-items-center gap-2">
+                                {% if user.faceImage %}
+                                    <img src="{{ asset('uploads/faces/' ~ user.faceImage) }}" class="avatar-sm rounded-circle" alt="">
+                                {% else %}
+                                    <div class="avatar-sm rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold" style="width:32px;height:32px;font-size:13px;">
+                                        {{ user.prenom|first|upper }}
+                                    </div>
+                                {% endif %}
+                                <strong>{{ user.prenom }} {{ user.nom }}</strong>
+                            </div>
+                        </td>
+                        <td class="text-muted small">{{ user.email }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ user.role ?? 'USER' }}</span>
+                        </td>
+                        <td>
+                            {% set badge = user.reputationBadge %}
+                            <span class="badge {% if badge == 'Gold' %}bg-warning text-dark{% elseif badge == 'Silver' %}bg-secondary{% else %}bg-danger{% endif %}">
+                                {{ badge }} ({{ user.reputationScore }})
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ path('admin_user_edit', {id: user.id}) }}" class="btn btn-xs btn-outline-secondary btn-sm">
+                                <i class="ti ti-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="text-center text-muted py-4">Aucun utilisateur.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{# ── QUICK LINKS ── #}
+<div class="row g-3 mt-2">
+    <div class="col-md-4">
+        <a href="{{ path('admin_users') }}" class="card text-decoration-none h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="ti ti-users fs-3 text-primary"></i>
+                <div><strong>Gérer les utilisateurs</strong><br><small class="text-muted">Ajouter, modifier, supprimer</small></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ path('admin_logs') }}" class="card text-decoration-none h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="ti ti-list-details fs-3 text-info"></i>
+                <div><strong>Journal d'activité</strong><br><small class="text-muted">Voir tous les logs</small></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ path('admin_inventory') }}" class="card text-decoration-none h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="ti ti-briefcase fs-3 text-warning"></i>
+                <div><strong>Recrutement</strong><br><small class="text-muted">Offres et candidatures</small></div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

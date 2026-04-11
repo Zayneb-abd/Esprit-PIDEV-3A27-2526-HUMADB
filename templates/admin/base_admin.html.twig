@@ -419,9 +419,9 @@
                 </a>
             </li>
             <li>
-                <a href="{{ path('admin_product_create') }}" class="{% if app.request.attributes.get('_route') == 'admin_product_create' %}active{% endif %}">
-                    <i class="ti ti-plus"></i>
-                    <span>Add Product</span>
+                <a href="{{ path('admin_publication_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_publication' or app.request.attributes.get('_route') starts with 'admin_commentaire' or app.request.attributes.get('_route') == 'admin_product_create' %}active{% endif %}">
+                    <i class="ti ti-news"></i>
+                    <span>Publications</span>
                 </a>
             </li>
             <li>
@@ -443,6 +443,24 @@
                         <a href="{{ path('admin_participation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_participation' %}active{% endif %}">Gestion des participations</a>
                     </li>
                 </ul>
+            </li>
+            <li>
+                <a href="{{ path('admin_users') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_user' %}active{% endif %}">
+                    <i class="ti ti-users"></i>
+                    <span>Utilisateurs</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('admin_logs') }}" class="{% if app.request.attributes.get('_route') == 'admin_logs' %}active{% endif %}">
+                    <i class="ti ti-list-details"></i>
+                    <span>Journal d'activité</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('admin_feedback_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_feedback' %}active{% endif %}">
+                    <i class="ti ti-messages"></i>
+                    <span>Feedbacks</span>
+                </a>
             </li>
             
             <li class="menu-label">Account</li>

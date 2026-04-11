@@ -151,6 +151,23 @@
             width: 20px;
             text-align: center;
         }
+
+        .sidebar-menu li ul li a {
+            padding: 8px 20px 8px 52px;
+            font-size: 13px;
+        }
+
+        .sidebar-menu li a[data-bs-toggle="collapse"]::after {
+            content: "\eb2e";
+            font-family: 'tabler-icons';
+            margin-left: auto;
+            transition: transform 0.3s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a[data-bs-toggle="collapse"]:not(.collapsed)::after {
+            transform: rotate(90deg);
+        }
         
         /* ==========================================
            TOPBAR
@@ -396,15 +413,21 @@
                 </a>
             </li>
             <li>
+                <a href="{{ path('employ_feedback_index') }}" class="{% if 'employ_feedback' in app.request.attributes.get('_route') %}active{% endif %}">
+                    <i class="ti ti-message-report"></i>
+                    <span>Mes Feedbacks</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ path('employ_inventory') }}" class="{% if app.request.attributes.get('_route') == 'employ_inventory' %}active{% endif %}">
                     <i class="ti ti-box-seam"></i>
                     <span>Gestion de recrutement</span>
                 </a>
             </li>
             <li>
-                <a href="{{ path('employ_product_create') }}" class="{% if app.request.attributes.get('_route') == 'employ_product_create' %}active{% endif %}">
-                    <i class="ti ti-plus"></i>
-                    <span>Add Product</span>
+                <a href="{{ path('employ_publication_index') }}" class="{% if app.request.attributes.get('_route') starts with 'employ_publication' or app.request.attributes.get('_route') starts with 'employ_commentaire' or app.request.attributes.get('_route') == 'employ_product_create' %}active{% endif %}">
+                    <i class="ti ti-news"></i>
+                    <span>Publications</span>
                 </a>
             </li>
             <li>
@@ -414,10 +437,27 @@
                 </a>
             </li>
             <li>
-                <a href="{{ path('employ_formation_index') }}" class="{% if app.request.attributes.get('_route') in ['employ_formation_index', 'employ_formation_new', 'employ_formation_show', 'employ_formation_edit'] %}active{% endif %}">
+                <a href="#formationSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'employ_formation' or app.request.attributes.get('_route') starts with 'employ_participation' %}active{% else %}collapsed{% endif %}">
                     <i class="ti ti-school"></i>
-                    <span>Formation</span>
+                    <span>Formations</span>
                 </a>
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'employ_formation' or app.request.attributes.get('_route') starts with 'employ_participation' %}show{% endif %}" id="formationSubmenu">
+                    <li>
+                        <a href="{{ path('employ_formation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'employ_formation' %}active{% endif %}">
+                            Gestion des formations
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('employ_participation_formations') }}" class="{% if app.request.attributes.get('_route') == 'employ_participation_formations' %}active{% endif %}">
+                            S'inscrire aux formations
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('employ_participation_index') }}" class="{% if app.request.attributes.get('_route') == 'employ_participation_index' %}active{% endif %}">
+                            Mes participations
+                        </a>
+                    </li>
+                </ul>
             </li>
             <li>
                 <a href="{{ path('employ_docs') }}">
@@ -550,6 +590,14 @@
        MAIN CONTENT
        ========================================== #}
     <main class="main-content">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
         {% block body %}{% endblock %}
     </main>
     
