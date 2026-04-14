@@ -23,6 +23,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
@@ -205,6 +206,70 @@ class AdminController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_users');
+    }
+
+    #[Route('/users/{id}/toggle-status', name: 'admin_user_toggle_status', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function toggleUserStatus(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+    ): Response {
+        $user = $userRepository->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        if ($this->isCsrfTokenValid('toggle_status_user_' . $id, (string) $request->request->get('_token'))) {
+            $user->setIsActive(!$user->isActive());
+            $em->flush();
+
+            $this->addFlash('success', $user->isActive()
+                ? 'Compte utilisateur active.'
+                : 'Compte utilisateur desactive.');
+        }
+
+        return $this->redirectToRoute('admin_users', [
+            'q' => (string) $request->query->get('q', ''),
+            'role' => (string) $request->query->get('role', ''),
+            'page' => (int) $request->query->get('page', 1),
+        ]);
+    }
+
+    #[Route('/users/export', name: 'admin_users_export', methods: ['GET'])]
+    public function exportUsers(Request $request, UserRepository $userRepository): StreamedResponse
+    {
+        $search = trim((string) $request->query->get('q', ''));
+        $role = trim((string) $request->query->get('role', ''));
+        $users = $userRepository->findForExport($search, $role);
+
+        $response = new StreamedResponse(function () use ($users): void {
+            $handle = fopen('php://output', 'w');
+            if (!$handle) {
+                return;
+            }
+
+            fputcsv($handle, ['id', 'nom', 'prenom', 'email', 'role', 'is_active', 'reputation_score', 'date_naissance']);
+            foreach ($users as $user) {
+                fputcsv($handle, [
+                    $user->getId(),
+                    $user->getNom(),
+                    $user->getPrenom(),
+                    $user->getEmail(),
+                    $user->getRole(),
+                    $user->isActive() ? '1' : '0',
+                    $user->getReputationScore(),
+                    $user->getDateNaissance() ? $user->getDateNaissance()->format('Y-m-d') : '',
+                ]);
+            }
+            fclose($handle);
+        });
+
+        $filename = 'users_export_' . (new \DateTime())->format('Ymd_His') . '.csv';
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+        return $response;
     }
 
     // ─────────────── LOGS ───────────────
