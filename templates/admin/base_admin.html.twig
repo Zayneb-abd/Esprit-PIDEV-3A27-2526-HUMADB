@@ -438,6 +438,9 @@
                     <li>
                         <a href="{{ path('admin_formation') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_formation' %}active{% endif %}">Gestion des formations</a>
                     </li>
+                    <li>
+                        <a href="{{ path('admin_participation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_participation' %}active{% endif %}">Gestion des participations</a>
+                    </li>
                 </ul>
             </li>
             <li>
@@ -451,6 +454,20 @@
                     </li>
                     <li>
                         <a href="{{ path('admin_inventory') }}" class="{% if app.request.attributes.get('_route') == 'admin_inventory' or app.request.attributes.get('_route') starts with 'admin_candidature' %}active{% endif %}">Candidatures</a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="#publicationSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'admin_publication' or app.request.attributes.get('_route') starts with 'admin_commentaire' %}active{% else %}collapsed{% endif %}">
+                    <i class="ti ti-message-circle"></i>
+                    <span>Publications</span>
+                </a>
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'admin_publication' or app.request.attributes.get('_route') starts with 'admin_commentaire' %}show{% endif %}" id="publicationSubmenu">
+                    <li>
+                        <a href="{{ path('admin_publication') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_publication' %}active{% endif %}">Gestion des publications</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_commentaire') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_commentaire' %}active{% endif %}">Gestion des commentaires</a>
                     </li>
                 </ul>
             </li>
@@ -544,32 +561,42 @@
                 <!-- User Dropdown -->
                 <li class="ms-3 dropdown">
                     <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="" class="avatar avatar-sm rounded-circle" />
+                        {% if app.user.faceImage %}
+                            <img src="{{ asset('uploads/faces/' ~ app.user.faceImage) }}" alt="" class="avatar avatar-sm rounded-circle" />
+                        {% else %}
+                            <div class="avatar avatar-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="font-size: 14px;">
+                                {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+                            </div>
+                        {% endif %}
                     </a>
                     <div class="dropdown-menu dropdown-menu-end p-0" style="min-width: 200px;">
                         <div>
                             <div class="d-flex gap-3 align-items-center border-dashed border-bottom px-3 py-3">
-                                <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="" class="avatar avatar-md rounded-circle" />
+                                {% if app.user.faceImage %}
+                                    <img src="{{ asset('uploads/faces/' ~ app.user.faceImage) }}" alt="" class="avatar avatar-md rounded-circle" />
+                                {% else %}
+                                    <div class="avatar avatar-md rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="font-size: 18px;">
+                                        {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+                                    </div>
+                                {% endif %}
                                 <div>
-                                    <h4 class="mb-0 small">Shrina Tesla</h4>
-                                    <p class="mb-0 small">@imshrina</p>
+                                    <h4 class="mb-0 small">{{ app.user.prenom }} {{ app.user.nom }}</h4>
+                                    <p class="mb-0 small">{{ app.user.email }}</p>
                                 </div>
                             </div>
                             <div class="p-3 d-flex flex-column gap-1 small lh-lg">
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Home</span>
+                                <a href="{{ path('user_profile') }}" class="text-decoration-none text-dark">
+                                    <i class="ti ti-user me-2"></i><span>Mon profil</span>
                                 </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Inbox</span>
+                                <a href="{{ path('user_edit_profile') }}" class="text-decoration-none text-dark">
+                                    <i class="ti ti-edit me-2"></i><span>Modifier le profil</span>
                                 </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Chat</span>
+                                <a href="{{ path('user_change_password') }}" class="text-decoration-none text-dark">
+                                    <i class="ti ti-lock me-2"></i><span>Changer le mot de passe</span>
                                 </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Activity</span>
-                                </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Account Settings</span>
+                                <div class="border-top my-1"></div>
+                                <a href="{{ path('app_logout') }}" class="text-decoration-none text-danger">
+                                    <i class="ti ti-logout me-2"></i><span>Déconnexion</span>
                                 </a>
                             </div>
                         </div>

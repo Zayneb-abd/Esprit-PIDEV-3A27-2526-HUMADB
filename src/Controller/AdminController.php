@@ -22,6 +22,10 @@ use App\Repository\FormationRepository;
 use App\Entity\Conge;
 use App\Entity\Absence;
 use App\Entity\Formation;
+use App\Entity\Publication;
+use App\Entity\Commentaire;
+use App\Repository\PublicationRepository;
+use App\Repository\CommentaireRepository;
 
 #[Route('/admin')]
 class AdminController extends AbstractController
@@ -919,5 +923,128 @@ class AdminController extends AbstractController
 
         $this->addFlash('success', 'Formation supprimée avec succès.');
         return $this->redirectToRoute('admin_formation');
+    }
+
+    #[Route('/publication', name: 'admin_publication')]
+    public function publication(PublicationRepository $publicationRepository): Response
+    {
+        $publications = $publicationRepository->findBy([], ['date_publication' => 'DESC']);
+        return $this->render('admin/publication/index.html.twig', [
+            'publications' => $publications,
+        ]);
+    }
+
+    #[Route('/publication/new', name: 'admin_publication_new', methods: ['GET', 'POST'])]
+    public function newPublication(Request $request, EntityManagerInterface $em): Response
+    {
+        if ($request->isMethod('POST')) {
+            $contenu = $request->request->get('contenu');
+            $type = $request->request->get('type');
+
+            $publication = new Publication();
+            $publication->setContenu($contenu);
+            $publication->setType($type);
+            $publication->setDate_publication(new \DateTime());
+            $publication->setUser($this->getUser());
+
+            $em->persist($publication);
+            $em->flush();
+
+            $this->addFlash('success', 'Publication créée avec succès.');
+            return $this->redirectToRoute('admin_publication');
+        }
+
+        return $this->render('admin/publication/new.html.twig');
+    }
+
+    #[Route('/publication/{id}/edit', name: 'admin_publication_edit', methods: ['GET', 'POST'])]
+    public function editPublication(Publication $publication, Request $request, EntityManagerInterface $em): Response
+    {
+        if ($request->isMethod('POST')) {
+            $publication->setContenu($request->request->get('contenu'));
+            $publication->setType($request->request->get('type'));
+
+            $em->flush();
+            $this->addFlash('success', 'Publication modifiée avec succès.');
+            return $this->redirectToRoute('admin_publication');
+        }
+
+        return $this->render('admin/publication/edit.html.twig', [
+            'publication' => $publication,
+        ]);
+    }
+
+    #[Route('/publication/{id}/delete', name: 'admin_publication_delete', methods: ['POST'])]
+    public function deletePublication(Publication $publication, EntityManagerInterface $em): Response
+    {
+        $em->remove($publication);
+        $em->flush();
+
+        $this->addFlash('success', 'Publication supprimée avec succès.');
+        return $this->redirectToRoute('admin_publication');
+    }
+
+    #[Route('/commentaire', name: 'admin_commentaire')]
+    public function commentaire(CommentaireRepository $commentaireRepository): Response
+    {
+        $commentaires = $commentaireRepository->findBy([], ['date_commentaire' => 'DESC']);
+        return $this->render('admin/commentaire/index.html.twig', [
+            'commentaires' => $commentaires,
+        ]);
+    }
+
+    #[Route('/commentaire/new', name: 'admin_commentaire_new', methods: ['GET', 'POST'])]
+    public function newCommentaire(Request $request, EntityManagerInterface $em): Response
+    {
+        $publicationId = $request->query->get('publication');
+        $publication = $em->getRepository(Publication::class)->find($publicationId);
+
+        if ($request->isMethod('POST')) {
+            $contenu = $request->request->get('contenu');
+            $publicationId = $request->request->get('publication_id');
+            $publication = $em->getRepository(Publication::class)->find($publicationId);
+
+            $commentaire = new Commentaire();
+            $commentaire->setContenu($contenu);
+            $commentaire->setDate_commentaire(new \DateTime());
+            $commentaire->setPublication($publication);
+            $commentaire->setUser($this->getUser());
+
+            $em->persist($commentaire);
+            $em->flush();
+
+            $this->addFlash('success', 'Commentaire ajouté avec succès.');
+            return $this->redirectToRoute('admin_publication');
+        }
+
+        return $this->render('admin/commentaire/new.html.twig', [
+            'publication' => $publication,
+        ]);
+    }
+
+    #[Route('/commentaire/{id}/edit', name: 'admin_commentaire_edit', methods: ['GET', 'POST'])]
+    public function editCommentaire(Commentaire $commentaire, Request $request, EntityManagerInterface $em): Response
+    {
+        if ($request->isMethod('POST')) {
+            $commentaire->setContenu($request->request->get('contenu'));
+
+            $em->flush();
+            $this->addFlash('success', 'Commentaire modifié avec succès.');
+            return $this->redirectToRoute('admin_publication');
+        }
+
+        return $this->render('admin/commentaire/edit.html.twig', [
+            'commentaire' => $commentaire,
+        ]);
+    }
+
+    #[Route('/commentaire/{id}/delete', name: 'admin_commentaire_delete', methods: ['POST'])]
+    public function deleteCommentaire(Commentaire $commentaire, EntityManagerInterface $em): Response
+    {
+        $em->remove($commentaire);
+        $em->flush();
+
+        $this->addFlash('success', 'Commentaire supprimé avec succès.');
+        return $this->redirectToRoute('admin_publication');
     }
 }

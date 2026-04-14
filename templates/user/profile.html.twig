@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends is_granted('ROLE_EMPLOYE') ? 'employ/base_employe.html.twig' : (is_granted('ROLE_CANDIDAT') or is_granted('ROLE_CONDIDAT') ? 'candidat/base_candidat.html.twig' : 'base_user.html.twig') %}
 
 {% block title %}Mon profil - {{ user.prenom }} {{ user.nom }}{% endblock %}
 

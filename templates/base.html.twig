@@ -27,21 +27,29 @@
                         <a class="nav-link" href="{{ path('client_services') }}">Services</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ path('client_contact') }}">Contact</a>
+                        <a class="nav-link" href="{{ path('contact_index') }}">Contact</a>
                     </li>
                 </ul>
-                <ul class="navbar-nav">
+                <ul class="navbar-nav align-items-center">
                     {% if app.user %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                {{ app.user.prenom }} {{ app.user.nom }}
+                        <li class="nav-item d-flex align-items-center gap-2">
+                            <a class="nav-link d-flex align-items-center gap-2 p-0" href="{{ path('user_profile') }}">
+                                {% if app.user.faceImage %}
+                                    <img src="{{ asset('uploads/faces/' ~ app.user.faceImage) }}" alt="Avatar" class="rounded-circle" width="32" height="32" style="object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 14px;">
+                                        {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+                                    </div>
+                                {% endif %}
+                                <span>{{ app.user.prenom }} {{ app.user.nom }}</span>
                             </a>
+                            <a class="nav-link dropdown-toggle ps-0" href="#" role="button" data-bs-toggle="dropdown"></a>
                             <ul class="dropdown-menu">
                                 {% if is_granted('ROLE_ADMIN') %}
                                     <li><a class="dropdown-item" href="{{ path('admin_dashboard') }}">Administration</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                 {% endif %}
-                                <li><a class="dropdown-item" href="{{ path('user_profile') }}">Mon profil</a></li>
+                                <li><a class="dropdown-item" href="{{ path('user_profile') }}"><i class="bi bi-person me-2"></i>Mon profil</a></li>
                                 <li><a class="dropdown-item" href="{{ path('user_edit_profile') }}">Modifier le profil</a></li>
                                 <li><a class="dropdown-item" href="{{ path('user_change_password') }}">Changer le mot de passe</a></li>
                                 <li><hr class="dropdown-divider"></li>
