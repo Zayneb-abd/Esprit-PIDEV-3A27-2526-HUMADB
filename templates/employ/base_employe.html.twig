@@ -12,32 +12,56 @@
     {# Tabler Icons #}
     <link href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/iconfont/tabler-icons.min.css" rel="stylesheet">
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --body-bg: #f5f6fa;
-            --text-dark: #333333;
-            --text-muted: #6c757d;
+            --primary-teal: #1a5f5f;
+            --primary-teal-light: #2d7a7a;
+            --accent-cyan: #4ecdc4;
+            --dark-bg: #1a3a3a;
+            --body-bg: #f8f9fa;
+            --text-dark: #2c3e50;
+            --text-muted: #5a6c7d;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Open Sans', sans-serif;
             background-color: var(--body-bg);
             font-size: 14px;
             line-height: 1.5;
             color: var(--text-dark);
         }
         
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+        }
+        
         /* Navbar Styles */
         .navbar-employe {
             background: white;
             border-bottom: 1px solid #e9ecef;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 20px rgba(26, 95, 95, 0.1);
+        }
+        
+        .navbar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
         }
         
         .navbar-brand img {
             height: 40px;
+        }
+        
+        .huma-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .navbar-nav .nav-link {
@@ -50,14 +74,14 @@
         
         .navbar-nav .nav-link:hover,
         .navbar-nav .nav-link.active {
-            background: #f0f3ff;
-            color: var(--primary) !important;
+            background: rgba(26, 95, 95, 0.1);
+            color: var(--primary-teal) !important;
         }
         
         /* Dropdown Styles */
         .dropdown-menu {
             border: none;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 40px rgba(26, 95, 95, 0.15);
             border-radius: 12px;
         }
         
@@ -69,7 +93,12 @@
         }
         
         .dropdown-item:hover {
-            background: #f0f3ff;
+            background: rgba(78, 205, 196, 0.1);
+            color: var(--primary-teal);
+        }
+        
+        .dropdown-item i {
+            color: var(--accent-cyan);
         }
         
         /* Avatar Styles */
@@ -85,6 +114,10 @@
             height: 32px;
         }
         
+        .bg-primary {
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--accent-cyan) 100%) !important;
+        }
+        
         /* Notification Badge */
         .notification-badge {
             position: absolute;
@@ -94,6 +127,7 @@
             height: 18px;
             font-size: 10px;
             font-weight: 600;
+            background: var(--accent-cyan) !important;
         }
         
         /* Main Content */
@@ -102,11 +136,26 @@
             min-height: calc(100vh - 70px);
         }
         
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--accent-cyan) 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-teal-light) 0%, var(--accent-cyan) 100%);
+        }
+        
         /* Footer */
         footer {
-            background: white;
-            border-top: 1px solid #e9ecef;
+            background: var(--dark-bg);
+            color: rgba(255,255,255,0.7);
             padding: 20px 0;
+        }
+        
+        footer .huma-brand {
+            color: white;
+            -webkit-text-fill-color: white;
         }
     </style>
     
@@ -117,9 +166,9 @@
     <nav class="navbar navbar-expand-lg navbar-employe sticky-top">
         <div class="container-fluid px-4">
             {# Logo #}
-            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ path('employ_dashboard') }}">
-                <img src="{{ asset('logo/huma.png') }}" alt="HumaDB" style="height: 40px;">
-                <span class="fw-bold text-dark">Espace Employé</span>
+            <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none" href="{{ path('employ_dashboard') }}">
+                <span class="huma-brand fs-4">HUMA</span>
+                <span class="text-muted" style="font-size: 0.9rem;">| Espace Employé</span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -129,10 +178,18 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 {# Navigation Links - From Sidebar Menu #}
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link {% if app.request.attributes.get('_route') == 'employ_dashboard' %}active{% endif %}" href="{{ path('employ_dashboard') }}">
-                            <i class="ti ti-home me-1"></i>Dashboard
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if app.request.attributes.get('_route') starts with 'employ_conge' or app.request.attributes.get('_route') starts with 'employ_absence' or app.request.attributes.get('_route') == 'employ_dashboard' %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="ti ti-calendar-event me-1"></i>Congés & Absences
                         </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ path('employ_conges') }}">
+                                <i class="ti ti-calendar me-2"></i>Congés
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ path('employ_absences') }}">
+                                <i class="ti ti-calendar-x me-2"></i>Absences
+                            </a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if 'employ_feedback' in app.request.attributes.get('_route') %}active{% endif %}" href="{{ path('employ_feedback_index') }}">
@@ -154,11 +211,6 @@
                                 <i class="ti ti-check me-2"></i>Mes participations
                             </a></li>
                         </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if app.request.attributes.get('_route') == 'employ_inventory' %}active{% endif %}" href="{{ path('employ_inventory') }}">
-                            <i class="ti ti-box-seam me-1"></i>Gestion de recrutement
-                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if app.request.attributes.get('_route') starts with 'employ_publication' %}active{% endif %}" href="{{ path('employ_publication_index') }}">
@@ -197,7 +249,7 @@
                     
                     {# User Profile #}
                     <li class="nav-item dropdown">
-                        <a class="nav-link d-flex align-items-center gap-2 p-0" href="{{ path('user_profile') }}">
+                        <a class="nav-link d-flex align-items-center gap-2 p-0" href="#" role="button" data-bs-toggle="dropdown">
                             {% if app.user.faceImage %}
                                 <img src="{{ asset('uploads/faces/' ~ app.user.faceImage) }}" alt="Avatar" class="avatar avatar-sm">
                             {% else %}
@@ -207,7 +259,6 @@
                             {% endif %}
                             <span class="d-none d-lg-block">{{ app.user.prenom }} {{ app.user.nom }}</span>
                         </a>
-                        <a class="nav-link dropdown-toggle ps-0 d-none d-lg-block" href="#" role="button" data-bs-toggle="dropdown"></a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{{ path('user_profile') }}">
                                 <i class="ti ti-user me-2"></i>Mon profil
@@ -244,8 +295,8 @@
     
     {# Footer #}
     <footer>
-        <div class="container text-center text-muted">
-            <p class="mb-0">&copy; {{ "now"|date("Y") }} HUMADB. Tous droits réservés.</p>
+        <div class="container text-center">
+            <p class="mb-0">&copy; {{ "now"|date("Y") }} <span class="huma-brand">HUMA</span>. Tous droits réservés.</p>
         </div>
     </footer>
     

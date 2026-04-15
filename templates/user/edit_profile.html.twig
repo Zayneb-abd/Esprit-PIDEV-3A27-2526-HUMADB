@@ -1,4 +1,4 @@
-{% extends is_granted('ROLE_EMPLOYE') ? 'employ/base_employe.html.twig' : (is_granted('ROLE_CANDIDAT') or is_granted('ROLE_CONDIDAT') ? 'candidat/base_candidat.html.twig' : 'base_user.html.twig') %}
+{% extends is_granted('ROLE_MANAGER') ? 'manager/base_manager.html.twig' : (is_granted('ROLE_EMPLOYE') ? 'employ/base_employe.html.twig' : (is_granted('ROLE_CANDIDAT') or is_granted('ROLE_CONDIDAT') ? 'candidat/base_candidat.html.twig' : 'base_user.html.twig')) %}
 
 {% block title %}Modifier mon profil{% endblock %}
 
