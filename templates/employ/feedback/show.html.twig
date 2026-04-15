@@ -34,6 +34,18 @@
             <p class="mb-0 fs-5" style="white-space: pre-wrap;">{{ feedback.contenu }}</p>
         </div>
 
+        {% if feedback.autoResponse and feedback.autoResponseSentAt %}
+            <div class="mb-4 p-4 rounded-3 border-start border-4 border-success bg-white shadow-sm">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="fw-bold mb-0 text-success"><i class="ti ti-message-check me-2"></i>Réponse (RH)</h6>
+                    <small class="text-muted">
+                        {{ feedback.autoResponseSentAt ? feedback.autoResponseSentAt|date('d/m/Y H:i') : '' }}
+                    </small>
+                </div>
+                <div style="white-space: pre-wrap;">{{ feedback.autoResponse }}</div>
+            </div>
+        {% endif %}
+
         <div class="row text-muted small border-top pt-3">
             <div class="col-md-6">
                 <p class="mb-0"><i class="ti ti-calendar me-2"></i><strong>Date d'envoi :</strong> {{ feedback.dateEnvoi ? feedback.dateEnvoi|date('d/m/Y à H:i') : '' }}</p>

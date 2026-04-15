@@ -97,10 +97,17 @@ class AdminController extends AbstractController
 
             $faceImageFile = $form->get('faceImageFile')->getData();
             if ($faceImageFile) {
-                $safeFilename = $slugger->slug(pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_FILENAME));
-                $newFilename  = $safeFilename . '-' . uniqid() . '.' . $faceImageFile->guessExtension();
+                $safeFilename = (string) $slugger->slug(pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_FILENAME));
+                $extension = $faceImageFile->guessExtension() ?: pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/faces';
+
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0775, true);
+                }
+
                 try {
-                    $faceImageFile->move($this->getParameter('kernel.project_dir') . '/public/uploads/faces', $newFilename);
+                    $faceImageFile->move($uploadDir, $newFilename);
                     $user->setFaceImage($newFilename);
                 } catch (FileException) {
                     $this->addFlash('warning', 'Erreur lors du téléchargement de l\'image.');
@@ -151,10 +158,17 @@ class AdminController extends AbstractController
 
             $faceImageFile = $form->get('faceImageFile')->getData();
             if ($faceImageFile) {
-                $safeFilename = $slugger->slug(pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_FILENAME));
-                $newFilename  = $safeFilename . '-' . uniqid() . '.' . $faceImageFile->guessExtension();
+                $safeFilename = (string) $slugger->slug(pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_FILENAME));
+                $extension = $faceImageFile->guessExtension() ?: pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/faces';
+
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0775, true);
+                }
+
                 try {
-                    $faceImageFile->move($this->getParameter('kernel.project_dir') . '/public/uploads/faces', $newFilename);
+                    $faceImageFile->move($uploadDir, $newFilename);
                     $user->setFaceImage($newFilename);
                 } catch (FileException) {
                     $this->addFlash('warning', 'Erreur lors du téléchargement de l\'image.');

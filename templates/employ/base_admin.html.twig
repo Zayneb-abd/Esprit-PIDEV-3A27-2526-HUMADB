@@ -569,15 +569,23 @@
                 <!-- User Dropdown -->
                 <li class="ms-3 dropdown">
                     <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="" class="avatar avatar-sm rounded-circle" />
+                        {% if app.user and app.user.faceImage %}
+                            <img src="{{ asset('uploads/faces/' ~ app.user.faceImage) }}" alt="Avatar" class="avatar avatar-sm rounded-circle" />
+                        {% else %}
+                            <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="Avatar" class="avatar avatar-sm rounded-circle" />
+                        {% endif %}
                     </a>
                     <div class="dropdown-menu dropdown-menu-end p-0" style="min-width: 200px;">
                         <div>
                             <div class="d-flex gap-3 align-items-center border-dashed border-bottom px-3 py-3">
-                                <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="" class="avatar avatar-md rounded-circle" />
+                                {% if app.user and app.user.faceImage %}
+                                    <img src="{{ asset('uploads/faces/' ~ app.user.faceImage) }}" alt="Avatar" class="avatar avatar-md rounded-circle" />
+                                {% else %}
+                                    <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="Avatar" class="avatar avatar-md rounded-circle" />
+                                {% endif %}
                                 <div>
-                                    <h4 class="mb-0 small">Shrina Tesla</h4>
-                                    <p class="mb-0 small">@imshrina</p>
+                                    <h4 class="mb-0 small">{{ app.user and app.user.prenom is defined ? app.user.prenom ~ ' ' ~ app.user.nom : 'Utilisateur' }}</h4>
+                                    <p class="mb-0 small">{{ app.user and app.user.email is defined ? app.user.email : '' }}</p>
                                 </div>
                             </div>
                             <div class="p-3 d-flex flex-column gap-1 small lh-lg">

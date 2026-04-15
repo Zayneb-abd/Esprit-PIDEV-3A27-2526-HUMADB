@@ -136,6 +136,15 @@ class Feedback
     )]
     private ?string $status = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $auto_response = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $auto_response_generated_at = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $auto_response_sent_at = null;
+
     public function getStatus(): ?string
     {
         return $this->status;
@@ -144,6 +153,39 @@ class Feedback
     public function setStatus(?string $status): self
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function getAutoResponse(): ?string
+    {
+        return $this->auto_response;
+    }
+
+    public function setAutoResponse(?string $autoResponse): self
+    {
+        $this->auto_response = $autoResponse;
+        return $this;
+    }
+
+    public function getAutoResponseGeneratedAt(): ?\DateTimeInterface
+    {
+        return $this->auto_response_generated_at;
+    }
+
+    public function setAutoResponseGeneratedAt(?\DateTimeInterface $generatedAt): self
+    {
+        $this->auto_response_generated_at = $generatedAt;
+        return $this;
+    }
+
+    public function getAutoResponseSentAt(): ?\DateTimeInterface
+    {
+        return $this->auto_response_sent_at;
+    }
+
+    public function setAutoResponseSentAt(?\DateTimeInterface $sentAt): self
+    {
+        $this->auto_response_sent_at = $sentAt;
         return $this;
     }
 

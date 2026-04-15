@@ -5,10 +5,14 @@ namespace App\Controller;
 use App\Entity\Feedback;
 use App\Form\AdminFeedbackType;
 use App\Repository\FeedbackRepository;
+use App\Repository\UserRepository;
+use App\Service\FeedbackAutoResponseGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/admin/feedback')]
@@ -51,6 +55,89 @@ class AdminFeedbackController extends AbstractController
             'feedback' => $feedback,
             'form' => $form->createView(),
         ]);
+    }
+
+    #[Route('/{id}/auto-response', name: 'admin_feedback_auto_response', methods: ['POST'])]
+    public function generateAutoResponse(
+        Request $request,
+        Feedback $feedback,
+        FeedbackAutoResponseGenerator $generator,
+        EntityManagerInterface $entityManager
+    ): Response {
+        if (!$this->isCsrfTokenValid('feedback_ai_' . $feedback->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('admin_feedback_edit', ['id' => $feedback->getId()]);
+        }
+
+        $text = $generator->generate($feedback);
+        $feedback->setAutoResponse($text);
+        $feedback->setAutoResponseGeneratedAt(new \DateTime());
+        $feedback->setAutoResponseSentAt(null);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Réponse AI générée.');
+        return $this->redirectToRoute('admin_feedback_edit', ['id' => $feedback->getId()]);
+    }
+
+    #[Route('/{id}/send-reply', name: 'admin_feedback_send_reply', methods: ['POST'])]
+    public function sendReplyToEmployee(
+        Request $request,
+        Feedback $feedback,
+        UserRepository $userRepository,
+        MailerInterface $mailer,
+        EntityManagerInterface $entityManager
+    ): Response {
+        if (!$this->isCsrfTokenValid('feedback_send_' . $feedback->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('admin_feedback_edit', ['id' => $feedback->getId()]);
+        }
+
+        $replyText = trim((string) $request->request->get('reply_text', ''));
+        if ($replyText === '') {
+            $this->addFlash('danger', 'La réponse ne peut pas être vide.');
+            return $this->redirectToRoute('admin_feedback_edit', ['id' => $feedback->getId()]);
+        }
+
+        $employeeId = $feedback->getEmployeId();
+        if (!$employeeId) {
+            $this->addFlash('danger', 'Impossible d\'identifier l\'employé lié à ce feedback.');
+            return $this->redirectToRoute('admin_feedback_edit', ['id' => $feedback->getId()]);
+        }
+
+        $employee = $userRepository->find($employeeId);
+        if (!$employee || !$employee->getEmail()) {
+            $this->addFlash('danger', 'Aucun email valide trouvé pour cet employé.');
+            return $this->redirectToRoute('admin_feedback_edit', ['id' => $feedback->getId()]);
+        }
+
+        try {
+            $email = (new Email())
+                ->from('noreply@humadb.com')
+                ->to($employee->getEmail())
+                ->subject('Réponse à votre feedback #' . $feedback->getId())
+                ->html(sprintf(
+                    '<p>Bonjour %s,</p><p>Nous avons traité votre feedback.</p><p><strong>Votre message :</strong></p><blockquote>%s</blockquote><p><strong>Notre réponse :</strong></p><blockquote>%s</blockquote><p>Cordialement,<br>Équipe RH</p>',
+                    htmlspecialchars((string) $employee->getPrenom()),
+                    nl2br(htmlspecialchars((string) $feedback->getContenu())),
+                    nl2br(htmlspecialchars($replyText))
+                ));
+
+            $mailer->send($email);
+        } catch (\Throwable) {
+            $this->addFlash('danger', 'Échec de l\'envoi de l\'email. Vérifiez la configuration MAILER_DSN.');
+            return $this->redirectToRoute('admin_feedback_edit', ['id' => $feedback->getId()]);
+        }
+
+        $feedback->setAutoResponse($replyText);
+        $feedback->setAutoResponseSentAt(new \DateTime());
+        if ($feedback->getStatus() !== 'traite') {
+            $feedback->setStatus('traite');
+        }
+        $feedback->setUser($this->getUser());
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Réponse envoyée à l\'employé avec succès.');
+        return $this->redirectToRoute('admin_feedback_edit', ['id' => $feedback->getId()]);
     }
 
     #[Route('/{id}/delete', name: 'admin_feedback_delete', methods: ['POST'])]
