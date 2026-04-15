@@ -16,6 +16,7 @@ use App\Form\PublicationType;
 use App\Repository\CandidatureRepository;
 use App\Repository\LogRepository;
 use App\Repository\OffreEmploiRepository;
+use App\Repository\FeedbackRepository;
 use App\Repository\PublicationRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -35,16 +36,22 @@ class AdminController extends AbstractController
 
     #[Route('/', name: 'admin_dashboard')]
     #[Route('/dashboard', name: 'admin_dashboard_alt')]
-    public function dashboard(UserRepository $userRepository): Response
+    public function dashboard(UserRepository $userRepository, FeedbackRepository $feedbackRepository): Response
     {
         $totalUsers = $userRepository->count([]);
         $countByRole = $userRepository->countByRole();
         $recentUsers = $userRepository->findRecentUsers(5);
 
+        $feedbackByStatus = $feedbackRepository->countByStatus();
+        $feedbackTimeline = $feedbackRepository->countByDayLastDays(7);
+
         return $this->render('admin/dashboard.html.twig', [
             'total_users'  => $totalUsers,
             'count_by_role' => $countByRole,
             'recent_users' => $recentUsers,
+            'feedback_by_status' => $feedbackByStatus,
+            'feedback_timeline_labels' => $feedbackTimeline['labels'],
+            'feedback_timeline_data' => $feedbackTimeline['data'],
         ]);
     }
 

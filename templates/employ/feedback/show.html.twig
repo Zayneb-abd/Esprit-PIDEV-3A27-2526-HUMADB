@@ -16,8 +16,23 @@
 <div class="card border-0 shadow-sm p-4">
     <div class="card-body">
         
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-            <h5 class="fw-bold mb-0 text-primary"><i class="ti ti-tag me-2"></i>{{ feedback.category }}</h5>
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold mb-1 text-primary"><i class="ti ti-tag me-2"></i>{{ feedback.category }}</h5>
+                <div class="small text-muted">
+                    Priorité (RH) :
+                    {% set p = feedback.priority %}
+                    {% if p == 'urgente' %}
+                        <span class="badge bg-danger">Urgente</span>
+                    {% elseif p == 'haute' %}
+                        <span class="badge bg-warning text-dark">Haute</span>
+                    {% elseif p == 'bas' %}
+                        <span class="badge bg-secondary">Basse</span>
+                    {% else %}
+                        <span class="badge bg-info text-dark">Normale</span>
+                    {% endif %}
+                </div>
+            </div>
             
             {% if feedback.status == 'nouveau' %}
                 <span class="badge bg-danger rounded-pill px-3 py-2 fs-6 shadow-sm"><i class="ti ti-sparkles me-1 text-white"></i> Nouveau</span>

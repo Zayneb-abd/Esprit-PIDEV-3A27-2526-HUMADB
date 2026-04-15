@@ -22,11 +22,29 @@ class AdminFeedbackController extends AbstractController
     public function index(Request $request, FeedbackRepository $feedbackRepository): Response
     {
         $query = trim((string) $request->query->get('q', ''));
-        $feedbacks = $feedbackRepository->searchForAdmin($query);
+        $priorityFilter = trim((string) $request->query->get('priority', ''));
+        $priorityFilter = $priorityFilter !== '' ? $priorityFilter : null;
+
+        $feedbacks = $feedbackRepository->searchForAdmin($query, $priorityFilter);
+
+        $byStatus = $feedbackRepository->countByStatus();
+        $byCategory = $feedbackRepository->countByCategory();
+        $byPriority = $feedbackRepository->countByPriority();
+        $timeline = $feedbackRepository->countByDayLastDays(7);
+        $feedbackTotal = array_sum($byStatus);
 
         return $this->render('admin/feedback/index.html.twig', [
             'feedbacks' => $feedbacks,
             'query' => $query,
+            'priority_filter' => $priorityFilter ?? '',
+            'feedback_stats' => [
+                'total' => $feedbackTotal,
+                'by_status' => $byStatus,
+                'by_category' => $byCategory,
+                'by_priority' => $byPriority,
+                'timeline_labels' => $timeline['labels'],
+                'timeline_data' => $timeline['data'],
+            ],
         ]);
     }
 

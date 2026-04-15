@@ -136,6 +136,13 @@ class Feedback
     )]
     private ?string $status = null;
 
+    #[ORM\Column(type: 'string', length: 20, options: ['default' => 'normal'])]
+    #[Assert\Choice(
+        choices: ['bas', 'normal', 'haute', 'urgente'],
+        message: 'Priorite invalide.'
+    )]
+    private string $priority = 'normal';
+
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $auto_response = null;
 
@@ -153,6 +160,17 @@ class Feedback
     public function setStatus(?string $status): self
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function getPriority(): string
+    {
+        return $this->priority;
+    }
+
+    public function setPriority(string $priority): self
+    {
+        $this->priority = $priority;
         return $this;
     }
 

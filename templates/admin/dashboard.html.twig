@@ -42,6 +42,31 @@
     {% endfor %}
 </div>
 
+{# ── FEEDBACK STATS ── #}
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-semibold"><i class="ti ti-message-2 me-2 text-primary"></i>Feedbacks — 7 derniers jours</h6>
+                <a href="{{ path('admin_feedback_index') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+            </div>
+            <div class="card-body">
+                <canvas id="adminDashboardFeedbackLine" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-semibold"><i class="ti ti-chart-donut me-2 text-primary"></i>Feedbacks par statut</h6>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="adminDashboardFeedbackStatus" style="max-height:220px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 {# ── RECENT USERS ── #}
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
@@ -127,4 +152,53 @@
         </a>
     </div>
 </div>
+{% endblock %}
+
+{% block js %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const labels = {{ feedback_timeline_labels|json_encode|raw }};
+    const data = {{ feedback_timeline_data|json_encode|raw }};
+    const byStatus = {{ feedback_by_status|json_encode|raw }};
+    const stLabels = Object.keys(byStatus).map(s => ({ 'nouveau': 'Nouveau', 'en_cours': 'En cours', 'traite': 'Traité', 'rejete': 'Rejeté' }[s] || s));
+    const stData = Object.values(byStatus);
+
+    if (document.getElementById('adminDashboardFeedbackLine')) {
+        new Chart(document.getElementById('adminDashboardFeedbackLine'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Feedbacks',
+                    data: data,
+                    borderColor: 'rgb(99, 102, 241)',
+                    backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                    fill: true,
+                    tension: 0.35
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+    if (document.getElementById('adminDashboardFeedbackStatus')) {
+        new Chart(document.getElementById('adminDashboardFeedbackStatus'), {
+            type: 'doughnut',
+            data: {
+                labels: stLabels.length ? stLabels : ['—'],
+                datasets: [{
+                    data: stData.length ? stData : [0],
+                    backgroundColor: ['#ef4444', '#f59e0b', '#22c55e', '#64748b', '#6366f1']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+})();
+</script>
 {% endblock %}

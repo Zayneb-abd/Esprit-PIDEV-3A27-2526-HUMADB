@@ -47,6 +47,7 @@ class EmployeFeedbackController extends AbstractController
             $feedback->setEmployeId($user->getId());
             $feedback->setDateEnvoi(new \DateTime());
             $feedback->setStatus('nouveau');
+            $feedback->setPriority('normal');
 
             if ($feedback->isEstAnonyme() === null) {
                 $feedback->setEstAnonyme(false);
