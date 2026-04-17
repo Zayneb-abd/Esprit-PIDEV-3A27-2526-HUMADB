@@ -1,46 +1,168 @@
 {% extends 'admin/base_admin.html.twig' %}
 
-{% block title %}Modifier la Formation{% endblock %}
+{% block title %}Modifier Formation{% endblock %}
 
 {% block body %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
             <div class="mb-4">
-                <h1 class="fs-3 mb-1">Modifier la Formation</h1>
-                <p class="mb-0">Mettez à jour les informations de la formation</p>
+                <h1 class="fs-3 mb-1">Modifier Formation</h1>
+                <p class="mb-0">Modifier les informations de la formation</p>
             </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-8 col-12 mx-auto">
-            <div class="card p-4">
-                {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-                    <div class="mb-3">
-                        {{ form_row(form.sujet) }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.formateur) }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.type) }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.dateDebut) }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.duree) }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.localisation) }}
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                        <a href="{{ path('admin_formation_index') }}" class="btn btn-outline-secondary">Retour à la liste</a>
-                    </div>
-                {{ form_end(form) }}
+
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ path('admin_formation_edit', {id: formation.id}) }}" method="POST" id="formationForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sujet" class="form-label">Sujet <span class="text-danger">*</span></label>
+                                <input type="text" name="sujet" id="sujet" class="form-control" required placeholder="Sujet de la formation" value="{{ formation.sujet|default('') }}">
+                                <div class="invalid-feedback">Le sujet est obligatoire.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="formateur" class="form-label">Formateur <span class="text-danger">*</span></label>
+                                <input type="text" name="formateur" id="formateur" class="form-control" required placeholder="Nom du formateur" value="{{ formation.formateur|default('') }}">
+                                <div class="invalid-feedback">Le formateur est obligatoire.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="type" class="form-label">Type <span class="text-danger">*</span></label>
+                                <select name="type" id="type" class="form-select" required>
+                                    <option value="">-- Sélectionner un type --</option>
+                                    <option value="presentiel" {% if formation.type == 'presentiel' %}selected{% endif %}>Présentiel</option>
+                                    <option value="en_ligne" {% if formation.type == 'en_ligne' %}selected{% endif %}>En ligne</option>
+                                    <option value="hybride" {% if formation.type == 'hybride' %}selected{% endif %}>Hybride</option>
+                                </select>
+                                <div class="invalid-feedback">Le type est obligatoire.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_debut" class="form-label">Date de début <span class="text-danger">*</span></label>
+                                <input type="date" name="date_debut" id="date_debut" class="form-control" required value="{% if formation.dateDebut %}{{ formation.dateDebut|date('Y-m-d') }}{% endif %}">
+                                <div class="invalid-feedback">La date de début est obligatoire.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="duree" class="form-label">Durée (jours) <span class="text-danger">*</span></label>
+                                <input type="number" name="duree" id="duree" class="form-control" required min="1" placeholder="Nombre de jours" value="{{ formation.duree|default('') }}">
+                                <div class="invalid-feedback">La durée doit être supérieure à 0.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="localisation" class="form-label">Localisation</label>
+                                <input type="text" name="localisation" id="localisation" class="form-control" placeholder="Salle, Adresse ou Lien en ligne" value="{{ formation.localisation|default('') }}">
+                            </div>
+                        </div>
+
+                        <div id="errorAlert" class="alert alert-danger d-none" role="alert">
+                            <ul class="mb-0" id="errorList"></ul>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('admin_formation') }}" class="btn btn-secondary">
+                                <i class="ti ti-arrow-left"></i> Retour
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="ti ti-check"></i> Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('formationForm');
+    const errorAlert = document.getElementById('errorAlert');
+    const errorList = document.getElementById('errorList');
+
+    function showErrors(errors) {
+        errorList.innerHTML = '';
+        errors.forEach(error => {
+            const li = document.createElement('li');
+            li.textContent = error;
+            errorList.appendChild(li);
+        });
+        errorAlert.classList.remove('d-none');
+    }
+
+    function hideErrors() {
+        errorAlert.classList.add('d-none');
+        errorList.innerHTML = '';
+    }
+
+    function validateForm() {
+        const errors = [];
+        let isValid = true;
+
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        hideErrors();
+
+        const sujet = document.getElementById('sujet').value.trim();
+        if (!sujet) {
+            errors.push('Le sujet est obligatoire.');
+            document.getElementById('sujet').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        const formateur = document.getElementById('formateur').value.trim();
+        if (!formateur) {
+            errors.push('Le formateur est obligatoire.');
+            document.getElementById('formateur').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        const type = document.getElementById('type').value;
+        if (!type) {
+            errors.push('Le type est obligatoire.');
+            document.getElementById('type').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        const dateDebut = document.getElementById('date_debut').value;
+        if (!dateDebut) {
+            errors.push('La date de début est obligatoire.');
+            document.getElementById('date_debut').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        const duree = document.getElementById('duree').value;
+        if (!duree || duree <= 0) {
+            errors.push('La durée doit être supérieure à 0.');
+            document.getElementById('duree').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            showErrors(errors);
+        }
+
+        return isValid;
+    }
+
+    ['sujet', 'formateur', 'type', 'date_debut', 'duree'].forEach(field => {
+        document.getElementById(field).addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+        });
+    });
+
+    form.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
 {% endblock %}

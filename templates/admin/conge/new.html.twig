@@ -1,0 +1,203 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Nouvelle Demande de Congé{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            <div class="mb-4">
+                <h1 class="fs-3 mb-1">Nouvelle Demande de Congé</h1>
+                <p class="mb-0">Créer une nouvelle demande de congé pour un employé</p>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ path('admin_conge_new') }}" method="POST" id="congeForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="employe_id" class="form-label">Employé <span class="text-danger">*</span></label>
+                                <select name="employe_id" id="employe_id" class="form-select" required>
+                                    <option value="">-- Sélectionner un employé --</option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.nom|default('') }} {{ user.prenom|default('') }} ({{ user.email|default('') }})</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback" id="employe_error"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="type_absence" class="form-label">Type de congé <span class="text-danger">*</span></label>
+                                <select name="type_absence" id="type_absence" class="form-select" required>
+                                    <option value="">-- Sélectionner un type --</option>
+                                    <option value="conge_annuel">Congé annuel</option>
+                                    <option value="conge_maladie">Congé maladie</option>
+                                    <option value="conge_sans_solde">Congé sans solde</option>
+                                    <option value="conge_maternite">Congé maternité</option>
+                                    <option value="conge_paternite">Congé paternité</option>
+                                    <option value="autre">Autre</option>
+                                </select>
+                                <div class="invalid-feedback" id="type_error"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_debut" class="form-label">Date de début <span class="text-danger">*</span></label>
+                                <input type="date" name="date_debut" id="date_debut" class="form-control" required>
+                                <div class="form-text text-muted">La date de début doit être aujourd'hui ou dans le futur.</div>
+                                <div class="invalid-feedback" id="date_debut_error"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_fin" class="form-label">Date de fin <span class="text-danger">*</span></label>
+                                <input type="date" name="date_fin" id="date_fin" class="form-control" required>
+                                <div class="form-text text-muted">La date de fin doit être après la date de début.</div>
+                                <div class="invalid-feedback" id="date_fin_error"></div>
+                            </div>
+                        </div>
+
+                        <div id="errorAlert" class="alert alert-danger d-none" role="alert">
+                            <ul class="mb-0" id="errorList"></ul>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('admin_conge') }}" class="btn btn-secondary">
+                                <i class="ti ti-arrow-left"></i> Retour
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="ti ti-check"></i> Créer la demande
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('congeForm');
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+    const submitBtn = document.getElementById('submitBtn');
+    const errorAlert = document.getElementById('errorAlert');
+    const errorList = document.getElementById('errorList');
+
+    // Définir la date minimale à aujourd'hui
+    const today = new Date().toISOString().split('T')[0];
+    dateDebut.min = today;
+    dateFin.min = today;
+
+    function showErrors(errors) {
+        errorList.innerHTML = '';
+        errors.forEach(error => {
+            const li = document.createElement('li');
+            li.textContent = error;
+            errorList.appendChild(li);
+        });
+        errorAlert.classList.remove('d-none');
+    }
+
+    function hideErrors() {
+        errorAlert.classList.add('d-none');
+        errorList.innerHTML = '';
+    }
+
+    function validateForm() {
+        const errors = [];
+        let isValid = true;
+
+        // Réinitialiser les erreurs visuelles
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        hideErrors();
+
+        // Validation employé
+        const employe = document.getElementById('employe_id').value;
+        if (!employe) {
+            errors.push('Veuillez sélectionner un employé.');
+            document.getElementById('employe_id').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        // Validation type d'absence
+        const typeAbsence = document.getElementById('type_absence').value;
+        if (!typeAbsence) {
+            errors.push('Veuillez sélectionner un type de congé.');
+            document.getElementById('type_absence').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        // Validation date de début
+        const dateDebutValue = dateDebut.value;
+        if (!dateDebutValue) {
+            errors.push('La date de début est obligatoire.');
+            dateDebut.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            const selectedDate = new Date(dateDebutValue);
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            if (selectedDate < now) {
+                errors.push('La date de début ne peut pas être dans le passé.');
+                dateDebut.classList.add('is-invalid');
+                isValid = false;
+            }
+        }
+
+        // Validation date de fin
+        const dateFinValue = dateFin.value;
+        if (!dateFinValue) {
+            errors.push('La date de fin est obligatoire.');
+            dateFin.classList.add('is-invalid');
+            isValid = false;
+        } else if (dateDebutValue && dateFinValue) {
+            if (new Date(dateFinValue) <= new Date(dateDebutValue)) {
+                errors.push('La date de fin doit être après la date de début.');
+                dateFin.classList.add('is-invalid');
+                isValid = false;
+            }
+        }
+
+        if (!isValid) {
+            showErrors(errors);
+        }
+
+        return isValid;
+    }
+
+    // Validation en temps réel lors de la modification des dates
+    dateDebut.addEventListener('change', function() {
+        if (this.value) {
+            dateFin.min = this.value;
+        }
+        this.classList.remove('is-invalid');
+    });
+
+    dateFin.addEventListener('change', function() {
+        this.classList.remove('is-invalid');
+    });
+
+    document.getElementById('employe_id').addEventListener('change', function() {
+        this.classList.remove('is-invalid');
+    });
+
+    document.getElementById('type_absence').addEventListener('change', function() {
+        this.classList.remove('is-invalid');
+    });
+
+    // Validation à la soumission
+    form.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

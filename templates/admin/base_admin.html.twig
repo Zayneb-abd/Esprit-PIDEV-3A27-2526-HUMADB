@@ -3,17 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Dashboard{% endblock %} | InApp</title>
+    <title>{% block title %}Dashboard{% endblock %} | HUMA Admin</title>
     
     {# Bootstrap CSS #}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     {# Tabler Icons #}
     <link href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/iconfont/tabler-icons.min.css" rel="stylesheet">
     
-    {# CSS Styles - Loaded from assets/admin/app.css via inline for reliability #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    {# CSS Styles - HUMA Admin Dashboard #}
     <style>
         /* ==========================================
-           InApp Admin Dashboard Styles
+           HUMA Admin Dashboard Styles
            ========================================== */
         
         /* Reset */
@@ -21,31 +25,39 @@
         
         /* Variables */
         :root {
-            --primary: #6366f1;
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-teal: #1a5f5f;
+            --primary-teal-light: #2d7a7a;
+            --accent-cyan: #4ecdc4;
+            --dark-bg: #1a3a3a;
+            --primary: #1a5f5f;
+            --primary-gradient: linear-gradient(135deg, #1a5f5f 0%, #4ecdc4 100%);
             --sidebar-width: 260px;
             --topbar-height: 70px;
-            --body-bg: #f5f6fa;
+            --body-bg: #f8f9fa;
             --sidebar-bg: #ffffff;
-            --text-dark: #333333;
-            --text-muted: #6c757d;
+            --text-dark: #2c3e50;
+            --text-muted: #5a6c7d;
             --text-light: #adb5bd;
             --border-color: #e9ecef;
-            --hover-bg: #f8f9fa;
-            --active-bg: #f0f3ff;
+            --hover-bg: #f0f4f4;
+            --active-bg: rgba(26, 95, 95, 0.1);
             --success: #22c55e;
             --danger: #dc3545;
             --warning: #f59e0b;
-            --info: #0ea5e9;
+            --info: #4ecdc4;
             --orange: #ff6b4a;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Open Sans', sans-serif;
             background-color: var(--body-bg);
             font-size: 14px;
             line-height: 1.5;
             color: var(--text-dark);
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
         }
         
         /* ==========================================
@@ -77,21 +89,27 @@
             color: var(--text-dark);
         }
         
-        .sidebar-header .logo-icon {
-            width: 58px;
-            height: 58px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 10px;
-            flex-shrink: 0;
-            overflow: hidden;
+        .huma-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 24px;
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-
-        .sidebar-header .logo-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        
+        .bg-primary {
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--accent-cyan) 100%) !important;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--accent-cyan) 100%) !important;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-teal-light) 0%, var(--accent-cyan) 100%) !important;
         }
         
         .sidebar-header .logo-text {
@@ -136,13 +154,13 @@
         
         .sidebar-menu li a:hover {
             background-color: var(--hover-bg);
-            color: var(--primary);
+            color: var(--primary-teal);
         }
         
         .sidebar-menu li a.active {
             background-color: var(--active-bg);
-            color: var(--primary);
-            border-left: 3px solid var(--primary);
+            color: var(--primary-teal);
+            border-left: 3px solid var(--accent-cyan);
         }
         
         .sidebar-menu li a i {
@@ -394,50 +412,46 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <a href="{{ path('admin_dashboard') }}">
-                <div class="logo-icon">
-                    <img src="{{ asset('logo/huma.png') }}" alt="HumaDB">
-                </div>
                 <div class="logo-text">
-                    HumaDB
-                    <small>Gestion de recrutement</small>
+                    <span class="huma-brand">HUMA</span>
+                    <small>Espace Administration</small>
                 </div>
             </a>
         </div>
         
         <ul class="sidebar-menu">
             <li class="menu-label">Main</li>
+            {% if app.request.attributes.get('_route') starts with 'admin' or app.request.attributes.get('_route') starts with 'employ' %}
             <li>
-                <a href="{{ path('admin_dashboard') }}" class="{% if app.request.attributes.get('_route') == 'admin_dashboard' %}active{% endif %}">
+                <a href="{% if app.request.attributes.get('_route') starts with 'admin' %}{{ path('admin_dashboard') }}{% else %}{{ path('employ_dashboard') }}{% endif %}" class="{% if app.request.attributes.get('_route') == 'admin_dashboard' or app.request.attributes.get('_route') == 'employ_dashboard' %}active{% endif %}">
                     <i class="ti ti-home"></i>
                     <span>Dashboard</span>
                 </a>
             </li>
+            {% endif %}
+            {% if app.request.attributes.get('_route') starts with 'admin' %}
             <li>
-                <a href="{{ path('admin_inventory') }}" class="{% if app.request.attributes.get('_route') in ['admin_inventory', 'admin_offre_new', 'admin_offre_show', 'admin_offre_edit', 'admin_candidature_new', 'admin_candidature_show', 'admin_candidature_edit'] %}active{% endif %}">
-                    <i class="ti ti-box-seam"></i>
-                    <span>Recrutement</span>
+                <a href="#congeSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'admin_conge' or app.request.attributes.get('_route') starts with 'admin_absence' %}active{% else %}collapsed{% endif %}">
+                    <i class="ti ti-calendar-time"></i>
+                    <span>Congés</span>
                 </a>
-            </li>
-            <li>
-                <a href="{{ path('admin_publication_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_publication' or app.request.attributes.get('_route') starts with 'admin_commentaire' or app.request.attributes.get('_route') == 'admin_product_create' %}active{% endif %}">
-                    <i class="ti ti-news"></i>
-                    <span>Publications</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('admin_reports') }}" class="{% if app.request.attributes.get('_route') == 'admin_reports' %}active{% endif %}">
-                    <i class="ti ti-receipt"></i>
-                    <span>Reports</span>
-                </a>
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'admin_conge' or app.request.attributes.get('_route') starts with 'admin_absence' %}show{% endif %}" id="congeSubmenu">
+                    <li>
+                        <a href="{{ path('admin_conge') }}" class="{% if app.request.attributes.get('_route') == 'admin_conge' %}active{% endif %}">Gestion des congés</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_absence') }}" class="{% if app.request.attributes.get('_route') == 'admin_absence' %}active{% endif %}">Gestion des absences</a>
+                    </li>
+                </ul>
             </li>
             <li>
                 <a href="#formationSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'admin_formation' or app.request.attributes.get('_route') starts with 'admin_participation' %}active{% else %}collapsed{% endif %}">
                     <i class="ti ti-school"></i>
-                    <span>Formations</span>
+                    <span>Formation</span>
                 </a>
                 <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'admin_formation' or app.request.attributes.get('_route') starts with 'admin_participation' %}show{% endif %}" id="formationSubmenu">
                     <li>
-                        <a href="{{ path('admin_formation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_formation' %}active{% endif %}">Gestion des formations</a>
+                        <a href="{{ path('admin_formation') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_formation' %}active{% endif %}">Gestion des formations</a>
                     </li>
                     <li>
                         <a href="{{ path('admin_participation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_participation' %}active{% endif %}">Gestion des participations</a>
@@ -445,31 +459,43 @@
                 </ul>
             </li>
             <li>
-                <a href="{{ path('admin_users') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_user' %}active{% endif %}">
-                    <i class="ti ti-users"></i>
-                    <span>Utilisateurs</span>
+                <a href="{{ path('admin_inventory') }}" class="{% if app.request.attributes.get('_route') == 'admin_inventory' or app.request.attributes.get('_route') starts with 'admin_offre' or app.request.attributes.get('_route') starts with 'admin_candidature' %}active{% endif %}">
+                    <i class="ti ti-briefcase"></i>
+                    <span>Gestion de recrutement</span>
                 </a>
             </li>
             <li>
-                <a href="{{ path('admin_logs') }}" class="{% if app.request.attributes.get('_route') == 'admin_logs' %}active{% endif %}">
-                    <i class="ti ti-list-details"></i>
-                    <span>Journal d'activité</span>
+                <a href="#publicationSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'admin_publication' or app.request.attributes.get('_route') starts with 'admin_commentaire' %}active{% else %}collapsed{% endif %}">
+                    <i class="ti ti-message-circle"></i>
+                    <span>Publications</span>
                 </a>
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'admin_publication' or app.request.attributes.get('_route') starts with 'admin_commentaire' %}show{% endif %}" id="publicationSubmenu">
+                    <li>
+                        <a href="{{ path('admin_publication') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_publication' %}active{% endif %}">Gestion des publications</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_commentaire') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_commentaire' %}active{% endif %}">Gestion des commentaires</a>
+                    </li>
+                </ul>
             </li>
-            <li>
-                <a href="{{ path('admin_feedback_index') }}" class="{% if app.request.attributes.get('_route') starts with 'admin_feedback' %}active{% endif %}">
-                    <i class="ti ti-messages"></i>
-                    <span>Feedbacks</span>
-                </a>
-            </li>
+            {% endif %}
             
-            <li class="menu-label">Account</li>
+            {% if app.request.attributes.get('_route') starts with 'employ' or app.request.attributes.get('_route') == 'employ_dashboard' %}
             <li>
-                <a href="{{ path('app_logout') }}">
-                    <i class="ti ti-logout"></i>
-                    <span>Logout</span>
+                <a href="#employeCongeSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'employ_conge' or app.request.attributes.get('_route') starts with 'employ_absence' or app.request.attributes.get('_route') == 'employ_dashboard' %}active{% else %}collapsed{% endif %}">
+                    <i class="ti ti-calendar-event"></i>
+                    <span>Congés</span>
                 </a>
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'employ_conge' or app.request.attributes.get('_route') starts with 'employ_absence' or app.request.attributes.get('_route') == 'employ_dashboard' %}show{% endif %}" id="employeCongeSubmenu">
+                    <li>
+                        <a href="{{ path('employ_conges') }}" class="{% if app.request.attributes.get('_route') == 'employ_conges' %}active{% endif %}">Mes congés</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('employ_absences') }}" class="{% if app.request.attributes.get('_route') == 'employ_absences' %}active{% endif %}">Mes absences</a>
+                    </li>
+                </ul>
             </li>
+            {% endif %}
         </ul>
     </aside>
     
@@ -542,32 +568,42 @@
                 <!-- User Dropdown -->
                 <li class="ms-3 dropdown">
                     <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="" class="avatar avatar-sm rounded-circle" />
+                        {% if app.user.faceImage %}
+                            <img src="{{ asset('uploads/faces/' ~ app.user.faceImage) }}" alt="" class="avatar avatar-sm rounded-circle" />
+                        {% else %}
+                            <div class="avatar avatar-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="font-size: 14px;">
+                                {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+                            </div>
+                        {% endif %}
                     </a>
                     <div class="dropdown-menu dropdown-menu-end p-0" style="min-width: 200px;">
                         <div>
                             <div class="d-flex gap-3 align-items-center border-dashed border-bottom px-3 py-3">
-                                <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="" class="avatar avatar-md rounded-circle" />
+                                {% if app.user.faceImage %}
+                                    <img src="{{ asset('uploads/faces/' ~ app.user.faceImage) }}" alt="" class="avatar avatar-md rounded-circle" />
+                                {% else %}
+                                    <div class="avatar avatar-md rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="font-size: 18px;">
+                                        {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+                                    </div>
+                                {% endif %}
                                 <div>
-                                    <h4 class="mb-0 small">Shrina Tesla</h4>
-                                    <p class="mb-0 small">@imshrina</p>
+                                    <h4 class="mb-0 small">{{ app.user.prenom }} {{ app.user.nom }}</h4>
+                                    <p class="mb-0 small">{{ app.user.email }}</p>
                                 </div>
                             </div>
                             <div class="p-3 d-flex flex-column gap-1 small lh-lg">
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Home</span>
+                                <a href="{{ path('user_profile') }}" class="text-decoration-none text-dark">
+                                    <i class="ti ti-user me-2"></i><span>Mon profil</span>
                                 </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Inbox</span>
+                                <a href="{{ path('user_edit_profile') }}" class="text-decoration-none text-dark">
+                                    <i class="ti ti-edit me-2"></i><span>Modifier le profil</span>
                                 </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Chat</span>
+                                <a href="{{ path('user_change_password') }}" class="text-decoration-none text-dark">
+                                    <i class="ti ti-lock me-2"></i><span>Changer le mot de passe</span>
                                 </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Activity</span>
-                                </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Account Settings</span>
+                                <div class="border-top my-1"></div>
+                                <a href="{{ path('app_logout') }}" class="text-decoration-none text-danger">
+                                    <i class="ti ti-logout me-2"></i><span>Déconnexion</span>
                                 </a>
                             </div>
                         </div>

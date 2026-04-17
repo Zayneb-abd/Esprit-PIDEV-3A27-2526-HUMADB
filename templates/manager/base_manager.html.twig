@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Espace Manager{% endblock %} | HUMA</title>
+    
+    {# Bootstrap CSS #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {# Bootstrap Icons #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    {# Tabler Icons #}
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/iconfont/tabler-icons.min.css" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-teal: #1a5f5f;
+            --primary-teal-light: #2d7a7a;
+            --accent-cyan: #4ecdc4;
+            --dark-bg: #1a3a3a;
+            --body-bg: #f8f9fa;
+            --text-dark: #2c3e50;
+            --text-muted: #5a6c7d;
+        }
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--body-bg);
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-dark);
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        /* Navbar Styles */
+        .navbar-manager {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 2px 20px rgba(26, 95, 95, 0.1);
+        }
+        
+        .navbar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+        }
+        
+        .navbar-brand img {
+            height: 40px;
+        }
+        
+        .huma-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .navbar-nav .nav-link:hover,
+        .navbar-nav .nav-link.active {
+            background: rgba(26, 95, 95, 0.1);
+            color: var(--primary-teal) !important;
+        }
+        
+        /* Dropdown Styles */
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 10px 40px rgba(26, 95, 95, 0.15);
+            border-radius: 12px;
+        }
+        
+        .dropdown-item {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            margin: 0.2rem;
+            transition: all 0.2s;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(78, 205, 196, 0.1);
+            color: var(--primary-teal);
+        }
+        
+        .dropdown-item i {
+            color: var(--accent-cyan);
+        }
+        
+        /* Avatar Styles */
+        .avatar {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        
+        .avatar-sm {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .bg-primary {
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--accent-cyan) 100%) !important;
+        }
+        
+        /* Notification Badge */
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            font-weight: 600;
+            background: var(--accent-cyan) !important;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 25px;
+            min-height: calc(100vh - 70px);
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--accent-cyan) 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-teal-light) 0%, var(--accent-cyan) 100%);
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--dark-bg);
+            color: rgba(255,255,255,0.7);
+            padding: 20px 0;
+        }
+        
+        footer .huma-brand {
+            color: white;
+            -webkit-text-fill-color: white;
+        }
+    </style>
+    
+    {% block css %}{% endblock %}
+</head>
+<body>
+    {# Navbar #}
+    <nav class="navbar navbar-expand-lg navbar-manager sticky-top">
+        <div class="container-fluid px-4">
+            {# Logo #}
+            <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none" href="{{ path('client_home') }}">
+                <span class="huma-brand fs-4">HUMA</span>
+                <span class="text-muted" style="font-size: 0.9rem;">| Espace Manager</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                {# Navigation Links #}
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if app.request.attributes.get('_route') starts with 'manager_equipe' %}active{% endif %}" href="#">
+                            <i class="ti ti-users me-1"></i>Équipe
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if app.request.attributes.get('_route') starts with 'manager_conge' or app.request.attributes.get('_route') starts with 'manager_absence' %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="ti ti-calendar-event me-1"></i>Congés & Absences
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">
+                                <i class="ti ti-calendar me-2"></i>Congés équipe
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="ti ti-calendar-x me-2"></i>Absences équipe
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                {# Right Side - Notifications & Profile #}
+                <ul class="navbar-nav align-items-center">
+                    {# Notification Bell #}
+                    <li class="nav-item dropdown me-3">
+                        <a class="nav-link position-relative p-2" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="ti ti-bell fs-5"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge">
+                                2
+                            </span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end p-0" style="min-width: 300px;">
+                            <div class="p-3 border-bottom">
+                                <h6 class="mb-0">Notifications</h6>
+                            </div>
+                            <div class="p-0">
+                                <a href="#" class="d-flex align-items-center p-3 text-decoration-none text-dark border-bottom hover-bg">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0 small fw-medium">Nouvelle notification</p>
+                                        <p class="mb-0 text-muted" style="font-size: 12px;">Il y a 5 minutes</p>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="p-2 text-center">
+                                <a href="#" class="text-primary small text-decoration-none">Voir tout</a>
+                            </div>
+                        </div>
+                    </li>
+                    
+                    {# User Profile #}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link d-flex align-items-center gap-2 p-0" href="#" role="button" data-bs-toggle="dropdown">
+                            {% if app.user.faceImage %}
+                                <img src="{{ asset('uploads/faces/' ~ app.user.faceImage) }}" alt="Avatar" class="avatar avatar-sm">
+                            {% else %}
+                                <div class="avatar avatar-sm bg-primary text-white d-flex align-items-center justify-content-center" style="font-size: 12px;">
+                                    {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+                                </div>
+                            {% endif %}
+                            <span class="d-none d-lg-block">{{ app.user.prenom }} {{ app.user.nom }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ path('user_profile') }}">
+                                <i class="ti ti-user me-2"></i>Mon profil
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ path('user_edit_profile') }}">
+                                <i class="ti ti-edit me-2"></i>Modifier le profil
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ path('user_change_password') }}">
+                                <i class="ti ti-lock me-2"></i>Changer mot de passe
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ path('app_logout') }}">
+                                <i class="ti ti-logout me-2"></i>Déconnexion
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    {# Main Content #}
+    <main class="main-content">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+        {% block body %}{% endblock %}
+    </main>
+    
+    {# Footer #}
+    <footer>
+        <div class="container text-center">
+            <p class="mb-0">&copy; {{ "now"|date("Y") }} <span class="huma-brand">HUMA</span>. Tous droits réservés.</p>
+        </div>
+    </footer>
+    
+    {# Bootstrap JS #}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block js %}{% endblock %}
+</body>
+</html>
