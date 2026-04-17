@@ -1,0 +1,125 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Gestion des Absences{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            <div class="mb-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="fs-3 mb-1">Gestion des Absences</h1>
+                    <p class="mb-0">Gérez les absences des employés</p>
+                </div>
+                <div>
+                    <a href="{{ path('admin_absence_new') }}" class="btn btn-primary">
+                        <i class="ti ti-plus"></i> Nouvelle absence
+                    </a>
+                </div>
+            </div>
+
+            <div class="card p-3 mb-4">
+                <form action="{{ path('admin_absence') }}" method="GET" class="row g-3">
+                    <div class="col-md-10">
+                        <input type="text" name="q" class="form-control" placeholder="Rechercher par employé, type ou statut..." value="{{ app.request.get('q') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-secondary w-100">
+                            <i class="ti ti-search"></i> Rechercher
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card table-responsive">
+                <table class="table mb-0 text-nowrap table-hover">
+                    <thead class="table-light border-light">
+                        <tr>
+                            <th>Employé</th>
+                            <th>Type</th>
+                            <th>Date début</th>
+                            <th>Date fin</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for absence in absences %}
+                            <tr class="align-middle">
+                                <td>
+                                    {% if absence.user %}
+                                        {{ absence.user.nom|default('') }} {{ absence.user.prenom|default('') }}
+                                    {% else %}
+                                        <em>Non assigné</em>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ absence.typeAbsence|replace({'_': ' '})|title }}
+                                </td>
+                                <td>
+                                    {% if absence.dateDebut %}
+                                        {{ absence.dateDebut|date('d/m/Y') }}
+                                    {% else %}
+                                        <em>-</em>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if absence.dateFin %}
+                                        {{ absence.dateFin|date('d/m/Y') }}
+                                    {% else %}
+                                        <em>-</em>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if absence.statut %}
+                                        {% if absence.statut == 'en_attente' %}
+                                            <span class="badge bg-warning">En attente</span>
+                                        {% elseif absence.statut == 'approuve' %}
+                                            <span class="badge bg-success">Approuvé</span>
+                                        {% elseif absence.statut == 'refuse' %}
+                                            <span class="badge bg-danger">Refusé</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ absence.statut }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ path('admin_absence_edit', {id: absence.id}) }}" class="btn btn-sm btn-info" title="Modifier">
+                                        <i class="ti ti-edit"></i>
+                                    </a>
+                                    <form action="{{ path('admin_absence_delete', {id: absence.id}) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette absence ?');">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
+                                            <i class="ti ti-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <p class="text-muted mb-0">Aucune absence trouvée.</p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -6,11 +6,14 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 use App\Repository\CongeRepository;
 
 #[ORM\Entity(repositoryClass: CongeRepository::class)]
 #[ORM\Table(name: 'conge')]
+#[Assert\Callback([Conge::class, 'validateDateDemande'])]
 class Conge
 {
     #[ORM\Id]
@@ -45,6 +48,9 @@ class Conge
     }
 
     #[ORM\Column(type: 'date', nullable: false)]
+    #[Assert\NotBlank(message: 'La date de demande est obligatoire.')]
+    #[Assert\Date(message: 'La date de demande doit être une date valide.')]
+    #[Assert\GreaterThanOrEqual('today', message: 'La date de demande ne peut pas être dans le passé.')]
     private ?\DateTimeInterface $date_demande = null;
 
     public function getDate_demande(): ?\DateTimeInterface
@@ -135,6 +141,22 @@ class Conge
         $this->date_validation = $date_validation;
 
         return $this;
+    }
+
+    public static function validateDateDemande(self $conge, ExecutionContextInterface $context): void
+    {
+        $dateDemande = $conge->getDate_demande();
+
+        if ($dateDemande) {
+            // Vérifier que l'année n'est pas en 2027 ou après
+            $year = (int)$dateDemande->format('Y');
+
+            if ($year > 2026) {
+                $context->buildViolation('La date de demande ne peut pas être en 2027 ou au-delà.')
+                    ->atPath('date_demande')
+                    ->addViolation();
+            }
+        }
     }
 
 }

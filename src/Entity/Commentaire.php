@@ -6,6 +6,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\CommentaireRepository;
 
@@ -30,6 +31,13 @@ class Commentaire
     }
 
     #[ORM\Column(type: 'text', nullable: false)]
+    #[Assert\NotBlank(message: 'Le contenu du commentaire ne peut pas etre vide.')]
+    #[Assert\Length(
+        min: 3,
+        max: 2000,
+        minMessage: 'Le commentaire doit contenir au moins {{ limit }} caracteres.',
+        maxMessage: 'Le commentaire ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private ?string $contenu = null;
 
     public function getContenu(): ?string
@@ -44,6 +52,7 @@ class Commentaire
     }
 
     #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Assert\Type(type: \DateTimeInterface::class, message: 'La date du commentaire doit etre valide.')]
     private ?\DateTimeInterface $date_commentaire = null;
 
     public function getDate_commentaire(): ?\DateTimeInterface
@@ -59,6 +68,7 @@ class Commentaire
 
     #[ORM\ManyToOne(targetEntity: Publication::class, inversedBy: 'commentaires')]
     #[ORM\JoinColumn(name: 'publication_id', referencedColumnName: 'id')]
+    #[Assert\NotNull(message: 'Le commentaire doit etre lie a une publication.')]
     private ?Publication $publication = null;
 
     public function getPublication(): ?Publication

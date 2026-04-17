@@ -1,0 +1,96 @@
+{% extends is_granted('ROLE_MANAGER') ? 'manager/base_manager.html.twig' : (is_granted('ROLE_EMPLOYE') ? 'employ/base_employe.html.twig' : (is_granted('ROLE_CANDIDAT') or is_granted('ROLE_CONDIDAT') ? 'candidat/base_candidat.html.twig' : 'base_user.html.twig')) %}
+
+{% block title %}Mon profil - {{ user.prenom }} {{ user.nom }}{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-4 flex-wrap">
+                    {# Avatar #}
+                    {% if user.faceImage %}
+                        <img src="{{ asset('uploads/faces/' ~ user.faceImage) }}"
+                             class="rounded-circle border"
+                             style="width:100px;height:100px;object-fit:cover;" alt="avatar">
+                    {% else %}
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold"
+                             style="width:100px;height:100px;font-size:36px;flex-shrink:0;">
+                            {{ user.prenom|first|upper }}
+                        </div>
+                    {% endif %}
+
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0 fw-bold">{{ user.prenom }} {{ user.nom }}</h4>
+                        <p class="text-muted mb-1">{{ user.email }}</p>
+
+                        {# Reputation badge #}
+                        {% set badge = user.reputationBadge %}
+                        <span class="badge
+                            {% if badge == 'Gold' %}bg-warning text-dark{% elseif badge == 'Silver' %}bg-secondary{% else %}bg-danger{% endif %}
+                            fs-6 px-3 py-2">
+                            {% if badge == 'Gold' %}🏆{% elseif badge == 'Silver' %}🥈{% else %}🥉{% endif %}
+                            {{ badge }} — {{ user.reputationScore }} pts
+                        </span>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{{ path('user_edit_profile') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil me-1"></i> Modifier le profil
+                        </a>
+                        <a href="{{ path('user_change_password') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-lock me-1"></i> Changer le mot de passe
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Details card #}
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0 fw-semibold">Informations personnelles</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Prénom</label>
+                        <strong>{{ user.prenom }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Nom</label>
+                        <strong>{{ user.nom }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Email</label>
+                        <strong>{{ user.email }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Date de naissance</label>
+                        <strong>{{ user.dateNaissance ? user.dateNaissance|date('d/m/Y') : 'Non renseignée' }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Rôle</label>
+                        <span class="badge bg-secondary">{{ user.role ?? 'USER' }}</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Score de réputation</label>
+                        <strong>{{ user.reputationScore }} points</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -2,6 +2,8 @@
 
 namespace App\Security;
 
+use App\Entity\Log;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,6 +25,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -44,6 +47,20 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
+        // Log login event
+        $user = $token->getUser();
+        if ($user instanceof \App\Entity\User) {
+            $log = new Log();
+            $log->setUser($user);
+            $log->setAction('login');
+            $this->entityManager->persist($log);
+            $this->entityManager->flush();
+        }
+
+        if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
+            return new RedirectResponse($targetPath);
+        }
+
         $roles = $token->getRoleNames();
 
         if (in_array('ROLE_ADMIN', $roles, true)) {
@@ -58,7 +75,8 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             return new RedirectResponse($this->urlGenerator->generate('candidat_dashboard'));
         }
 
-        return new RedirectResponse($this->urlGenerator->generate('client_home'));
+        // ROLE_USER → profile page
+        return new RedirectResponse($this->urlGenerator->generate('user_profile'));
     }
 
     protected function getLoginUrl(Request $request): string

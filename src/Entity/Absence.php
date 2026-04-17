@@ -6,11 +6,16 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 use App\Repository\AbsenceRepository;
 
 #[ORM\Entity(repositoryClass: AbsenceRepository::class)]
 #[ORM\Table(name: 'absence')]
+#[Assert\Callback([Absence::class, 'validateDates'])]
+#[Assert\Callback([Absence::class, 'validateDureeMax'])]
+#[Assert\Callback([Absence::class, 'validateMotifIfMaladie'])]
 class Absence
 {
     #[ORM\Id]
@@ -45,6 +50,9 @@ class Absence
     }
 
     #[ORM\Column(type: 'date', nullable: false)]
+    #[Assert\NotBlank(message: 'La date de début est obligatoire.')]
+    #[Assert\Date(message: 'La date de début doit être une date valide.')]
+    #[Assert\GreaterThanOrEqual('today', message: 'La date de début ne peut pas être dans le passé.')]
     private ?\DateTimeInterface $date_debut = null;
 
     public function getDate_debut(): ?\DateTimeInterface
@@ -59,6 +67,8 @@ class Absence
     }
 
     #[ORM\Column(type: 'date', nullable: true)]
+    #[Assert\NotBlank(message: 'La date de fin est obligatoire.')]
+    #[Assert\Date(message: 'La date de fin doit être une date valide.')]
     private ?\DateTimeInterface $date_fin = null;
 
     public function getDate_fin(): ?\DateTimeInterface
@@ -73,6 +83,8 @@ class Absence
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Le type d\'absence est obligatoire.')]
+    #[Assert\Choice(choices: ['CONGE_PAYE', 'CONGE_SANS_SOLDE', 'MALADIE', 'FORMATION', 'AUTRE'], message: 'Le type d\'absence n\'est pas valide.')]
     private ?string $type_absence = null;
 
     public function getType_absence(): ?string
@@ -148,6 +160,79 @@ class Absence
         $this->type_absence = $type_absence;
 
         return $this;
+    }
+
+    public static function validateDates(self $absence, ExecutionContextInterface $context): void
+    {
+        $dateDebut = $absence->getDate_debut();
+        $dateFin = $absence->getDate_fin();
+
+        if ($dateDebut && $dateFin) {
+            // Vérifier que date fin est après date début
+            if ($dateFin <= $dateDebut) {
+                $context->buildViolation('La date de fin doit être après la date de début.')
+                    ->atPath('date_fin')
+                    ->addViolation();
+            }
+
+            // Vérifier que les dates ne sont pas en 2027 ou après
+            $yearDebut = (int)$dateDebut->format('Y');
+            $yearFin = (int)$dateFin->format('Y');
+
+            if ($yearDebut > 2026) {
+                $context->buildViolation('La date de début ne peut pas être en 2027 ou au-delà.')
+                    ->atPath('date_debut')
+                    ->addViolation();
+            }
+
+            if ($yearFin > 2026) {
+                $context->buildViolation('La date de fin ne peut pas être en 2027 ou au-delà.')
+                    ->atPath('date_fin')
+                    ->addViolation();
+            }
+        }
+    }
+
+    public static function validateDureeMax(self $absence, ExecutionContextInterface $context): void
+    {
+        $dateDebut = $absence->getDate_debut();
+        $dateFin = $absence->getDate_fin();
+
+        if ($dateDebut && $dateFin) {
+            $diff = $dateDebut->diff($dateFin);
+            $dureeJours = $diff->days;
+
+            if ($dureeJours > 30) {
+                $context->buildViolation('La durée maximale est de 30 jours.')
+                    ->atPath('date_fin')
+                    ->addViolation();
+            }
+        }
+    }
+
+    public static function validateMotifIfMaladie(self $absence, ExecutionContextInterface $context): void
+    {
+        $type = $absence->getType_absence();
+        $dateDebut = $absence->getDate_debut();
+        $dateFin = $absence->getDate_fin();
+
+        if ($type === 'MALADIE' && $dateDebut && $dateFin) {
+            $diff = $dateDebut->diff($dateFin);
+            $dureeJours = $diff->days;
+
+            // Si maladie > 3 jours, vérifier le motif dans le congé lié
+            if ($dureeJours > 3) {
+                $conge = $absence->getConge();
+                if ($conge) {
+                    $commentaire = $conge->getCommentaire_validation();
+                    if (empty($commentaire)) {
+                        $context->buildViolation('Le motif est obligatoire pour un congé maladie de plus de 3 jours.')
+                            ->atPath('conge.commentaire_validation')
+                            ->addViolation();
+                    }
+                }
+            }
+        }
     }
 
 }
