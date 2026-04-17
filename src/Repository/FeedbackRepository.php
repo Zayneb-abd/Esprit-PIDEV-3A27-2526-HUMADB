@@ -16,28 +16,56 @@ class FeedbackRepository extends ServiceEntityRepository
         parent::__construct($registry, Feedback::class);
     }
 
-    //    /**
-    //     * @return Feedback[] Returns an array of Feedback objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('f')
-    //            ->andWhere('f.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('f.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * @return Feedback[]
+     */
+    public function searchForAdmin(string $query = ''): array
+    {
+        $qb = $this->createQueryBuilder('f')
+            ->orderBy('f.date_envoi', 'DESC')
+            ->addOrderBy('f.id', 'DESC');
 
-    //    public function findOneBySomeField($value): ?Feedback
-    //    {
-    //        return $this->createQueryBuilder('f')
-    //            ->andWhere('f.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        $query = trim($query);
+        if ($query !== '') {
+            $qb->andWhere('
+                LOWER(f.contenu) LIKE :q
+                OR LOWER(f.category) LIKE :q
+                OR LOWER(f.status) LIKE :q
+            ')
+            ->setParameter('q', '%' . mb_strtolower($query) . '%');
+
+            // If the query is numeric, also allow exact match on employee id.
+            if (ctype_digit($query)) {
+                $qb->orWhere('f.employe_id = :employeeId')
+                    ->setParameter('employeeId', (int) $query);
+            }
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @return Feedback[]
+     */
+    public function searchForEmployee(int $employeeId, string $query = ''): array
+    {
+        $qb = $this->createQueryBuilder('f')
+            ->andWhere('f.employe_id = :employeeId')
+            ->setParameter('employeeId', $employeeId)
+            ->orderBy('f.date_envoi', 'DESC')
+            ->addOrderBy('f.id', 'DESC');
+
+        $query = trim($query);
+        if ($query !== '') {
+            $qb->andWhere('
+                LOWER(f.contenu) LIKE :q
+                OR LOWER(f.category) LIKE :q
+                OR LOWER(f.status) LIKE :q
+            ')
+            ->setParameter('q', '%' . mb_strtolower($query) . '%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
 }

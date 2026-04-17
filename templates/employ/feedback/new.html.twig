@@ -1,0 +1,54 @@
+{% extends 'employ/base_employe.html.twig' %}
+
+{% block title %}Nouveau Feedback{% endblock %}
+
+{% block body %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="fs-4 fw-bold mb-1">Soumettre un Feedback</h1>
+        <p class="text-muted mb-0">Partagez vos idées, suggestions ou requêtes.</p>
+    </div>
+    <a href="{{ path('employ_feedback_index') }}" class="btn btn-outline-secondary">
+        <i class="ti ti-arrow-left me-2"></i>Annuler
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4">
+            <div class="card-body">
+                {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+                    
+                    <div class="mb-4">
+                        {{ form_label(form.category, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.category, {'attr': {'class': 'form-select form-select-lg'}}) }}
+                        <div class="text-danger small mt-1">{{ form_errors(form.category) }}</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        {{ form_label(form.contenu, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.contenu, {'attr': {'class': 'form-control', 'style': 'resize: none;'}}) }}
+                        <div class="text-danger small mt-1">{{ form_errors(form.contenu) }}</div>
+                        <div class="form-text text-muted">Veuillez décrire le contexte et fournir des détails pertinents.</div>
+                    </div>
+
+                    <div class="form-check form-switch mb-4">
+                        {{ form_widget(form.est_anonyme, {'attr': {'class': 'form-check-input', 'role': 'switch'}}) }}
+                        {{ form_label(form.est_anonyme, null, {'label_attr': {'class': 'form-check-label ms-2'}}) }}
+                        <div class="form-text">Si vous l'activez, votre nom ne sera pas visible par les administrateurs.</div>
+                    </div>
+                    
+                    <hr class="mb-4">
+                    
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+                            <i class="ti ti-send me-2"></i>Envoyer le feedback
+                        </button>
+                    </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

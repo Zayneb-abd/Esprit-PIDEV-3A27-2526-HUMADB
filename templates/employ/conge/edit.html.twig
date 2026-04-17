@@ -1,0 +1,109 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Modifier Demande de Congé{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4">
+                <h1 class="fs-3 mb-1">Modifier Demande de Congé</h1>
+                <p class="mb-0">Modifier votre demande de congé #{{ id }}</p>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" id="congeEditForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date_debut" class="form-label">Date de début <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="date_debut" name="date_debut" value="{{ absence ? absence.getDate_debut()|date('Y-m-d') : '' }}" required>
+                                <div class="invalid-feedback">Veuillez sélectionner une date de début valide.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_fin" class="form-label">Date de fin <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="date_fin" name="date_fin" value="{{ absence ? absence.getDate_fin()|date('Y-m-d') : '' }}" required>
+                                <div class="invalid-feedback">Veuillez sélectionner une date de fin valide.</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="type" class="form-label">Type de congé <span class="text-danger">*</span></label>
+                                <select class="form-select" id="type" name="type" required>
+                                    <option value="">Sélectionner un type</option>
+                                    <option value="ANNUEL" {{ absence and absence.getType_absence() == 'ANNUEL' ? 'selected' : '' }}>Congé annuel</option>
+                                    <option value="MALADIE" {{ absence and absence.getType_absence() == 'MALADIE' ? 'selected' : '' }}>Congé maladie</option>
+                                    <option value="MATERNITE" {{ absence and absence.getType_absence() == 'MATERNITE' ? 'selected' : '' }}>Congé maternité</option>
+                                    <option value="PATERNITE" {{ absence and absence.getType_absence() == 'PATERNITE' ? 'selected' : '' }}>Congé paternité</option>
+                                    <option value="SANS_SOLDE" {{ absence and absence.getType_absence() == 'SANS_SOLDE' ? 'selected' : '' }}>Congé sans solde</option>
+                                    <option value="FORMATION" {{ absence and absence.getType_absence() == 'FORMATION' ? 'selected' : '' }}>Congé formation</option>
+                                </select>
+                                <div class="invalid-feedback">Veuillez sélectionner un type de congé.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="motif" class="form-label">Motif (optionnel)</label>
+                                <textarea class="form-control" id="motif" name="motif" rows="3" placeholder="Précisez le motif de votre demande...">{{ conge.getCommentaire_validation() ?? '' }}</textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('employ_conges') }}" class="btn btn-secondary">
+                                <i class="ti ti-arrow-left"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-check"></i> Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('congeEditForm');
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+
+    // Validation dates
+    function validateDates() {
+        const debut = new Date(dateDebut.value);
+        const fin = new Date(dateFin.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (debut < today) {
+            dateDebut.classList.add('is-invalid');
+            return false;
+        } else {
+            dateDebut.classList.remove('is-invalid');
+        }
+
+        if (fin <= debut) {
+            dateFin.classList.add('is-invalid');
+            return false;
+        } else {
+            dateFin.classList.remove('is-invalid');
+        }
+
+        return true;
+    }
+
+    dateDebut.addEventListener('change', validateDates);
+    dateFin.addEventListener('change', validateDates);
+
+    form.addEventListener('submit', function(e) {
+        if (!validateDates()) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

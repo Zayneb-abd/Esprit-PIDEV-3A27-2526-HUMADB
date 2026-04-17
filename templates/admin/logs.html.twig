@@ -1,0 +1,79 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Journal d'activité{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0 fw-bold">Journal d'activité</h4>
+        <small class="text-muted">Historique des actions système</small>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4">#</th>
+                        <th>Utilisateur</th>
+                        <th>Action</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="px-4 text-muted small">{{ log.id }}</td>
+                        <td>
+                            {% if log.user %}
+                                <span class="fw-semibold">{{ log.user.prenom }} {{ log.user.nom }}</span>
+                                <br><small class="text-muted">{{ log.user.email }}</small>
+                            {% else %}
+                                <span class="text-muted fst-italic">Compte supprimé</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set action = log.action %}
+                            {% if 'login' in action %}
+                                <span class="badge bg-success bg-opacity-10 text-success"><i class="ti ti-login me-1"></i>{{ action }}</span>
+                            {% elseif 'created' in action %}
+                                <span class="badge bg-primary bg-opacity-10 text-primary"><i class="ti ti-user-plus me-1"></i>{{ action }}</span>
+                            {% elseif 'updated' in action %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning"><i class="ti ti-edit me-1"></i>{{ action }}</span>
+                            {% elseif 'deleted' in action %}
+                                <span class="badge bg-danger bg-opacity-10 text-danger"><i class="ti ti-trash me-1"></i>{{ action }}</span>
+                            {% elseif 'password' in action %}
+                                <span class="badge bg-info bg-opacity-10 text-info"><i class="ti ti-lock me-1"></i>{{ action }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ action }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ log.createdAt|date('d/m/Y H:i:s') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-5">Aucun journal disponible.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if logs|length > 0 %}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <small class="text-muted">Affichage de {{ logs|length }} entrée(s)</small>
+        <div>
+            {% if page > 1 %}
+            <a href="{{ path('admin_logs', {page: page - 1}) }}" class="btn btn-sm btn-outline-secondary me-1">‹ Précédent</a>
+            {% endif %}
+            {% if logs|length == 20 %}
+            <a href="{{ path('admin_logs', {page: page + 1}) }}" class="btn btn-sm btn-outline-secondary">Suivant ›</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
