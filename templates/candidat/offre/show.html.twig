@@ -46,7 +46,43 @@
                 <h5 class="mb-3">Votre candidature</h5>
                 <p class="mb-2"><strong>Statut:</strong> {{ candidature.statut ?: 'En attente' }}</p>
                 <p class="mb-2"><strong>Date:</strong> {{ candidature.dateCandidature ? candidature.dateCandidature|date('d/m/Y') : '-' }}</p>
-                <p class="mb-0"><strong>CV:</strong> {{ candidature.cv ?: '-' }}</p>
+                <p class="mb-3">
+                    <strong>CV:</strong>
+                    {% if candidature.cv %}
+                        <a href="{{ asset('uploads/candidatures/cv/' ~ candidature.cv) }}" target="_blank">Ouvrir le CV depose</a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </p>
+
+                {% if quiz %}
+                    <div class="border rounded-3 p-3 mb-3">
+                        <h6 class="mb-2">Quiz de recrutement</h6>
+                        <p class="text-muted small mb-2">
+                            {{ quiz.titre ?: 'Quiz' }}
+                            {% if quiz.seuilPourcentage %} · Seuil {{ quiz.seuilPourcentage }}%{% endif %}
+                        </p>
+                        {% if resultat_quiz %}
+                            <p class="mb-2"><strong>Score:</strong> {{ resultat_quiz.scorePourcentage }}%</p>
+                            <p class="mb-0"><strong>Statut:</strong> {{ resultat_quiz.statut ?: '-' }}</p>
+                        {% else %}
+                            <a href="{{ path('candidat_candidature_quiz', {id: candidature.id}) }}" class="btn btn-primary btn-sm">Passer le quiz</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if latest_entretien %}
+                    <div class="border rounded-3 p-3">
+                        <h6 class="mb-2">Entretien</h6>
+                        <p class="mb-2"><strong>Date:</strong> {{ latest_entretien.dateEntretien ? latest_entretien.dateEntretien|date('d/m/Y H:i') : '-' }}</p>
+                        <p class="mb-2"><strong>Admin:</strong> {{ latest_entretien.user ? latest_entretien.user.prenom ~ ' ' ~ latest_entretien.user.nom : '-' }}</p>
+                        <p class="mb-2"><strong>Manager:</strong> {{ latest_entretien.manager ? latest_entretien.manager.prenom ~ ' ' ~ latest_entretien.manager.nom : '-' }}</p>
+                        <p class="mb-2"><strong>Statut:</strong> {{ latest_entretien.statut ?: '-' }}</p>
+                        {% if latest_entretien.meetLink %}
+                            <a href="{{ latest_entretien.meetLink }}" target="_blank" class="btn btn-outline-primary btn-sm">Rejoindre l'entretien</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
             </div>
         </div>
     {% endif %}

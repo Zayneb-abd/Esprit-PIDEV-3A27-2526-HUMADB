@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\Candidature;
 use App\Entity\OffreEmploi;
 use App\Entity\User;
-use App\Form\CandidatureType;
 use App\Form\OffreEmploiType;
 use App\Repository\CandidatureRepository;
 use App\Repository\OffreEmploiRepository;
@@ -102,7 +101,7 @@ class AdminController extends AbstractController
             static fn (Candidature $candidature): bool => $candidature->getStatut() === 'En attente'
         ));
 
-        return $this->render('admin/inventory/index.html.twig', [
+        return $this->render('admin/recrutment/recrutment.html.twig', [
             'offres' => $offres,
             'candidatures' => $candidatures,
             'search' => $search,
@@ -189,76 +188,6 @@ class AdminController extends AbstractController
                 $entityManager->remove($offre);
                 $entityManager->flush();
                 $this->addFlash('success', "L'offre d'emploi a ete supprimee.");
-            }
-        }
-
-        return $this->redirectToRoute('admin_inventory');
-    }
-
-    #[Route('/candidatures/new', name: 'admin_candidature_new')]
-    public function newCandidature(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $candidature = new Candidature();
-        $candidature->setDateCandidature(new \DateTime());
-        $candidature->setDateStatut(new \DateTime());
-        $candidature->setStatut('En attente');
-
-        $form = $this->createForm(CandidatureType::class, $candidature);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($candidature);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'La candidature a ete creee.');
-
-            return $this->redirectToRoute('admin_candidature_show', ['id' => $candidature->getId()]);
-        }
-
-        return $this->render('admin/candidature/new.html.twig', [
-            'form' => $form->createView(),
-            'candidature' => $candidature,
-        ]);
-    }
-
-    #[Route('/candidatures/{id}', name: 'admin_candidature_show', requirements: ['id' => '\d+'])]
-    public function showCandidature(Candidature $candidature): Response
-    {
-        return $this->render('admin/candidature/show.html.twig', [
-            'candidature' => $candidature,
-        ]);
-    }
-
-    #[Route('/candidatures/{id}/edit', name: 'admin_candidature_edit', requirements: ['id' => '\d+'])]
-    public function editCandidature(Request $request, Candidature $candidature, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(CandidatureType::class, $candidature);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            $this->addFlash('success', 'La candidature a ete mise a jour.');
-
-            return $this->redirectToRoute('admin_candidature_show', ['id' => $candidature->getId()]);
-        }
-
-        return $this->render('admin/candidature/edit.html.twig', [
-            'form' => $form->createView(),
-            'candidature' => $candidature,
-        ]);
-    }
-
-    #[Route('/candidatures/{id}/delete', name: 'admin_candidature_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function deleteCandidature(Request $request, Candidature $candidature, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete_candidature_'.$candidature->getId(), (string) $request->request->get('_token'))) {
-            if ($candidature->getEntretiens()->count() > 0) {
-                $this->addFlash('danger', 'Suppression impossible: la candidature est liee a des entretiens.');
-            } else {
-                $entityManager->remove($candidature);
-                $entityManager->flush();
-                $this->addFlash('success', 'La candidature a ete supprimee.');
             }
         }
 

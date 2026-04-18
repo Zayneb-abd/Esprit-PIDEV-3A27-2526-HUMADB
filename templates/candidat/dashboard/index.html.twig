@@ -42,6 +42,14 @@
                 </div>
             </div>
         </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-1 small">Entretiens a venir</p>
+                    <h3 class="fw-bold mb-0" style="color:#4338ca;">{{ stats.entretiens }}</h3>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-4">
@@ -96,6 +104,48 @@
                             <div class="p-4 text-secondary">Vous n'avez encore postule a aucune offre.</div>
                         {% endfor %}
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h5 class="mb-0 fw-semibold">Entretiens planifies</h5>
+                </div>
+                <div class="card-body">
+                    {% for entretien in entretiens_a_venir %}
+                        <div class="border rounded-3 p-3 mb-3">
+                            <div class="fw-semibold">{{ entretien.candidature and entretien.candidature.offreEmploi ? entretien.candidature.offreEmploi.titre : 'Entretien' }}</div>
+                            <div class="text-muted small mb-2">{{ entretien.dateEntretien ? entretien.dateEntretien|date('d/m/Y H:i') : '-' }}</div>
+                            <div class="small mb-2">Statut: {{ entretien.statut ?: 'PLANIFIE' }}</div>
+                            {% if entretien.meetLink %}
+                                <a href="{{ entretien.meetLink }}" target="_blank" class="btn btn-sm btn-outline-primary">Rejoindre sur Jitsi</a>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <p class="text-secondary mb-0">Aucun entretien n'est encore planifie.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h5 class="mb-0 fw-semibold">Quiz recents</h5>
+                </div>
+                <div class="card-body">
+                    {% for resultat in quiz_recents %}
+                        <div class="border rounded-3 p-3 mb-3">
+                            <div class="fw-semibold">{{ resultat.quiz ? resultat.quiz.titre : 'Quiz' }}</div>
+                            <div class="small mb-1">Score: {{ resultat.scorePourcentage ?: 0 }}%</div>
+                            <div class="small text-muted">Statut: {{ resultat.statut ?: '-' }}</div>
+                        </div>
+                    {% else %}
+                        <p class="text-secondary mb-0">Aucun quiz n'a encore ete passe.</p>
+                    {% endfor %}
                 </div>
             </div>
         </div>

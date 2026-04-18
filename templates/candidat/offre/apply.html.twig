@@ -14,10 +14,20 @@
 
     <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
-            {{ form_start(form) }}
-                <div class="mb-3">{{ form_row(form.cv) }}</div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Envoyer ma candidature</button>
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <span class="badge text-bg-primary">Etape 1: Uploader le CV</span>
+                <span class="badge text-bg-light border">Etape 2: Passer le quiz</span>
+            </div>
+            {{ form_start(form, {attr: {enctype: 'multipart/form-data'}}) }}
+                {{ form_errors(form) }}
+                <div class="alert alert-info">
+                    Deposez votre CV PDF pour cette candidature. Apres validation, vous passerez directement a l etape quiz si l offre contient un quiz.
+                </div>
+                <div class="row g-3">
+                    <div class="col-lg-8">{{ form_row(form.cvFile) }}</div>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">Continuer vers le quiz</button>
                     <a href="{{ path('candidat_reports') }}" class="btn btn-outline-secondary">Mes candidatures</a>
                 </div>
             {{ form_end(form) }}

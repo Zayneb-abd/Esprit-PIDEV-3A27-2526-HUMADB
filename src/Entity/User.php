@@ -6,12 +6,15 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 use App\Repository\UserRepository;
 
+#[Vich\Uploadable]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -186,6 +189,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->face_image = $face_image;
         return $this;
     }
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $cv_filename = null;
+
+    #[Vich\UploadableField(mapping: 'candidate_cv', fileNameProperty: 'cv_filename')]
+    private ?File $cvFile = null;
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $updated_at = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $reset_token = null;
@@ -631,6 +643,44 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function setCvFile(?File $cvFile = null): void
+    {
+        $this->cvFile = $cvFile;
+
+        if ($cvFile !== null) {
+            $this->updated_at = new \DateTimeImmutable();
+        }
+    }
+
+    public function getCvFile(): ?File
+    {
+        return $this->cvFile;
+    }
+
+    public function getCvFilename(): ?string
+    {
+        return $this->cv_filename;
+    }
+
+    public function setCvFilename(?string $cv_filename): static
+    {
+        $this->cv_filename = $cv_filename;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updated_at;
+    }
+
+    public function setUpdatedAt(?\DateTimeInterface $updated_at): static
+    {
+        $this->updated_at = $updated_at;
+
+        return $this;
+    }
+
     public function getResetToken(): ?string
     {
         return $this->reset_token;
@@ -657,6 +707,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function eraseCredentials(): void
     {
+        $this->cvFile = null;
+    }
+
+    public function __serialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'email' => $this->email,
+            'mdp' => $this->mdp,
+            'role' => $this->role,
+        ];
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->id = $data['id'] ?? null;
+        $this->email = $data['email'] ?? null;
+        $this->mdp = $data['mdp'] ?? null;
+        $this->role = $data['role'] ?? null;
+        $this->cvFile = null;
     }
 
     public function getUserIdentifier(): string

@@ -24,7 +24,23 @@
                     <h2 class="fs-5 mb-3">Candidat</h2>
                     <p class="mb-2"><strong>Nom:</strong> {{ candidature.user ? candidature.user.prenom ~ ' ' ~ candidature.user.nom : '-' }}</p>
                     <p class="mb-2"><strong>Email:</strong> {{ candidature.user ? candidature.user.email : '-' }}</p>
-                    <p class="mb-0"><strong>CV:</strong> {{ candidature.cv ?: '-' }}</p>
+                    <p class="mb-3">
+                        <strong>CV:</strong>
+                        {% if candidature.cv %}
+                            <a href="{{ asset('uploads/candidatures/cv/' ~ candidature.cv) }}" target="_blank">Ouvrir le PDF</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </p>
+
+                    <div class="border rounded-3 p-3 bg-light">
+                        <h3 class="fs-6 mb-2">Apercu du CV</h3>
+                        {% if cv_preview %}
+                            <p class="mb-0 small text-secondary">{{ cv_preview }}</p>
+                        {% else %}
+                            <p class="mb-0 text-secondary">Aucun texte exploitable n'a pu etre extrait du PDF.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -37,6 +53,95 @@
                     <p class="mb-2"><strong>Date de candidature:</strong> {{ candidature.dateCandidature ? candidature.dateCandidature|date('d/m/Y') : '-' }}</p>
                     <p class="mb-0"><strong>Date du statut:</strong> {{ candidature.dateStatut ? candidature.dateStatut|date('d/m/Y') : '-' }}</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <h2 class="fs-5 mb-3">Resultat du quiz</h2>
+                    {% if quiz_result %}
+                        <p class="mb-2"><strong>Quiz:</strong> {{ quiz_result.quiz ? quiz_result.quiz.titre : '-' }}</p>
+                        <p class="mb-2"><strong>Score:</strong> {{ quiz_result.scorePourcentage ?: 0 }}%</p>
+                        <p class="mb-2"><strong>Temps utilise:</strong> {{ quiz_result.tempsUtilise ?: 0 }} sec</p>
+                        <p class="mb-0"><strong>Statut:</strong> {{ quiz_result.statut ?: '-' }}</p>
+                    {% else %}
+                        <p class="mb-0 text-secondary">Le candidat n'a pas encore soumis de quiz pour cette offre.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100" id="planifier-entretien">
+                <div class="card-body p-4">
+                    <h2 class="fs-5 mb-3">Planifier un entretien</h2>
+                    <p class="text-secondary small mb-3">Le meet sera partage entre le candidat, l admin RH et le manager selectionne. Un lien Jitsi unique sera genere automatiquement.</p>
+                    {{ form_start(entretien_form) }}
+                        <div class="row g-3">
+                            <div class="col-md-6">{{ form_row(entretien_form.manager) }}</div>
+                            <div class="col-md-6">{{ form_row(entretien_form.date_entretien) }}</div>
+                            <div class="col-md-4">{{ form_row(entretien_form.duree_minutes) }}</div>
+                            <div class="col-md-4">{{ form_row(entretien_form.statut) }}</div>
+                            <div class="col-12">{{ form_row(entretien_form.commentaire) }}</div>
+                        </div>
+                        <button class="btn btn-primary mt-3">Generer le lien Jitsi et planifier</button>
+                    {{ form_end(entretien_form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="fs-5 mb-0">Entretiens</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Duree</th>
+                            <th>Admin</th>
+                            <th>Manager</th>
+                            <th>Statut</th>
+                            <th>Jitsi</th>
+                            <th>API</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entretien in entretiens %}
+                            <tr>
+                                <td>{{ entretien.dateEntretien ? entretien.dateEntretien|date('d/m/Y H:i') : '-' }}</td>
+                                <td>{{ entretien.dureeMinutes ?: '-' }} min</td>
+                                <td>{{ entretien.user ? entretien.user.prenom ~ ' ' ~ entretien.user.nom : '-' }}</td>
+                                <td>{{ entretien.manager ? entretien.manager.prenom ~ ' ' ~ entretien.manager.nom : '-' }}</td>
+                                <td>{{ entretien.statut ?: '-' }}</td>
+                                <td>
+                                    {% if entretien.meetLink %}
+                                        <a href="{{ entretien.meetLink }}" target="_blank">Ouvrir</a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ path('admin_entretien_jitsi_api', {id: entretien.id}) }}" target="_blank">JSON</a>
+                                </td>
+                            </tr>
+                            <tr class="table-light">
+                                <td colspan="7" class="small text-secondary">
+                                    Participants: candidat {{ candidature.user ? candidature.user.prenom ~ ' ' ~ candidature.user.nom : '-' }}, admin {{ entretien.user ? entretien.user.prenom ~ ' ' ~ entretien.user.nom : '-' }}, manager {{ entretien.manager ? entretien.manager.prenom ~ ' ' ~ entretien.manager.nom : '-' }}.
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-secondary">Aucun entretien planifie pour cette candidature.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

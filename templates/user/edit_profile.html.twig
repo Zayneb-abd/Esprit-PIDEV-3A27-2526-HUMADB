@@ -41,6 +41,22 @@
                     {{ form_errors(form.faceImageFile) }}
                 </div>
 
+                {% if is_granted('ROLE_CANDIDAT') or is_granted('ROLE_CONDIDAT') %}
+                    <div class="mb-4">
+                        <label class="form-label">CV PDF</label>
+                        {{ form_widget(form.cvFile, { attr: { class: 'form-control', accept: 'application/pdf' } }) }}
+                        {{ form_errors(form.cvFile) }}
+                        {% if app.user.cvFilename %}
+                            <div class="form-text">
+                                CV actuel:
+                                <a href="{{ asset('uploads/cvs/' ~ app.user.cvFilename) }}" target="_blank">ouvrir le PDF</a>
+                            </div>
+                        {% else %}
+                            <div class="form-text">Ajoute ici le CV qui sera reutilise pour tes candidatures.</div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary px-4">Enregistrer</button>
                     <a href="{{ path('user_profile') }}" class="btn btn-outline-secondary">Annuler</a>

@@ -139,6 +139,7 @@ class UserController extends AbstractController
             }
 
             $em->flush();
+            $user->setCvFile(null);
 
             // Log
             $log = new Log();

@@ -21,11 +21,15 @@
                         <th>Departement</th>
                         <th>Date candidature</th>
                         <th>CV</th>
+                        <th>Quiz</th>
+                        <th>Entretien</th>
                         <th>Statut</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for candidature in candidatures %}
+                        {% set resultatQuiz = resultats_par_candidature[candidature.id] ?? null %}
+                        {% set entretien = entretiens_par_candidature[candidature.id] ?? null %}
                         <tr>
                             <td>
                                 {% if candidature.offreEmploi %}
@@ -38,7 +42,36 @@
                             </td>
                             <td>{{ candidature.offreEmploi ? candidature.offreEmploi.departement : '-' }}</td>
                             <td>{{ candidature.dateCandidature ? candidature.dateCandidature|date('d/m/Y') : '-' }}</td>
-                            <td>{{ candidature.cv ?: '-' }}</td>
+                            <td>
+                                {% if candidature.cv %}
+                                    <a href="{{ asset('uploads/candidatures/cv/' ~ candidature.cv) }}" target="_blank">PDF</a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if resultatQuiz %}
+                                    <span class="badge text-bg-{{ resultatQuiz.statut == 'REUSSI' ? 'success' : 'danger' }}">{{ resultatQuiz.scorePourcentage }}%</span>
+                                {% elseif candidature.offreEmploi and candidature.offreEmploi.quizs|length > 0 %}
+                                    <a href="{{ path('candidat_candidature_quiz', {id: candidature.id}) }}" class="btn btn-sm btn-outline-primary">Passer</a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if entretien %}
+                                    <div>{{ entretien.dateEntretien ? entretien.dateEntretien|date('d/m/Y H:i') : '-' }}</div>
+                                    <div class="small text-secondary">
+                                        Admin: {{ entretien.user ? entretien.user.prenom ~ ' ' ~ entretien.user.nom : '-' }}
+                                        | Manager: {{ entretien.manager ? entretien.manager.prenom ~ ' ' ~ entretien.manager.nom : '-' }}
+                                    </div>
+                                    {% if entretien.meetLink %}
+                                        <a href="{{ entretien.meetLink }}" target="_blank" class="small">Jitsi</a>
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                             <td>
                                 <span class="badge text-bg-{{ candidature.statut == 'Acceptee' ? 'success' : (candidature.statut == 'Refusee' ? 'danger' : (candidature.statut == 'En cours' ? 'primary' : 'warning')) }}">
                                     {{ candidature.statut ?: 'En attente' }}
@@ -47,7 +80,7 @@
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-secondary">Vous n'avez encore aucune candidature.</td>
+                            <td colspan="7" class="text-center py-4 text-secondary">Vous n'avez encore aucune candidature.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
