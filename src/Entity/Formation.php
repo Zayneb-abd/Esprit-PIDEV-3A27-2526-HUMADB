@@ -172,4 +172,45 @@ class Formation
         $this->getParticipations()->removeElement($participation);
         return $this;
     }
+
+    public function getLieu(): ?string
+    {
+        return $this->getLocalisation();
+    }
+
+    public function getDateFin(): ?\DateTimeInterface
+    {
+        // Si dateDebut existe, retourne dateDebut + durée
+        if ($this->getDateDebut() && $this->getDuree()) {
+            $dateFin = clone $this->getDateDebut();
+            $dateFin->modify('+' . $this->getDuree() . ' days');
+            return $dateFin;
+        }
+        return null;
+    }
+
+    private ?string $qrCodePath = null;
+    private ?string $calendarData = null;
+
+    public function getQrCodePath(): ?string
+    {
+        return $this->qrCodePath;
+    }
+
+    public function setQrCodePath(?string $qrCodePath): self
+    {
+        $this->qrCodePath = $qrCodePath;
+        return $this;
+    }
+
+    public function getCalendarData(): ?string
+    {
+        return $this->calendarData;
+    }
+
+    public function setCalendarData(?string $calendarData): self
+    {
+        $this->calendarData = $calendarData;
+        return $this;
+    }
 }

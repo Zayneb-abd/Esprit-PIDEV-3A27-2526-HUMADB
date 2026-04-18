@@ -19,15 +19,10 @@
                 </div>
             {% endfor %}
 
-            <div class="mb-4 d-flex justify-content-between align-items-center">
+            <div class="mb-4">
                 <div>
                     <h1 class="fs-3 mb-1">Gestion des Formations</h1>
                     <p class="mb-0">Gérez les formations et sessions de formation</p>
-                </div>
-                <div>
-                    <a href="{{ path('admin_formation_new') }}" class="btn btn-primary">
-                        <i class="ti ti-plus"></i> Nouvelle formation
-                    </a>
                 </div>
             </div>
 
@@ -56,59 +51,77 @@
             </div>
 
             <div class="card table-responsive">
-                <table class="table mb-0 text-nowrap table-hover">
-                    <thead class="table-light border-light">
-                        <tr>
-                            <th>Sujet</th>
-                            <th>Formateur</th>
-                            <th>Type</th>
-                            <th>Date début</th>
-                            <th>Durée (jours)</th>
-                            <th>Localisation</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for formation in formations %}
-                            <tr class="align-middle">
-                                <td>{{ formation.sujet|default('-') }}</td>
-                                <td>{{ formation.formateur|default('-') }}</td>
-                                <td>
-                                    {% if formation.type %}
-                                        {{ formation.type|replace({'_': ' '})|title }}
-                                    {% else %}
-                                        <em>-</em>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if formation.dateDebut %}
-                                        {{ formation.dateDebut|date('d/m/Y') }}
-                                    {% else %}
-                                        <em>-</em>
-                                    {% endif %}
-                                </td>
-                                <td>{{ formation.duree|default('-') }}</td>
-                                <td>{{ formation.localisation|default('-') }}</td>
-                                <td>
-                                    <a href="{{ path('admin_formation_edit', {id: formation.id}) }}" class="btn btn-sm btn-info" title="Modifier">
-                                        <i class="ti ti-edit"></i>
-                                    </a>
-                                    <form action="{{ path('admin_formation_delete', {id: formation.id}) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette formation ?');">
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        {% else %}
+                <div class="table-responsive" style="overflow-x: auto; max-height: 500px !important;">
+                    <table class="table mb-0 table-hover" style="min-width: 900px;">
+                        <colgroup>
+                            <col style="width: 60px;"> <!-- ID -->
+                            <col style="width: 280px;"> <!-- Sujet -->
+                            <col style="width: 160px;"> <!-- Formateur -->
+                            <col style="width: 130px;"> <!-- Date Début -->
+                            <col style="width: 100px;"> <!-- Durée -->
+                            <col style="width: 180px;"> <!-- Localisation -->
+                            <col style="width: 180px;"> <!-- Actions -->
+                        </colgroup>
+                        <thead class="table-light">
                             <tr>
-                                <td colspan="7" class="text-center py-4">
-                                    <p class="text-muted mb-0">Aucune formation trouvée.</p>
-                                </td>
+                                <th>ID</th>
+                                <th>
+                                    <a href="{{ path('admin_formation_index', {q: query, sort: 'sujet', order: sort == 'sujet' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
+                                        Sujet {% if sort == 'sujet' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="{{ path('admin_formation_index', {q: query, sort: 'formateur', order: sort == 'formateur' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
+                                        Formateur {% if sort == 'formateur' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="{{ path('admin_formation_index', {q: query, sort: 'dateDebut', order: sort == 'dateDebut' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
+                                        Date Début {% if sort == 'dateDebut' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                                    </a>
+                                </th>
+                                <th>Localisation</th>
+                                <th>Actions</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for formation in formations %}
+                                <tr class="align-middle">
+                                    <td>{{ formation.id }}</td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ formation.sujet }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                Type: {{ formation.type }} | Durée: {{ formation.duree }} jours
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>{{ formation.formateur }}</td>
+                                    <td>{{ formation.dateDebut ? formation.dateDebut|date('d/m/Y') : 'Non définie' }}</td>
+                                    <td>{{ formation.localisation }}</td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ path('admin_formation_edit', {'id': formation.id}) }}" class="btn btn-sm btn-outline-primary" title="Modifier">
+                                                <i class="ti ti-edit"></i>
+                                            </a>
+                                            <form action="{{ path('admin_formation_delete', {'id': formation.id}) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette formation ?');" style="margin: 0; padding: 0;">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ formation.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                    <i class="ti ti-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">Aucune formation trouvée.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

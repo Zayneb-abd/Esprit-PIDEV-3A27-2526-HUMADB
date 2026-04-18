@@ -20,5 +20,13 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+    # QrCodeService configuration
+    App\Service\QrCodeService:
+
+    # AIService configuration
+    App\Service\AIService:
+        arguments:
+            $groqApiKey: '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'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
