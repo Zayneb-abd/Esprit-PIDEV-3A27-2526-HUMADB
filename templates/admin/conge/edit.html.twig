@@ -1,0 +1,246 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Modifier Demande de Congé{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            <div class="mb-4">
+                <h1 class="fs-3 mb-1">Modifier Demande de Congé</h1>
+                <p class="mb-0">Modifier les informations de la demande de congé</p>
+            </div>
+
+            {% set absence = conge.absence %}
+
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ path('admin_conge_edit', {id: conge.id}) }}" method="POST" id="congeForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="employe_id" class="form-label">Employé <span class="text-danger">*</span></label>
+                                <select name="employe_id" id="employe_id" class="form-select" required>
+                                    <option value="">-- Sélectionner un employé --</option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}" {% if absence and absence.user and absence.user.id == user.id %}selected{% endif %}>
+                                            {{ user.nom|default('') }} {{ user.prenom|default('') }} ({{ user.email|default('') }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback" id="employe_error"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="type_absence" class="form-label">Type de congé <span class="text-danger">*</span></label>
+                                <select name="type_absence" id="type_absence" class="form-select" required>
+                                    <option value="">-- Sélectionner un type --</option>
+                                    <option value="conge_annuel" {% if absence and absence.typeAbsence == 'conge_annuel' %}selected{% endif %}>Congé annuel</option>
+                                    <option value="conge_maladie" {% if absence and absence.typeAbsence == 'conge_maladie' %}selected{% endif %}>Congé maladie</option>
+                                    <option value="conge_sans_solde" {% if absence and absence.typeAbsence == 'conge_sans_solde' %}selected{% endif %}>Congé sans solde</option>
+                                    <option value="conge_maternite" {% if absence and absence.typeAbsence == 'conge_maternite' %}selected{% endif %}>Congé maternité</option>
+                                    <option value="conge_paternite" {% if absence and absence.typeAbsence == 'conge_paternite' %}selected{% endif %}>Congé paternité</option>
+                                    <option value="autre" {% if absence and absence.typeAbsence == 'autre' %}selected{% endif %}>Autre</option>
+                                </select>
+                                <div class="invalid-feedback" id="type_error"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_debut" class="form-label">Date de début <span class="text-danger">*</span></label>
+                                <input type="date" name="date_debut" id="date_debut" class="form-control" required
+                                    value="{% if absence and absence.dateDebut %}{{ absence.dateDebut|date('Y-m-d') }}{% endif %}">
+                                <div class="form-text text-muted">La date de début doit être aujourd'hui ou dans le futur.</div>
+                                <div class="invalid-feedback" id="date_debut_error"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_fin" class="form-label">Date de fin <span class="text-danger">*</span></label>
+                                <input type="date" name="date_fin" id="date_fin" class="form-control" required
+                                    value="{% if absence and absence.dateFin %}{{ absence.dateFin|date('Y-m-d') }}{% endif %}">
+                                <div class="form-text text-muted">La date de fin doit être après la date de début.</div>
+                                <div class="invalid-feedback" id="date_fin_error"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="statut" class="form-label">Statut <span class="text-danger">*</span></label>
+                                <select name="statut" id="statut" class="form-select" required>
+                                    <option value="en_attente" {% if absence and absence.statut == 'en_attente' %}selected{% endif %}>En attente</option>
+                                    <option value="approuve" {% if absence and absence.statut == 'approuve' %}selected{% endif %}>Approuvé</option>
+                                    <option value="refuse" {% if absence and absence.statut == 'refuse' %}selected{% endif %}>Refusé</option>
+                                </select>
+                                <div class="invalid-feedback" id="statut_error"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_validation" class="form-label">Date de validation</label>
+                                <input type="text" class="form-control" disabled
+                                    value="{% if conge.dateValidation %}{{ conge.dateValidation|date('d/m/Y H:i') }}{% else %}Non validé{% endif %}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="commentaire_validation" class="form-label">Commentaire de validation</label>
+                            <textarea name="commentaire_validation" id="commentaire_validation" class="form-control" rows="3" placeholder="Ajouter un commentaire sur la décision...">{{ conge.commentaireValidation|default('') }}</textarea>
+                        </div>
+
+                        <div id="errorAlert" class="alert alert-danger d-none" role="alert">
+                            <ul class="mb-0" id="errorList"></ul>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('admin_conge') }}" class="btn btn-secondary">
+                                <i class="ti ti-arrow-left"></i> Retour
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="ti ti-check"></i> Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('congeForm');
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+    const errorAlert = document.getElementById('errorAlert');
+    const errorList = document.getElementById('errorList');
+
+    // Récupérer la date de début actuelle pour la comparaison
+    const currentDateDebut = dateDebut.value;
+    
+    // Définir la date minimale à aujourd'hui seulement si la date actuelle est dans le futur
+    const today = new Date().toISOString().split('T')[0];
+    if (currentDateDebut && currentDateDebut >= today) {
+        dateDebut.min = today;
+    }
+    
+    function showErrors(errors) {
+        errorList.innerHTML = '';
+        errors.forEach(error => {
+            const li = document.createElement('li');
+            li.textContent = error;
+            errorList.appendChild(li);
+        });
+        errorAlert.classList.remove('d-none');
+    }
+
+    function hideErrors() {
+        errorAlert.classList.add('d-none');
+        errorList.innerHTML = '';
+    }
+
+    function validateForm() {
+        const errors = [];
+        let isValid = true;
+
+        // Réinitialiser les erreurs visuelles
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        hideErrors();
+
+        // Validation employé
+        const employe = document.getElementById('employe_id').value;
+        if (!employe) {
+            errors.push('Veuillez sélectionner un employé.');
+            document.getElementById('employe_id').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        // Validation type d'absence
+        const typeAbsence = document.getElementById('type_absence').value;
+        if (!typeAbsence) {
+            errors.push('Veuillez sélectionner un type de congé.');
+            document.getElementById('type_absence').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        // Validation date de début
+        const dateDebutValue = dateDebut.value;
+        if (!dateDebutValue) {
+            errors.push('La date de début est obligatoire.');
+            dateDebut.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            const selectedDate = new Date(dateDebutValue);
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            // Pour l'édition, on permet de garder une date passée mais pas d'en choisir une nouvelle dans le passé
+            if (selectedDate < now && dateDebutValue !== currentDateDebut) {
+                errors.push('La nouvelle date de début ne peut pas être dans le passé.');
+                dateDebut.classList.add('is-invalid');
+                isValid = false;
+            }
+        }
+
+        // Validation date de fin
+        const dateFinValue = dateFin.value;
+        if (!dateFinValue) {
+            errors.push('La date de fin est obligatoire.');
+            dateFin.classList.add('is-invalid');
+            isValid = false;
+        } else if (dateDebutValue && dateFinValue) {
+            if (new Date(dateFinValue) <= new Date(dateDebutValue)) {
+                errors.push('La date de fin doit être après la date de début.');
+                dateFin.classList.add('is-invalid');
+                isValid = false;
+            }
+        }
+
+        // Validation statut
+        const statut = document.getElementById('statut').value;
+        if (!statut) {
+            errors.push('Le statut est obligatoire.');
+            document.getElementById('statut').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            showErrors(errors);
+        }
+
+        return isValid;
+    }
+
+    // Validation en temps réel lors de la modification des dates
+    dateDebut.addEventListener('change', function() {
+        if (this.value) {
+            dateFin.min = this.value;
+        }
+        this.classList.remove('is-invalid');
+    });
+
+    dateFin.addEventListener('change', function() {
+        this.classList.remove('is-invalid');
+    });
+
+    document.getElementById('employe_id').addEventListener('change', function() {
+        this.classList.remove('is-invalid');
+    });
+
+    document.getElementById('type_absence').addEventListener('change', function() {
+        this.classList.remove('is-invalid');
+    });
+
+    document.getElementById('statut').addEventListener('change', function() {
+        this.classList.remove('is-invalid');
+    });
+
+    // Validation à la soumission
+    form.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

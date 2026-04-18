@@ -1,0 +1,125 @@
+{% extends 'employ/base_employe.html.twig' %}
+
+{% block title %}Mes Congés{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4">
+                <h1 class="fs-3 mb-1">Mes Congés</h1>
+                <p class="mb-0">Gérez vos demandes de congés</p>
+            </div>
+
+            {# Messages flash #}
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title mb-0">Liste de mes congés</h5>
+                        <div>
+                            <a href="{{ path('employ_conges_new') }}" class="btn btn-primary btn-sm me-2">
+                                <i class="ti ti-plus"></i> Demande de congé
+                            </a>
+                            <a href="{{ path('employ_dashboard') }}" class="btn btn-secondary btn-sm">
+                                <i class="ti ti-arrow-left"></i> Retour
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date de demande</th>
+                                    <th>Date début</th>
+                                    <th>Date fin</th>
+                                    <th>Type</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if conges is defined and conges|length > 0 %}
+                                    {% for conge in conges %}
+                                        <tr>
+                                            <td>{{ conge.dateDemande ? conge.dateDemande|date('d/m/Y') : '-' }}</td>
+                                            <td>{{ conge.absence and conge.absence.dateDebut ? conge.absence.dateDebut|date('d/m/Y') : '-' }}</td>
+                                            <td>{{ conge.absence and conge.absence.dateFin ? conge.absence.dateFin|date('d/m/Y') : '-' }}</td>
+                                            <td>
+                                                {% if conge.absence and conge.absence.typeAbsence %}
+                                                    {% set typeLabels = {
+                                                        'ANNUEL': 'Congé annuel',
+                                                        'MALADIE': 'Congé maladie',
+                                                        'MATERNITE': 'Congé maternité',
+                                                        'PATERNITE': 'Congé paternité',
+                                                        'SANS_SOLDE': 'Congé sans solde',
+                                                        'FORMATION': 'Congé formation'
+                                                    } %}
+                                                    {{ typeLabels[conge.absence.typeAbsence] ?? conge.absence.typeAbsence }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% set statut = conge.absence and conge.absence.statut ? conge.absence.statut : 'EN_ATTENTE' %}
+                                                {% set badgeClass = {
+                                                    'EN_ATTENTE': 'bg-warning',
+                                                    'APPROUVE': 'bg-success',
+                                                    'REFUSE': 'bg-danger',
+                                                    'ANNULE': 'bg-secondary'
+                                                }[statut] ?? 'bg-secondary' %}
+                                                <span class="badge {{ badgeClass }}">
+                                                    {% set statutLabels = {
+                                                        'EN_ATTENTE': 'En attente',
+                                                        'APPROUVE': 'Approuvé',
+                                                        'REFUSE': 'Refusé',
+                                                        'ANNULE': 'Annulé'
+                                                    } %}
+                                                    {{ statutLabels[statut] ?? statut }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{{ path('employ_conges_show', {'id': conge.id}) }}" class="btn btn-info btn-sm" title="Voir">
+                                                    <i class="ti ti-eye"></i>
+                                                </a>
+                                                <a href="{{ path('employ_conges_edit', {'id': conge.id}) }}" class="btn btn-warning btn-sm" title="Modifier">
+                                                    <i class="ti ti-edit"></i>
+                                                </a>
+                                                <form method="post" action="{{ path('employ_conges_delete', {'id': conge.id}) }}" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette demande ?');">
+                                                    <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
+                                                        <i class="ti ti-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
+                                            Aucune demande de congé trouvée
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

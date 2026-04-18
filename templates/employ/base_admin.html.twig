@@ -425,12 +425,6 @@
                 </a>
             </li>
             <li>
-                <a href="{{ path('employ_publication_index') }}" class="{% if app.request.attributes.get('_route') starts with 'employ_publication' or app.request.attributes.get('_route') starts with 'employ_commentaire' or app.request.attributes.get('_route') == 'employ_product_create' %}active{% endif %}">
-                    <i class="ti ti-news"></i>
-                    <span>Publications</span>
-                </a>
-            </li>
-            <li>
                 <a href="{{ path('employ_reports') }}" class="{% if app.request.attributes.get('_route') == 'employ_reports' %}active{% endif %}">
                     <i class="ti ti-receipt"></i>
                     <span>Reports</span>
