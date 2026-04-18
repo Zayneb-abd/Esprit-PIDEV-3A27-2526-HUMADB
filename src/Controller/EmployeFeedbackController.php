@@ -32,8 +32,12 @@ class EmployeFeedbackController extends AbstractController
     }
 
     #[Route('/new', name: 'employ_feedback_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
+    public function new(
+        Request $request, 
+        EntityManagerInterface $entityManager,
+        \App\Service\FeedbackPriorityAnalyzer $priorityAnalyzer,
+        \App\Service\NotificationService $notificationService
+    ): Response {
         $user = $this->getUser();
         if (!$user) {
             return $this->redirectToRoute('app_login');
@@ -47,7 +51,10 @@ class EmployeFeedbackController extends AbstractController
             $feedback->setEmployeId($user->getId());
             $feedback->setDateEnvoi(new \DateTime());
             $feedback->setStatus('nouveau');
-            $feedback->setPriority('normal');
+
+            // Analyse de priorité par l'IA (ou fallback) !
+            $priority = $priorityAnalyzer->analyze($feedback);
+            $feedback->setPriority($priority);
 
             if ($feedback->isEstAnonyme() === null) {
                 $feedback->setEstAnonyme(false);
@@ -55,6 +62,13 @@ class EmployeFeedbackController extends AbstractController
 
             $entityManager->persist($feedback);
             $entityManager->flush();
+
+            // Notification aux Admins
+            $notificationService->sendToAdmins(
+                'Nouveau Feedback (' . $priority . ')',
+                'Un employé vient de soumettre un nouveau feedback dans la catégorie : ' . $feedback->getCategory(),
+                '/admin/feedback/' . $feedback->getId() . '/edit' // C'est un lien vers le feedback
+            );
 
             $this->addFlash('success', 'Votre feedback a été envoyé avec succès !');
 

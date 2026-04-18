@@ -595,7 +595,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->publications = new ArrayCollection();
         $this->resultatQuizs = new ArrayCollection();
         $this->users = new ArrayCollection();
+        $this->notifications = new ArrayCollection();
     }
+
+    #[ORM\OneToMany(targetEntity: Notification::class, mappedBy: 'user')]
+    private Collection $notifications;
 
     /**
      * @return Collection<int, User>

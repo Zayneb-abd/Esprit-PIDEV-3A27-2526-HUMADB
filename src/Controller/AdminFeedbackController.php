@@ -7,6 +7,7 @@ use App\Form\AdminFeedbackType;
 use App\Repository\FeedbackRepository;
 use App\Repository\UserRepository;
 use App\Service\FeedbackAutoResponseGenerator;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -99,14 +100,15 @@ class AdminFeedbackController extends AbstractController
 
     #[Route('/{id}/send-reply', name: 'admin_feedback_send_reply', methods: ['POST'])]
     public function sendReplyToEmployee(
-        Request $request,
         Feedback $feedback,
+        Request $request,
         UserRepository $userRepository,
         MailerInterface $mailer,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        NotificationService $notificationService
     ): Response {
-        if (!$this->isCsrfTokenValid('feedback_send_' . $feedback->getId(), (string) $request->request->get('_token'))) {
-            $this->addFlash('danger', 'Jeton CSRF invalide.');
+        if ($this->isCsrfTokenValid('feedback_send_' . $feedback->getId(), (string) $request->request->get('_token')) === false) {
+            $this->addFlash('danger', 'Token CSRF invalide.');
             return $this->redirectToRoute('admin_feedback_edit', ['id' => $feedback->getId()]);
         }
 
@@ -153,6 +155,14 @@ class AdminFeedbackController extends AbstractController
         }
         $feedback->setUser($this->getUser());
         $entityManager->flush();
+
+        // Notification in-app pour l'employé
+        $notificationService->sendToUser(
+            $employee,
+            'Réponse de l\'administration',
+            'L\'administration a répondu à votre feedback concernant : ' . $feedback->getCategory(),
+            '/employ/feedback' // Redirige vers la liste des feedbacks de l'employé où il verra le statut traité
+        );
 
         $this->addFlash('success', 'Réponse envoyée à l\'employé avec succès.');
         return $this->redirectToRoute('admin_feedback_edit', ['id' => $feedback->getId()]);

@@ -25,5 +25,10 @@ services:
             $openAiApiKey: '%env(OPENAI_API_KEY)%'
             $openAiModel: '%env(OPENAI_MODEL)%'
 
+    App\Service\FeedbackPriorityAnalyzer:
+        arguments:
+            $openAiApiKey: '%env(OPENAI_API_KEY)%'
+            $openAiModel: '%env(OPENAI_MODEL)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -12,6 +12,7 @@ use App\Repository\OffreEmploiRepository;
 use App\Repository\FeedbackRepository;
 use App\Repository\PublicationRepository;
 use App\Repository\UserRepository;
+use App\Repository\LogRepository;
 use App\Repository\CongeRepository;
 use App\Repository\AbsenceRepository;
 use App\Repository\FormationRepository;
