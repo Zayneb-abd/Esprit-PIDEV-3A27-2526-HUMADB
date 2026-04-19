@@ -3,6 +3,175 @@
 {% block title %}Publications{% endblock %}
 
 {% block body %}
+<style>
+.facebook-post {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.facebook-post-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e9ebee;
+}
+.facebook-post-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    margin-right: 12px;
+}
+.facebook-post-info {
+    flex: 1;
+}
+.facebook-post-author {
+    font-weight: 600;
+    color: #1c1e21;
+    margin: 0;
+    font-size: 15px;
+}
+.facebook-post-meta {
+    color: #65676b;
+    font-size: 13px;
+    margin: 0;
+}
+.facebook-post-actions {
+    display: flex;
+    gap: 8px;
+}
+.facebook-post-content {
+    padding: 15px;
+    color: #1c1e21;
+    font-size: 15px;
+    line-height: 1.5;
+}
+.facebook-post-media {
+    padding: 0 15px;
+}
+.facebook-post-media img {
+    max-width: 100%;
+    max-height: 300px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.facebook-post-media video {
+    max-width: 100%;
+    max-height: 300px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.facebook-post-footer {
+    padding: 12px 15px;
+    border-top: 1px solid #e9ebee;
+}
+.facebook-post-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #65676b;
+}
+.facebook-post-buttons {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 8px;
+    border-top: 1px solid #e9ebee;
+}
+.facebook-post-button {
+    background: none;
+    border: none;
+    color: #65676b;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s;
+}
+.facebook-post-button:hover {
+    background-color: #f0f2f5;
+}
+.facebook-comments {
+    padding: 0 15px 15px;
+}
+.facebook-comment {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px;
+    background: #f0f2f5;
+    border-radius: 8px;
+}
+.facebook-comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+.facebook-comment-content {
+    flex: 1;
+}
+.facebook-comment-author {
+    font-weight: 600;
+    color: #1c1e21;
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+.facebook-comment-text {
+    color: #1c1e21;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+.facebook-comment-meta {
+    color: #65676b;
+    font-size: 12px;
+}
+.facebook-comment-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+.facebook-comment-action {
+    background: none;
+    border: none;
+    color: #65676b;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0;
+}
+.facebook-comment-action:hover {
+    text-decoration: underline;
+}
+</style>
+
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -36,62 +205,94 @@
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row">
         {% for publication in publications %}
             <div class="col-12">
-                <div class="card">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                            <div>
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <span class="badge text-bg-light border">#{{ publication.id }}</span>
-                                    <span class="badge text-bg-primary">{{ publication.type ?: 'General' }}</span>
-                                </div>
-                                <h5 class="mb-2">Publication de {{ publication.user ? publication.user.prenom ~ ' ' ~ publication.user.nom : 'Utilisateur inconnu' }}</h5>
-                                <p class="text-muted mb-0">{{ publication.datePublication ? publication.datePublication|date('d/m/Y H:i') : '-' }}</p>
+                <div class="facebook-post">
+                    <div class="facebook-post-header">
+                        <div class="facebook-post-avatar">
+                            {{ publication.user ? publication.user.prenom|first ~ publication.user.nom|first : 'U' }}
+                        </div>
+                        <div class="facebook-post-info">
+                            <div class="facebook-post-author">
+                                {{ publication.user ? publication.user.prenom ~ ' ' ~ publication.user.nom : 'Utilisateur inconnu' }}
                             </div>
-                            <div class="d-flex gap-2">
-                                <a href="{{ path('admin_commentaire_new', { publication: publication.id }) }}" class="btn btn-sm btn-light">Ajouter commentaire</a>
-                                <a href="{{ path('admin_publication_edit', { id: publication.id }) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
-                                <form method="post" action="{{ path('admin_publication_delete', { id: publication.id }) }}">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_publication_' ~ publication.id) }}">
-                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette publication ?');">Supprimer</button>
-                                </form>
+                            <div class="facebook-post-meta">
+                                {{ publication.datePublication ? publication.datePublication|date('d M Y à H:i') : '-' }}
+                                {% if publication.type %}
+                                    <span class="badge text-bg-primary ms-2">{{ publication.type }}</span>
+                                {% endif %}
                             </div>
                         </div>
+                        <div class="facebook-post-actions">
+                            <a href="{{ path('admin_commentaire_new', { publication: publication.id }) }}" class="btn btn-sm btn-light">Ajouter commentaire</a>
+                            <a href="{{ path('admin_publication_edit', { id: publication.id }) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                            <form method="post" action="{{ path('admin_publication_delete', { id: publication.id }) }}" style="display: inline;">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_publication_' ~ publication.id) }}">
+                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette publication ?');">Supprimer</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="facebook-post-content">
+                        {{ publication.contenu|nl2br }}
+                    </div>
 
-                        <hr>
-                        <p class="mb-0">{{ publication.contenu }}</p>
+                    {% if publication.publicationMedias|length > 0 %}
+                        <div class="facebook-post-media">
+                            {% for media in publication.publicationMedias %}
+                                {% if media.type == 'image' %}
+                                    <img src="{{ asset(media.path) }}" alt="Image de la publication">
+                                {% elseif media.type == 'video' %}
+                                    <video controls>
+                                        <source src="{{ asset(media.path) }}" type="video/mp4">
+                                        <source src="{{ asset(media.path) }}" type="video/webm">
+                                        <source src="{{ asset(media.path) }}" type="video/ogg">
+                                        Votre navigateur ne supporte pas les vidéos.
+                                    </video>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
 
-                        <div class="mt-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0">Commentaires ({{ publication.commentaires|length }})</h6>
-                            </div>
+                    <div class="facebook-post-footer">
+                        <div class="facebook-post-stats">
+                            <span>{{ publication.commentaires|length }} commentaire{% if publication.commentaires|length > 1 %}s{% endif %}</span>
+                            <span>{{ publication.publicationMedias|length }} média{% if publication.publicationMedias|length > 1 %}s{% endif %}</span>
+                        </div>
+                    </div>
 
+                    {% if publication.commentaires|length > 0 %}
+                        <div class="facebook-comments">
                             {% for commentaire in publication.commentaires %}
-                                <div class="border rounded p-3 mb-2 bg-light-subtle">
-                                    <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
-                                        <div>
-                                            <p class="mb-1">{{ commentaire.contenu }}</p>
-                                            <small class="text-muted">
-                                                {{ commentaire.user ? commentaire.user.prenom ~ ' ' ~ commentaire.user.nom : 'Utilisateur inconnu' }}
-                                                - {{ commentaire.dateCommentaire ? commentaire.dateCommentaire|date('d/m/Y H:i') : '-' }}
-                                            </small>
+                                <div class="facebook-comment">
+                                    <div class="facebook-comment-avatar">
+                                        {{ commentaire.user ? commentaire.user.prenom|first ~ commentaire.user.nom|first : 'U' }}
+                                    </div>
+                                    <div class="facebook-comment-content">
+                                        <div class="facebook-comment-author">
+                                            {{ commentaire.user ? commentaire.user.prenom ~ ' ' ~ commentaire.user.nom : 'Utilisateur inconnu' }}
                                         </div>
-                                        <div class="d-flex gap-1">
-                                            <a href="{{ path('admin_commentaire_edit', { id: commentaire.id }) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
-                                            <form method="post" action="{{ path('admin_commentaire_delete', { id: commentaire.id }) }}">
+                                        <div class="facebook-comment-text">
+                                            {{ commentaire.contenu }}
+                                        </div>
+                                        <div class="facebook-comment-meta">
+                                            {{ commentaire.dateCommentaire ? commentaire.dateCommentaire|date('d M Y à H:i') : '-' }}
+                                        </div>
+                                        <div class="facebook-comment-actions">
+                                            <button class="facebook-comment-action">Like</button>
+                                            <button class="facebook-comment-action">Répondre</button>
+                                            <a href="{{ path('admin_commentaire_edit', { id: commentaire.id }) }}" class="facebook-comment-action">Modifier</a>
+                                            <form method="post" action="{{ path('admin_commentaire_delete', { id: commentaire.id }) }}" style="display: inline;">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ commentaire.id) }}">
-                                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ce commentaire ?');">Supprimer</button>
+                                                <button class="facebook-comment-action" onclick="return confirm('Supprimer ce commentaire ?');">Supprimer</button>
                                             </form>
                                         </div>
                                     </div>
                                 </div>
-                            {% else %}
-                                <div class="text-muted small">Aucun commentaire pour cette publication.</div>
                             {% endfor %}
                         </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         {% else %}
