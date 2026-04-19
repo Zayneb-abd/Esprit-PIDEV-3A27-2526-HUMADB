@@ -143,14 +143,6 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/offres/{id}', name: 'admin_offre_show', requirements: ['id' => '\d+'])]
-    public function showOffre(OffreEmploi $offre): Response
-    {
-        return $this->render('admin/offre_emploi/show.html.twig', [
-            'offre' => $offre,
-        ]);
-    }
-
     #[Route('/offres/{id}/edit', name: 'admin_offre_edit', requirements: ['id' => '\d+'])]
     public function editOffre(Request $request, OffreEmploi $offre, EntityManagerInterface $entityManager): Response
     {

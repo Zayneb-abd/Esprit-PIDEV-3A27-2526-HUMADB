@@ -3,6 +3,8 @@
 {% block title %}Mes candidatures{% endblock %}
 
 {% block body %}
+{% set selected_meet_id = app.request.query.get('meet') %}
+{% set selected_meet_link = null %}
 <div class="container-fluid">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
@@ -30,6 +32,9 @@
                     {% for candidature in candidatures %}
                         {% set resultatQuiz = resultats_par_candidature[candidature.id] ?? null %}
                         {% set entretien = entretiens_par_candidature[candidature.id] ?? null %}
+                        {% if entretien and selected_meet_id and selected_meet_id == entretien.id and entretien.meetLink %}
+                            {% set selected_meet_link = entretien.meetLink %}
+                        {% endif %}
                         <tr>
                             <td>
                                 {% if candidature.offreEmploi %}
@@ -66,7 +71,7 @@
                                         | Manager: {{ entretien.manager ? entretien.manager.prenom ~ ' ' ~ entretien.manager.nom : '-' }}
                                     </div>
                                     {% if entretien.meetLink %}
-                                        <a href="{{ entretien.meetLink }}" target="_blank" class="small">Jitsi</a>
+                                        <a href="{{ path('candidat_reports', {meet: entretien.id}) }}#jitsi-meet" class="small">Jitsi dans la page</a>
                                     {% endif %}
                                 {% else %}
                                     -
@@ -87,5 +92,25 @@
             </table>
         </div>
     </div>
+
+    {% if selected_meet_link %}
+        <div class="card border-0 shadow-sm mt-4" id="jitsi-meet">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+                    <div>
+                        <h5 class="mb-1">Meet Jitsi</h5>
+                        <p class="mb-0 text-secondary">Le meet est affiche directement dans cette page.</p>
+                    </div>
+                    <a href="{{ selected_meet_link }}" target="_blank" class="btn btn-outline-primary btn-sm">Ouvrir dans un nouvel onglet</a>
+                </div>
+                <iframe
+                    src="{{ selected_meet_link }}"
+                    title="Meet Jitsi"
+                    style="width: 100%; min-height: 720px; border: 0; border-radius: 12px;"
+                    allow="camera; microphone; fullscreen; display-capture; autoplay"
+                ></iframe>
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

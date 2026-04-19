@@ -3,6 +3,7 @@
 {% block title %}Detail offre{% endblock %}
 
 {% block body %}
+{% set selected_meet_id = app.request.query.get('meet') %}
 <div class="container-fluid">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
@@ -79,10 +80,30 @@
                         <p class="mb-2"><strong>Manager:</strong> {{ latest_entretien.manager ? latest_entretien.manager.prenom ~ ' ' ~ latest_entretien.manager.nom : '-' }}</p>
                         <p class="mb-2"><strong>Statut:</strong> {{ latest_entretien.statut ?: '-' }}</p>
                         {% if latest_entretien.meetLink %}
-                            <a href="{{ latest_entretien.meetLink }}" target="_blank" class="btn btn-outline-primary btn-sm">Rejoindre l'entretien</a>
+                            <a href="{{ path('candidat_offer_show', {id: offre.id, meet: latest_entretien.id}) }}#jitsi-meet" class="btn btn-outline-primary btn-sm">Rejoindre dans cette page</a>
                         {% endif %}
                     </div>
                 {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if latest_entretien and latest_entretien.meetLink and selected_meet_id and selected_meet_id == latest_entretien.id %}
+        <div class="card border-0 shadow-sm mt-4" id="jitsi-meet">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+                    <div>
+                        <h5 class="mb-1">Meet Jitsi</h5>
+                        <p class="mb-0 text-secondary">Vous pouvez rejoindre l entretien directement dans cette page.</p>
+                    </div>
+                    <a href="{{ latest_entretien.meetLink }}" target="_blank" class="btn btn-outline-primary btn-sm">Ouvrir dans un nouvel onglet</a>
+                </div>
+                <iframe
+                    src="{{ latest_entretien.meetLink }}"
+                    title="Meet Jitsi"
+                    style="width: 100%; min-height: 720px; border: 0; border-radius: 12px;"
+                    allow="camera; microphone; fullscreen; display-capture; autoplay"
+                ></iframe>
             </div>
         </div>
     {% endif %}

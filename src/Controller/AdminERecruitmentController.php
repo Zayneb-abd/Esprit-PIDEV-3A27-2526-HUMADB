@@ -5,14 +5,19 @@ namespace App\Controller;
 use App\Entity\Candidature;
 use App\Entity\Entretien;
 use App\Entity\OffreEmploi;
+use App\Entity\Question;
+use App\Entity\Quiz;
+use App\Entity\ReponseQcm;
 use App\Entity\ResultatQuiz;
 use App\Entity\User;
 use App\Form\CandidatureType;
 use App\Form\EntretienType;
 use App\Repository\ResultatQuizRepository;
 use App\Service\CandidateCvManager;
+use App\Service\CvMatchingService;
 use App\Service\JitsiMeetService;
 use App\Service\PdfCvPreviewService;
+use App\Service\PublicProfileSourcingService;
 use App\Service\QuizGenerationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -24,6 +29,40 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/admin')]
 class AdminERecruitmentController extends AbstractController
 {
+    #[Route('/offres/{id}', name: 'admin_offre_show', requirements: ['id' => '\d+'])]
+    public function showOffre(OffreEmploi $offre, CvMatchingService $cvMatchingService): Response
+    {
+        return $this->render('admin/offre_emploi/show.html.twig', [
+            'offre' => $offre,
+            'cv_rankings' => $cvMatchingService->rankForOffer($offre, $offre->getCandidatures()),
+        ]);
+    }
+
+    #[Route('/offres/{id}/sourcing/public-urls', name: 'admin_offre_public_sourcing', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function sourcePublicProfiles(OffreEmploi $offre, Request $request, PublicProfileSourcingService $publicProfileSourcingService): Response
+    {
+        $results = [];
+        $rawUrls = '';
+
+        if ($request->isMethod('POST')) {
+            $rawUrls = trim((string) $request->request->get('urls', ''));
+            $urls = array_values(array_filter(array_map('trim', preg_split('/\R+/', $rawUrls) ?: [])));
+
+            if ($urls === []) {
+                $this->addFlash('danger', 'Ajoutez au moins une URL publique a analyser.');
+            } else {
+                $results = $publicProfileSourcingService->sourceForOffer($offre, $urls);
+                $this->addFlash('success', sprintf('%d profil(s) public(s) analyses.', count($results)));
+            }
+        }
+
+        return $this->render('admin/offre_emploi/public_sourcing.html.twig', [
+            'offre' => $offre,
+            'results' => $results,
+            'raw_urls' => $rawUrls,
+        ]);
+    }
+
     #[Route('/candidatures/new', name: 'admin_candidature_new')]
     public function newCandidature(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -213,5 +252,120 @@ class AdminERecruitmentController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_offre_show', ['id' => $offre->getId()]);
+    }
+
+    #[Route('/offres/{id}/quiz/new', name: 'admin_offre_quiz_new', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function createManualQuiz(OffreEmploi $offre, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        if ($request->isMethod('POST')) {
+            $titre = trim((string) $request->request->get('titre', ''));
+            $dureeMinutes = max(1, (int) $request->request->get('duree_minutes', 12));
+            $seuilPourcentage = max(0, min(100, (int) $request->request->get('seuil_pourcentage', 70)));
+            $questionsData = $request->request->all('questions');
+
+            if ($titre === '') {
+                $this->addFlash('danger', 'Le titre du quiz est obligatoire.');
+
+                return $this->render('admin/offre_emploi/quiz_new.html.twig', [
+                    'offre' => $offre,
+                ]);
+            }
+
+            if (!is_array($questionsData) || $questionsData === []) {
+                $this->addFlash('danger', 'Ajoutez au moins une question au quiz.');
+
+                return $this->render('admin/offre_emploi/quiz_new.html.twig', [
+                    'offre' => $offre,
+                ]);
+            }
+
+            $existingQuiz = $offre->getQuizs()->first();
+            if ($existingQuiz instanceof Quiz) {
+                if ($existingQuiz->getResultatQuizs()->count() > 0) {
+                    $this->addFlash('danger', 'Impossible de remplacer le quiz: des candidats l ont deja passe.');
+
+                    return $this->redirectToRoute('admin_offre_show', ['id' => $offre->getId()]);
+                }
+
+                foreach ($existingQuiz->getQuestions()->toArray() as $existingQuestion) {
+                    foreach ($existingQuestion->getReponseQcms()->toArray() as $existingAnswer) {
+                        $entityManager->remove($existingAnswer);
+                    }
+
+                    $entityManager->remove($existingQuestion);
+                }
+
+                $entityManager->remove($existingQuiz);
+                $entityManager->flush();
+            }
+
+            $quiz = new Quiz();
+            $quiz->setOffreEmploi($offre);
+            $quiz->setTitre($titre);
+            $quiz->setDureeMinutes($dureeMinutes);
+            $quiz->setSeuilPourcentage($seuilPourcentage);
+            $entityManager->persist($quiz);
+
+            $validQuestions = 0;
+
+            foreach ($questionsData as $questionData) {
+                $questionText = trim((string) ($questionData['question_text'] ?? ''));
+                if ($questionText === '') {
+                    continue;
+                }
+
+                $question = new Question();
+                $question->setQuiz($quiz);
+                $question->setQuestionText($questionText);
+                $question->setType('QCM');
+                $question->setPoints(max(1, (int) ($questionData['points'] ?? 1)));
+                $entityManager->persist($question);
+
+                $correctAnswers = 0;
+                foreach (($questionData['answers'] ?? []) as $answerData) {
+                    $text = trim((string) ($answerData['texte'] ?? ''));
+                    if ($text === '') {
+                        continue;
+                    }
+
+                    $answer = new ReponseQcm();
+                    $answer->setQuestion($question);
+                    $answer->setTexte($text);
+                    $answer->setCorrecte(isset($answerData['correcte']) && (string) $answerData['correcte'] === '1');
+                    if ($answer->isCorrecte()) {
+                        ++$correctAnswers;
+                    }
+                    $entityManager->persist($answer);
+                }
+
+                if ($correctAnswers === 0) {
+                    $this->addFlash('danger', sprintf('Chaque question doit avoir au moins une bonne reponse. Probleme sur: "%s".', $questionText));
+
+                    return $this->render('admin/offre_emploi/quiz_new.html.twig', [
+                        'offre' => $offre,
+                    ]);
+                }
+
+                ++$validQuestions;
+            }
+
+            if ($validQuestions === 0) {
+                $this->addFlash('danger', 'Le quiz doit contenir au moins une question valide.');
+
+                return $this->render('admin/offre_emploi/quiz_new.html.twig', [
+                    'offre' => $offre,
+                ]);
+            }
+
+            $entityManager->flush();
+
+            $this->addFlash('success', sprintf('Quiz cree avec succes (%d questions).', $validQuestions));
+
+            return $this->redirectToRoute('admin_offre_show', ['id' => $offre->getId()]);
+        }
+
+        return $this->render('admin/offre_emploi/quiz_new.html.twig', [
+            'offre' => $offre,
+        ]);
     }
 }

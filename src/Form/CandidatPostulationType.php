@@ -16,6 +16,8 @@ class CandidatPostulationType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $maxUploadSize = $this->getEffectiveMaxUploadSize();
+
         if ($options['include_offer']) {
             $builder->add('offreEmploi', EntityType::class, [
                 'class' => OffreEmploi::class,
@@ -30,9 +32,10 @@ class CandidatPostulationType extends AbstractType
 
         $constraints = [
             new File([
-                'maxSize' => '5M',
-                'mimeTypes' => ['application/pdf'],
-                'mimeTypesMessage' => 'Veuillez uploader un CV au format PDF.',
+                'maxSize' => $maxUploadSize,
+                'mimeTypes' => ['application/pdf', 'application/x-pdf', 'application/acrobat', 'applications/vnd.pdf', 'text/pdf', 'text/x-pdf', 'application/octet-stream'],
+                'mimeTypesMessage' => 'Veuillez uploader un fichier PDF valide.',
+                'maxSizeMessage' => sprintf('Le CV depasse la taille maximale autorisee (%s).', $maxUploadSize),
             ]),
         ];
 
@@ -51,12 +54,55 @@ class CandidatPostulationType extends AbstractType
         ]);
     }
 
+    private function getEffectiveMaxUploadSize(): string
+    {
+        $appLimit = $this->toBytes('5M');
+        $phpUploadLimit = $this->toBytes((string) ini_get('upload_max_filesize'));
+        $phpPostLimit = $this->toBytes((string) ini_get('post_max_size'));
+
+        $effectiveLimit = min(array_filter([$appLimit, $phpUploadLimit, $phpPostLimit]));
+
+        return $this->formatBytes($effectiveLimit);
+    }
+
+    private function toBytes(string $value): int
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return 0;
+        }
+
+        $number = (float) $value;
+        $unit = strtoupper(substr($value, -1));
+
+        return match ($unit) {
+            'G' => (int) ($number * 1024 * 1024 * 1024),
+            'M' => (int) ($number * 1024 * 1024),
+            'K' => (int) ($number * 1024),
+            default => (int) $number,
+        };
+    }
+
+    private function formatBytes(int $bytes): string
+    {
+        if ($bytes >= 1024 * 1024) {
+            return ((int) round($bytes / (1024 * 1024))).'M';
+        }
+
+        if ($bytes >= 1024) {
+            return ((int) round($bytes / 1024)).'K';
+        }
+
+        return (string) $bytes;
+    }
+
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Candidature::class,
             'include_offer' => true,
             'require_cv' => true,
+            'validation_groups' => false,
         ]);
 
         $resolver->setAllowedTypes('include_offer', 'bool');

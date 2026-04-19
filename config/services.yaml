@@ -29,5 +29,7 @@ services:
         arguments:
             $baseUrl: '%app.jitsi_base_url%'
 
+    Smalot\PdfParser\Parser: ~
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Form\FormError;
 
 #[Route('/candidat')]
 #[IsGranted('ROLE_CANDIDAT')]
@@ -144,7 +145,7 @@ class CondidatController extends AbstractController
         }
 
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('danger', 'Le formulaire contient des erreurs. Le CV doit etre un fichier PDF de 5 Mo maximum.');
+            $this->addFlash('danger', $this->extractFormErrors($form));
         }
 
         return $this->render('candidat/product/create.html.twig', [
@@ -287,7 +288,7 @@ class CondidatController extends AbstractController
         }
 
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('danger', 'Le formulaire contient des erreurs. Le CV doit etre un fichier PDF de 5 Mo maximum.');
+            $this->addFlash('danger', $this->extractFormErrors($form));
         }
 
         return $this->render('candidat/offre/apply.html.twig', [
@@ -330,5 +331,22 @@ class CondidatController extends AbstractController
         }
 
         return null;
+    }
+
+    private function extractFormErrors(\Symfony\Component\Form\FormInterface $form): string
+    {
+        $messages = [];
+
+        foreach ($form->getErrors(true) as $error) {
+            if ($error instanceof FormError) {
+                $messages[] = $error->getMessage();
+            }
+        }
+
+        if ($messages === []) {
+            return 'Le formulaire contient des erreurs. Verifiez le fichier PDF et reessayez.';
+        }
+
+        return implode(' ', array_unique($messages));
     }
 }
