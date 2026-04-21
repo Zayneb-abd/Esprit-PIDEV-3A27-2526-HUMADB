@@ -15,6 +15,7 @@ use App\Form\EntretienType;
 use App\Repository\ResultatQuizRepository;
 use App\Service\CandidateCvManager;
 use App\Service\CvMatchingService;
+use App\Service\ExternalAiRecruitmentAnalyzer;
 use App\Service\JitsiMeetService;
 use App\Service\PdfCvPreviewService;
 use App\Service\PublicProfileSourcingService;
@@ -30,16 +31,17 @@ use Symfony\Component\Routing\Annotation\Route;
 class AdminERecruitmentController extends AbstractController
 {
     #[Route('/offres/{id}', name: 'admin_offre_show', requirements: ['id' => '\d+'])]
-    public function showOffre(OffreEmploi $offre, CvMatchingService $cvMatchingService): Response
+    public function showOffre(OffreEmploi $offre, CvMatchingService $cvMatchingService, ExternalAiRecruitmentAnalyzer $externalAiRecruitmentAnalyzer): Response
     {
         return $this->render('admin/offre_emploi/show.html.twig', [
             'offre' => $offre,
             'cv_rankings' => $cvMatchingService->rankForOffer($offre, $offre->getCandidatures()),
+            'external_ai_configured' => $externalAiRecruitmentAnalyzer->isConfigured(),
         ]);
     }
 
     #[Route('/offres/{id}/sourcing/public-urls', name: 'admin_offre_public_sourcing', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function sourcePublicProfiles(OffreEmploi $offre, Request $request, PublicProfileSourcingService $publicProfileSourcingService): Response
+    public function sourcePublicProfiles(OffreEmploi $offre, Request $request, PublicProfileSourcingService $publicProfileSourcingService, ExternalAiRecruitmentAnalyzer $externalAiRecruitmentAnalyzer): Response
     {
         $results = [];
         $rawUrls = '';
@@ -60,6 +62,7 @@ class AdminERecruitmentController extends AbstractController
             'offre' => $offre,
             'results' => $results,
             'raw_urls' => $rawUrls,
+            'external_ai_configured' => $externalAiRecruitmentAnalyzer->isConfigured(),
         ]);
     }
 

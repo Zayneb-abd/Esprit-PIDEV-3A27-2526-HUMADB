@@ -5,6 +5,11 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     app.jitsi_base_url: 'https://meet.jit.si'
+    app.external_ai_url: '%env(default::EXTERNAL_AI_API_URL)%'
+    app.external_ai_key: '%env(default::EXTERNAL_AI_API_KEY)%'
+    app.external_ai_model: '%env(default::EXTERNAL_AI_MODEL)%'
+    app.external_ai_timeout: 25
+    app.external_ai_max_candidates: 3
 
 services:
     # default configuration for services in *this* file
@@ -28,6 +33,17 @@ services:
     App\Service\JitsiMeetService:
         arguments:
             $baseUrl: '%app.jitsi_base_url%'
+
+    App\Service\ExternalAiRecruitmentAnalyzer:
+        arguments:
+            $apiUrl: '%app.external_ai_url%'
+            $apiKey: '%app.external_ai_key%'
+            $model: '%app.external_ai_model%'
+            $timeoutSeconds: '%app.external_ai_timeout%'
+
+    App\Service\CvMatchingService:
+        arguments:
+            $advancedAiMaxCandidates: '%app.external_ai_max_candidates%'
 
     Smalot\PdfParser\Parser: ~
 
