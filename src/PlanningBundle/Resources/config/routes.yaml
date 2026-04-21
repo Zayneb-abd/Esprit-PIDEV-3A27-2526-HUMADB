@@ -1,0 +1,8 @@
+planning_calendar:
+    path: /planning/calendar
+    controller: App\PlanningBundle\Controller\PlanningController::calendar
+
+planning_api_events:
+    path: /planning/api/events
+    controller: App\PlanningBundle\Controller\PlanningController::apiEvents
+    methods: [GET]

@@ -1,0 +1,131 @@
+{% extends 'manager/base_manager.html.twig' %}
+
+{% block title %}Profil de {{ employe.prenom }} {{ employe.nom }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            {# Header with back button #}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <a href="{{ path('manager_equipe') }}" class="btn btn-outline-secondary btn-sm mb-2">
+                        <i class="ti ti-arrow-left"></i> Retour à l'équipe
+                    </a>
+                    <h1 class="fs-3 mb-1">{{ employe.prenom }} {{ employe.nom }}</h1>
+                    <p class="mb-0 text-muted">{{ employe.email }}</p>
+                </div>
+                <span class="badge bg-info fs-6">Employé</span>
+            </div>
+
+            {# Employee Info Card #}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            {% if employe.faceImage %}
+                                <img src="{{ asset('uploads/faces/' ~ employe.faceImage) }}" 
+                                     alt="{{ employe.prenom }} {{ employe.nom }}" 
+                                     class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto" 
+                                     style="width: 100px; height: 100px; font-size: 36px;">
+                                    {{ employe.prenom|first|upper }}{{ employe.nom|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-10">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Score:</strong> 
+                                        <span class="badge bg-success">{{ employe.reputationScore|default(0) }}</span>
+                                    </p>
+                                    <p class="mb-1"><strong>Badge:</strong> 
+                                        {% if employe.reputationScore >= 300 %}
+                                            <span class="badge bg-warning">Gold</span>
+                                        {% elseif employe.reputationScore >= 150 %}
+                                            <span class="badge bg-secondary">Silver</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Bronze</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Congés:</strong> {{ conges|length }}</p>
+                                    <p class="mb-1"><strong>Absences:</strong> {{ absences|length }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                {# Congés Section #}
+                <div class="col-md-6" id="conges">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="ti ti-calendar me-2 text-primary"></i>Ses Congés</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if conges is empty %}
+                                <p class="text-muted mb-0">Aucune demande de congé.</p>
+                            {% else %}
+                                <div class="list-group list-group-flush">
+                                    {% for conge in conges %}
+                                        <div class="list-group-item px-0">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <p class="mb-0 fw-semibold">{{ conge.absence.typeAbsence|capitalize }}</p>
+                                                    <small class="text-muted">
+                                                        {{ conge.absence.dateDebut|date('d/m/Y') }} - {{ conge.absence.dateFin|date('d/m/Y') }}
+                                                    </small>
+                                                </div>
+                                                <span class="badge bg-{{ conge.absence.statut == 'approuve' ? 'success' : (conge.absence.statut == 'refuse' ? 'danger' : 'warning') }}">
+                                                    {{ conge.absence.statut|capitalize }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {# Absences Section #}
+                <div class="col-md-6" id="absences">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="ti ti-calendar-x me-2 text-warning"></i>Ses Absences</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if absences is empty %}
+                                <p class="text-muted mb-0">Aucune absence enregistrée.</p>
+                            {% else %}
+                                <div class="list-group list-group-flush">
+                                    {% for absence in absences %}
+                                        <div class="list-group-item px-0">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <p class="mb-0 fw-semibold">{{ absence.typeAbsence|capitalize }}</p>
+                                                    <small class="text-muted">
+                                                        {{ absence.dateDebut|date('d/m/Y') }} - {{ absence.dateFin|date('d/m/Y') }}
+                                                    </small>
+                                                </div>
+                                                <span class="badge bg-{{ absence.statut == 'approuve' ? 'success' : (absence.statut == 'refuse' ? 'danger' : 'warning') }}">
+                                                    {{ absence.statut|capitalize }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

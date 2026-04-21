@@ -6,6 +6,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Entity\Absence;
 use App\Entity\Conge;
 use App\Repository\CongeRepository;
+use App\WorkflowBundle\Repository\ApprovalHistoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -40,13 +41,23 @@ class EmployeController extends AbstractController
     }
 
     #[Route('/conges', name: 'employ_conges')]
-    public function mesConges(CongeRepository $congeRepository): Response
+    public function mesConges(CongeRepository $congeRepository, ApprovalHistoryRepository $historyRepo): Response
     {
         $user = $this->getUser();
         $conges = $congeRepository->findBy(['user' => $user], ['id' => 'DESC']);
+        
+        // Fetch comments for each conge
+        $comments = [];
+        foreach ($conges as $conge) {
+            $history = $historyRepo->findOneByConge($conge);
+            if ($history && $history->getComment()) {
+                $comments[$conge->getId()] = $history->getComment();
+            }
+        }
 
         return $this->render('employ/conge/index.html.twig', [
-            'conges' => $conges
+            'conges' => $conges,
+            'comments' => $comments
         ]);
     }
 

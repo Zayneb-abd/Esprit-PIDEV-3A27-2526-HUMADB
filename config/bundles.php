@@ -13,4 +13,7 @@ return [
     Symfony\Bundle\SecurityBundle\SecurityBundle::class => ['all' => true],
     Symfony\Bundle\MonologBundle\MonologBundle::class => ['all' => true],
     Symfony\Bundle\MakerBundle\MakerBundle::class => ['dev' => true],
+    App\PlanningBundle\PlanningBundle::class => ['all' => true],
+    App\WorkflowBundle\WorkflowBundle::class => ['all' => true],
+    App\ReportBundle\ReportBundle::class => ['all' => true],
 ];

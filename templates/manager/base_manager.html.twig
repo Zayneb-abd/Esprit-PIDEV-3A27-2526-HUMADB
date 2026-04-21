@@ -176,25 +176,66 @@
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
-                {# Navigation Links #}
+                {# Navigation Links - Same as employee + Team button #}
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link {% if app.request.attributes.get('_route') starts with 'manager_equipe' %}active{% endif %}" href="#">
+                        <a class="nav-link {% if app.request.attributes.get('_route') starts with 'manager_equipe' %}active{% endif %}" href="{{ path('manager_equipe') }}">
                             <i class="ti ti-users me-1"></i>Équipe
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if app.request.attributes.get('_route') starts with 'manager_conge' or app.request.attributes.get('_route') starts with 'manager_absence' %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle {% if app.request.attributes.get('_route') starts with 'manager_conge' or app.request.attributes.get('_route') starts with 'manager_absence' or app.request.attributes.get('_route') == 'manager_dashboard' %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="ti ti-calendar-event me-1"></i>Congés & Absences
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">
-                                <i class="ti ti-calendar me-2"></i>Congés équipe
+                            <li><a class="dropdown-item" href="{{ path('manager_mes_conges') }}">
+                                <i class="ti ti-calendar me-2"></i>Mes Congés
                             </a></li>
-                            <li><a class="dropdown-item" href="#">
-                                <i class="ti ti-calendar-x me-2"></i>Absences équipe
+                            <li><a class="dropdown-item" href="{{ path('manager_mes_absences') }}">
+                                <i class="ti ti-calendar-x me-2"></i>Mes Absences
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ path('manager_conges') }}">
+                                <i class="ti ti-users me-2"></i>Congés équipe
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ path('manager_absences') }}">
+                                <i class="ti ti-users me-2"></i>Absences équipe
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ path('planning_calendar') }}">
+                                <i class="ti ti-calendar-stats me-2"></i>Calendrier d'équipe
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ path('report_dashboard') }}">
+                                <i class="ti ti-report-analytics me-2"></i>Rapports & Stats
                             </a></li>
                         </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if app.request.attributes.get('_route') starts with 'manager_feedback' %}active{% endif %}" href="{{ path('manager_feedback_index') }}">
+                            <i class="ti ti-message-report me-1"></i>Mes Feedbacks
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if app.request.attributes.get('_route') starts with 'manager_formation' or app.request.attributes.get('_route') starts with 'manager_participation' %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="ti ti-school me-1"></i>Formations
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ path('manager_formation_index') }}">
+                                <i class="ti ti-list me-2"></i>Gestion des formations
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ path('manager_participation_formations') }}">
+                                <i class="ti ti-plus me-2"></i>S'inscrire aux formations
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ path('manager_participation_index') }}">
+                                <i class="ti ti-check me-2"></i>Mes participations
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if app.request.attributes.get('_route') starts with 'manager_publication' %}active{% endif %}" href="{{ path('manager_publication_index') }}">
+                            <i class="ti ti-message-circle me-1"></i>Publications
+                        </a>
                     </li>
                 </ul>
                 

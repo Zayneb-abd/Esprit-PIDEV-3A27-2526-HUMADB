@@ -3,3 +3,21 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
+planning_bundle:
+    resource:
+        path: ../src/PlanningBundle/Controller/
+        namespace: App\PlanningBundle\Controller
+    type: attribute
+
+workflow_bundle:
+    resource:
+        path: ../src/WorkflowBundle/Controller/
+        namespace: App\WorkflowBundle\Controller
+    type: attribute
+
+report_bundle:
+    resource:
+        path: ../src/ReportBundle/Controller/
+        namespace: App\ReportBundle\Controller
+    type: attribute
