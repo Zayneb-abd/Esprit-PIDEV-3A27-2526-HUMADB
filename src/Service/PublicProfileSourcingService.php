@@ -3,13 +3,12 @@
 namespace App\Service;
 
 use App\Entity\OffreEmploi;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class PublicProfileSourcingService
 {
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
         private readonly CvMatchingService $cvMatchingService,
+        private readonly RecruitmentProfileScrapingBot $scrapingBot,
     ) {
     }
 
@@ -18,11 +17,17 @@ class PublicProfileSourcingService
      * @return array<int, array{
      *     url:string,
      *     title:string,
+     *     name:string,
+     *     photo:?string,
+     *     contact:array{email:?string,phone:?string,website:?string},
+     *     description:string,
      *     score:int,
      *     matched_keywords:array<int,string>,
      *     missing_keywords:array<int,string>,
      *     preview:string,
      *     status:string,
+     *     source:string,
+     *     source_label:string,
      *     advanced_analysis:?array{
      *         score:int,
      *         summary:string,
@@ -42,47 +47,18 @@ class PublicProfileSourcingService
                 continue;
             }
 
-            if (!$this->isAllowedPublicUrl($url)) {
-                $results[] = [
-                    'url' => $url,
-                    'title' => 'URL refusee',
-                    'score' => 0,
-                    'matched_keywords' => [],
-                    'missing_keywords' => [],
-                    'preview' => 'Seules les URLs publiques http/https sont autorisees.',
-                    'status' => 'blocked',
-                    'advanced_analysis' => null,
-                ];
-                continue;
-            }
-
             try {
-                $response = $this->httpClient->request('GET', $url, [
-                    'max_redirects' => 5,
-                    'timeout' => 15,
-                    'headers' => [
-                        'User-Agent' => 'HUMADB Public Sourcing Bot/1.0',
-                        'Accept-Language' => 'fr,en;q=0.8',
-                    ],
-                ]);
-
-                $statusCode = $response->getStatusCode();
-                if ($statusCode >= 400) {
-                    throw new \RuntimeException('HTTP '.$statusCode);
-                }
-
-                $html = $response->getContent();
-                $title = $this->extractTitle($html) ?: parse_url($url, \PHP_URL_HOST) ?: 'Profil public';
-                $text = $this->extractVisibleText($html);
-                $analysis = $this->cvMatchingService->analyzeTextForOffer($offreEmploi, $text);
+                $profile = $this->scrapingBot->scrapeProfile($url, 'manual_url', 'URL manuelle');
+                $analysis = $this->cvMatchingService->analyzeTextForOffer(
+                    $offreEmploi,
+                    trim($profile['title'].' '.$profile['description'].' '.$profile['preview'])
+                );
 
                 $results[] = [
-                    'url' => $url,
-                    'title' => $title,
+                    ...$profile,
                     'score' => $analysis['score'],
                     'matched_keywords' => $analysis['matched_keywords'],
                     'missing_keywords' => $analysis['missing_keywords'],
-                    'preview' => mb_substr($text, 0, 350).(mb_strlen($text) > 350 ? '...' : ''),
                     'status' => 'ok',
                     'advanced_analysis' => $analysis['advanced_analysis'] ?? null,
                 ];
@@ -90,11 +66,17 @@ class PublicProfileSourcingService
                 $results[] = [
                     'url' => $url,
                     'title' => 'Erreur de lecture',
+                    'name' => 'Profil indisponible',
+                    'photo' => null,
+                    'contact' => ['email' => null, 'phone' => null, 'website' => $url],
+                    'description' => 'Impossible de charger les informations publiques de ce profil.',
                     'score' => 0,
                     'matched_keywords' => [],
                     'missing_keywords' => [],
-                    'preview' => 'Impossible de lire cette page publique: '.$exception->getMessage(),
+                    'preview' => 'Le scraping Goutte n a pas pu lire cette page: '.$exception->getMessage(),
                     'status' => 'error',
+                    'source' => 'manual_url',
+                    'source_label' => 'URL manuelle',
                     'advanced_analysis' => null,
                 ];
             }
@@ -105,34 +87,90 @@ class PublicProfileSourcingService
         return $results;
     }
 
-    private function isAllowedPublicUrl(string $url): bool
+    /**
+     * @return array<int, array{
+     *     url:string,
+     *     title:string,
+     *     name:string,
+     *     photo:?string,
+     *     contact:array{email:?string,phone:?string,website:?string},
+     *     description:string,
+     *     score:int,
+     *     matched_keywords:array<int,string>,
+     *     missing_keywords:array<int,string>,
+     *     preview:string,
+     *     status:string,
+     *     source:string,
+     *     source_label:string,
+     *     advanced_analysis:?array{
+     *         score:int,
+     *         summary:string,
+     *         recommendation:string,
+     *         strengths:array<int,string>,
+     *         risks:array<int,string>
+     *     }
+     * }>
+     */
+    public function searchForOffer(OffreEmploi $offreEmploi, int $limit = 8): array
     {
-        if (!filter_var($url, \FILTER_VALIDATE_URL)) {
-            return false;
+        $discoveredProfiles = $this->scrapingBot->discoverProfilesForOffer($offreEmploi, $limit);
+        $results = [];
+
+        foreach ($discoveredProfiles as $candidate) {
+            try {
+                $profile = $this->scrapingBot->scrapeProfile($candidate['url'], $candidate['source'], $candidate['source_label']);
+                $analysis = $this->cvMatchingService->analyzeTextForOffer(
+                    $offreEmploi,
+                    trim($profile['title'].' '.$profile['description'].' '.$profile['preview'])
+                );
+
+                $results[] = [
+                    ...$profile,
+                    'score' => $analysis['score'],
+                    'matched_keywords' => $analysis['matched_keywords'],
+                    'missing_keywords' => $analysis['missing_keywords'],
+                    'status' => 'ok',
+                    'advanced_analysis' => $analysis['advanced_analysis'] ?? null,
+                ];
+            } catch (\Throwable) {
+                $analysis = $this->cvMatchingService->analyzeTextForOffer(
+                    $offreEmploi,
+                    trim($candidate['title'].' '.$candidate['snippet'])
+                );
+
+                $results[] = [
+                    'url' => $candidate['url'],
+                    'title' => $candidate['title'],
+                    'name' => $this->normalizeProfileName($candidate['title']),
+                    'photo' => null,
+                    'contact' => [
+                        'email' => null,
+                        'phone' => null,
+                        'website' => $candidate['url'],
+                    ],
+                    'description' => $candidate['snippet'] !== '' ? $candidate['snippet'] : 'Profil suggere par le bot de scraping Goutte.',
+                    'score' => $analysis['score'],
+                    'matched_keywords' => $analysis['matched_keywords'],
+                    'missing_keywords' => $analysis['missing_keywords'],
+                    'preview' => $candidate['snippet'] !== '' ? $candidate['snippet'] : $candidate['title'],
+                    'status' => 'scraping_fallback',
+                    'source' => $candidate['source'],
+                    'source_label' => $candidate['source_label'],
+                    'advanced_analysis' => $analysis['advanced_analysis'] ?? null,
+                ];
+            }
         }
 
-        $scheme = parse_url($url, \PHP_URL_SCHEME);
+        usort($results, static fn (array $left, array $right): int => $right['score'] <=> $left['score']);
 
-        return in_array($scheme, ['http', 'https'], true);
+        return $results;
     }
 
-    private function extractTitle(string $html): ?string
+    private function normalizeProfileName(string $title): string
     {
-        if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $matches) !== 1) {
-            return null;
-        }
+        $name = preg_split('/[|\-–•·]+/u', $title, 2)[0] ?? $title;
+        $name = trim($name);
 
-        return trim(html_entity_decode(strip_tags($matches[1]), \ENT_QUOTES | \ENT_HTML5));
-    }
-
-    private function extractVisibleText(string $html): string
-    {
-        $clean = preg_replace('/<script\b[^>]*>.*?<\/script>/is', ' ', $html) ?? $html;
-        $clean = preg_replace('/<style\b[^>]*>.*?<\/style>/is', ' ', $clean) ?? $clean;
-        $clean = strip_tags($clean);
-        $clean = html_entity_decode($clean, \ENT_QUOTES | \ENT_HTML5);
-        $clean = preg_replace('/\s+/u', ' ', $clean) ?? $clean;
-
-        return trim($clean);
+        return $name !== '' ? $name : 'Profil public';
     }
 }

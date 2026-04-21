@@ -2,6 +2,46 @@
 
 {% block title %}Recrutement{% endblock %}
 
+{% block css %}
+<style>
+    .recruitment-kpi-card {
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .recruitment-kpi-card .kpi-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .recruitment-kpi-card .kpi-chip {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .recruitment-kpi-card .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 0.35rem;
+    }
+
+    .recruitment-kpi-card .kpi-chart {
+        min-height: 120px;
+    }
+</style>
+{% endblock %}
+
 {% block body %}
 <div class="container-fluid">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
@@ -21,34 +61,70 @@
 
     <div class="row g-3 mb-4">
         <div class="col-md-6 col-xl-3">
-            <div class="card h-100">
+            <div class="card h-100 recruitment-kpi-card">
                 <div class="card-body p-4">
-                    <p class="text-muted mb-2">Offres publiees</p>
-                    <h3 class="mb-0">{{ stats.offres }}</h3>
+                    <div class="kpi-head">
+                        <div>
+                            <p class="text-muted mb-2">Offres publiees</p>
+                            <div class="kpi-value">{{ stats.offres }}</div>
+                            <div class="small text-secondary">Evolution sur 6 mois</div>
+                        </div>
+                        <div class="kpi-chip" style="background: linear-gradient(135deg, #1a5f5f 0%, #4ecdc4 100%);">
+                            <i class="ti ti-briefcase"></i>
+                        </div>
+                    </div>
+                    <div id="kpiOffersChart" class="kpi-chart"></div>
                 </div>
             </div>
         </div>
         <div class="col-md-6 col-xl-3">
-            <div class="card h-100">
+            <div class="card h-100 recruitment-kpi-card">
                 <div class="card-body p-4">
-                    <p class="text-muted mb-2">Candidatures</p>
-                    <h3 class="mb-0">{{ stats.candidatures }}</h3>
+                    <div class="kpi-head">
+                        <div>
+                            <p class="text-muted mb-2">Candidatures</p>
+                            <div class="kpi-value">{{ stats.candidatures }}</div>
+                            <div class="small text-secondary">Flux mensuel des depots</div>
+                        </div>
+                        <div class="kpi-chip" style="background: linear-gradient(135deg, #ff8a65 0%, #ffb74d 100%);">
+                            <i class="ti ti-users"></i>
+                        </div>
+                    </div>
+                    <div id="kpiApplicationsChart" class="kpi-chart"></div>
                 </div>
             </div>
         </div>
         <div class="col-md-6 col-xl-3">
-            <div class="card h-100">
+            <div class="card h-100 recruitment-kpi-card">
                 <div class="card-body p-4">
-                    <p class="text-muted mb-2">Postes ouverts</p>
-                    <h3 class="mb-0">{{ stats.postes }}</h3>
+                    <div class="kpi-head">
+                        <div>
+                            <p class="text-muted mb-2">Postes ouverts</p>
+                            <div class="kpi-value">{{ stats.postes }}</div>
+                            <div class="small text-secondary">Repartition par contrat</div>
+                        </div>
+                        <div class="kpi-chip" style="background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);">
+                            <i class="ti ti-layout-grid"></i>
+                        </div>
+                    </div>
+                    <div id="kpiContractsChart" class="kpi-chart"></div>
                 </div>
             </div>
         </div>
         <div class="col-md-6 col-xl-3">
-            <div class="card h-100">
+            <div class="card h-100 recruitment-kpi-card">
                 <div class="card-body p-4">
-                    <p class="text-muted mb-2">En attente</p>
-                    <h3 class="mb-0">{{ stats.candidatures_en_attente }}</h3>
+                    <div class="kpi-head">
+                        <div>
+                            <p class="text-muted mb-2">En attente</p>
+                            <div class="kpi-value">{{ stats.candidatures_en_attente }}</div>
+                            <div class="small text-secondary">Statuts des candidatures</div>
+                        </div>
+                        <div class="kpi-chip" style="background: linear-gradient(135deg, #f59e0b 0%, #fcd34d 100%);">
+                            <i class="ti ti-hourglass-high"></i>
+                        </div>
+                    </div>
+                    <div id="kpiStatusesChart" class="kpi-chart"></div>
                 </div>
             </div>
         </div>
@@ -83,7 +159,7 @@
             <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
                 <div>
                     <h2 class="fs-5 mb-1">Offres d'emploi</h2>
-                    <p class="mb-0 text-secondary">Liste complete des offres disponibles.</p>
+                    <p class="mb-0 text-secondary">Liste complete des offres disponibles. {{ offres.getTotalItemCount }} resultat(s).</p>
                 </div>
             </div>
             <div class="table-responsive">
@@ -116,7 +192,7 @@
                                     <a href="{{ path('admin_offre_edit', {id: offre.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
                                     <form method="post" action="{{ path('admin_offre_delete', {id: offre.id}) }}" class="d-inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token('delete_offre_' ~ offre.id) }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette offre ?');">Supprimer</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette offre ainsi que ses candidatures, entretiens et quiz lies ?');">Supprimer</button>
                                     </form>
                                 </td>
                             </tr>
@@ -128,6 +204,11 @@
                     </tbody>
                 </table>
             </div>
+            {% if offres.getPageCount > 1 %}
+                <div class="p-4 border-top">
+                    {{ knp_pagination_render(offres) }}
+                </div>
+            {% endif %}
         </div>
     </div>
 
@@ -136,7 +217,7 @@
             <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
                 <div>
                     <h2 class="fs-5 mb-1">Candidatures</h2>
-                    <p class="mb-0 text-secondary">Suivi des candidatures associees aux offres.</p>
+                    <p class="mb-0 text-secondary">Suivi des candidatures associees aux offres. {{ candidatures.getTotalItemCount }} resultat(s).</p>
                 </div>
             </div>
             <div class="table-responsive">
@@ -190,7 +271,116 @@
                     </tbody>
                 </table>
             </div>
+            {% if candidatures.getPageCount > 1 %}
+                <div class="p-4 border-top">
+                    {{ knp_pagination_render(candidatures) }}
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ApexCharts === 'undefined') {
+        return;
+    }
+
+    const kpiCharts = {{ kpi_charts|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }};
+
+    const commonSparkline = {
+        chart: {
+            type: 'area',
+            height: 120,
+            toolbar: { show: false },
+            sparkline: { enabled: false },
+        },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 3 },
+        grid: { borderColor: '#eef2f7', strokeDashArray: 3 },
+        xaxis: {
+            labels: { show: true, style: { colors: '#94a3b8', fontSize: '10px' } },
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+        },
+        yaxis: { labels: { show: false } },
+        legend: { show: false },
+        tooltip: { theme: 'light' },
+    };
+
+    new ApexCharts(document.querySelector('#kpiOffersChart'), {
+        ...commonSparkline,
+        colors: ['#1a5f5f'],
+        series: [{ name: 'Offres', data: kpiCharts.offers.series }],
+        labels: kpiCharts.offers.labels,
+        fill: {
+            type: 'gradient',
+            gradient: { opacityFrom: 0.45, opacityTo: 0.06, stops: [0, 100] },
+        },
+    }).render();
+
+    new ApexCharts(document.querySelector('#kpiApplicationsChart'), {
+        ...commonSparkline,
+        colors: ['#ff8a65'],
+        series: [{ name: 'Candidatures', data: kpiCharts.applications.series }],
+        labels: kpiCharts.applications.labels,
+        fill: {
+            type: 'gradient',
+            gradient: { opacityFrom: 0.45, opacityTo: 0.08, stops: [0, 100] },
+        },
+    }).render();
+
+    new ApexCharts(document.querySelector('#kpiContractsChart'), {
+        chart: {
+            type: 'bar',
+            height: 120,
+            toolbar: { show: false },
+        },
+        colors: ['#4ecdc4'],
+        series: [{ name: 'Postes', data: kpiCharts.contracts.series }],
+        xaxis: {
+            categories: kpiCharts.contracts.labels,
+            labels: { style: { colors: '#94a3b8', fontSize: '10px' } },
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+        },
+        yaxis: { labels: { show: false } },
+        dataLabels: { enabled: false },
+        grid: { borderColor: '#eef2f7', strokeDashArray: 3 },
+        plotOptions: {
+            bar: {
+                borderRadius: 6,
+                columnWidth: '50%',
+            },
+        },
+        legend: { show: false },
+    }).render();
+
+    new ApexCharts(document.querySelector('#kpiStatusesChart'), {
+        chart: {
+            type: 'donut',
+            height: 140,
+        },
+        colors: ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444'],
+        series: kpiCharts.statuses.series,
+        labels: kpiCharts.statuses.labels,
+        legend: {
+            position: 'bottom',
+            fontSize: '10px',
+        },
+        dataLabels: { enabled: false },
+        stroke: { width: 0 },
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '62%',
+                },
+            },
+        },
+    }).render();
+});
+</script>
 {% endblock %}

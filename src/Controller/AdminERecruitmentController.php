@@ -16,6 +16,7 @@ use App\Repository\ResultatQuizRepository;
 use App\Service\CandidateCvManager;
 use App\Service\CvMatchingService;
 use App\Service\ExternalAiRecruitmentAnalyzer;
+use App\Service\FacebookJobPublisher;
 use App\Service\JitsiMeetService;
 use App\Service\PdfCvPreviewService;
 use App\Service\PublicProfileSourcingService;
@@ -31,12 +32,13 @@ use Symfony\Component\Routing\Annotation\Route;
 class AdminERecruitmentController extends AbstractController
 {
     #[Route('/offres/{id}', name: 'admin_offre_show', requirements: ['id' => '\d+'])]
-    public function showOffre(OffreEmploi $offre, CvMatchingService $cvMatchingService, ExternalAiRecruitmentAnalyzer $externalAiRecruitmentAnalyzer): Response
+    public function showOffre(OffreEmploi $offre, CvMatchingService $cvMatchingService, ExternalAiRecruitmentAnalyzer $externalAiRecruitmentAnalyzer, FacebookJobPublisher $facebookJobPublisher): Response
     {
         return $this->render('admin/offre_emploi/show.html.twig', [
             'offre' => $offre,
             'cv_rankings' => $cvMatchingService->rankForOffer($offre, $offre->getCandidatures()),
             'external_ai_configured' => $externalAiRecruitmentAnalyzer->isConfigured(),
+            'facebook_publish_configured' => $facebookJobPublisher->isConfigured(),
         ]);
     }
 
@@ -45,16 +47,37 @@ class AdminERecruitmentController extends AbstractController
     {
         $results = [];
         $rawUrls = '';
+        $searchMode = 'auto';
 
         if ($request->isMethod('POST')) {
+            $searchMode = (string) $request->request->get('search_mode', 'auto');
             $rawUrls = trim((string) $request->request->get('urls', ''));
             $urls = array_values(array_filter(array_map('trim', preg_split('/\R+/', $rawUrls) ?: [])));
 
-            if ($urls === []) {
-                $this->addFlash('danger', 'Ajoutez au moins une URL publique a analyser.');
-            } else {
+            if ($searchMode === 'manual' && $urls !== []) {
                 $results = $publicProfileSourcingService->sourceForOffer($offre, $urls);
                 $this->addFlash('success', sprintf('%d profil(s) public(s) analyses.', count($results)));
+            } else {
+                try {
+                    $results = $publicProfileSourcingService->searchForOffer($offre);
+
+                    if ($results === []) {
+                        $this->addFlash('warning', 'Aucun profil public pertinent n a ete trouve a partir de la description de l offre.');
+                    } else {
+                        $fallbackCount = count(array_filter(
+                            $results,
+                            static fn (array $item): bool => ($item['status'] ?? '') === 'scraping_fallback'
+                        ));
+
+                        if ($fallbackCount > 0) {
+                            $this->addFlash('success', sprintf('%d resultat(s) trouves par le bot Goutte. %d proviennent d un fallback quand le profil complet n etait pas disponible.', count($results), $fallbackCount));
+                        } else {
+                            $this->addFlash('success', sprintf('%d profil(s) public(s) trouves et analyses a partir de l offre par le bot Goutte.', count($results)));
+                        }
+                    }
+                } catch (\Throwable $exception) {
+                    $this->addFlash('danger', 'Recherche automatique impossible: '.$exception->getMessage());
+                }
             }
         }
 
@@ -62,6 +85,7 @@ class AdminERecruitmentController extends AbstractController
             'offre' => $offre,
             'results' => $results,
             'raw_urls' => $rawUrls,
+            'search_mode' => $searchMode,
             'external_ai_configured' => $externalAiRecruitmentAnalyzer->isConfigured(),
         ]);
     }
@@ -122,6 +146,7 @@ class AdminERecruitmentController extends AbstractController
         return $this->render('admin/candidature/show.html.twig', [
             'candidature' => $candidature,
             'cv_preview' => $cvPreview,
+            'cv_public_path' => $candidateCvManager->getApplicationCvPublicPath($candidature->getCv()),
             'quiz_result' => $quizResult,
             'entretiens' => $entretiens,
             'entretien_form' => $entretienForm->createView(),
@@ -252,6 +277,29 @@ class AdminERecruitmentController extends AbstractController
             $this->addFlash('success', $message.' ('.$quiz->getQuestions()->count().' questions)');
         } catch (\RuntimeException $exception) {
             $this->addFlash('danger', $exception->getMessage());
+        }
+
+        return $this->redirectToRoute('admin_offre_show', ['id' => $offre->getId()]);
+    }
+
+    #[Route('/offres/{id}/publish/facebook', name: 'admin_offre_publish_facebook', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function publishOfferOnFacebook(OffreEmploi $offre, Request $request, FacebookJobPublisher $facebookJobPublisher): Response
+    {
+        if (!$this->isCsrfTokenValid('publish_facebook_'.$offre->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$facebookJobPublisher->isConfigured()) {
+            $this->addFlash('warning', 'La publication Facebook n est pas configuree.');
+
+            return $this->redirectToRoute('admin_offre_show', ['id' => $offre->getId()]);
+        }
+
+        try {
+            $facebookJobPublisher->publishOffer($offre);
+            $this->addFlash('success', 'L offre a ete publiee sur Facebook.');
+        } catch (\Throwable $exception) {
+            $this->addFlash('danger', 'Impossible de publier l offre sur Facebook: '.$exception->getMessage());
         }
 
         return $this->redirectToRoute('admin_offre_show', ['id' => $offre->getId()]);

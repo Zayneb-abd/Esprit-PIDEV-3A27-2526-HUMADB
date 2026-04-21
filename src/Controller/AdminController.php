@@ -25,6 +25,9 @@ use App\Entity\Publication;
 use App\Entity\Commentaire;
 use App\Repository\PublicationRepository;
 use App\Repository\CommentaireRepository;
+use App\Service\FacebookJobPublisher;
+use App\Service\OfferDeletionService;
+use Knp\Component\Pager\PaginatorInterface;
 
 #[Route('/admin')]
 class AdminController extends AbstractController
@@ -36,7 +39,7 @@ class AdminController extends AbstractController
     }
 
     #[Route('/inventory', name: 'admin_inventory')]
-    public function inventory(Request $request, OffreEmploiRepository $offreEmploiRepository, CandidatureRepository $candidatureRepository): Response
+    public function inventory(Request $request, OffreEmploiRepository $offreEmploiRepository, CandidatureRepository $candidatureRepository, PaginatorInterface $paginator): Response
     {
         $offres = $offreEmploiRepository->findBy([], ['date_publication' => 'DESC', 'id' => 'DESC']);
         $candidatures = $candidatureRepository->findBy([], ['date_candidature' => 'DESC', 'id' => 'DESC']);
@@ -101,9 +104,59 @@ class AdminController extends AbstractController
             static fn (Candidature $candidature): bool => $candidature->getStatut() === 'En attente'
         ));
 
+        $monthlyOffers = $this->buildMonthlySeries(
+            $offres,
+            static fn (OffreEmploi $offre): ?\DateTimeInterface => $offre->getDatePublication()
+        );
+
+        $monthlyApplications = $this->buildMonthlySeries(
+            $candidatures,
+            static fn (Candidature $candidature): ?\DateTimeInterface => $candidature->getDateCandidature()
+        );
+
+        $contractCounts = [];
+        foreach ($offres as $offre) {
+            $label = $offre->getTypeContrat() ?: 'Non precise';
+            $contractCounts[$label] = ($contractCounts[$label] ?? 0) + ($offre->getNombrePostes() ?? 0);
+        }
+        arsort($contractCounts);
+        $contractCounts = array_slice($contractCounts, 0, 4, true);
+
+        $statusCounts = [
+            'En attente' => 0,
+            'En cours' => 0,
+            'Acceptee' => 0,
+            'Refusee' => 0,
+        ];
+        foreach ($candidatures as $candidature) {
+            $status = $candidature->getStatut() ?: 'En attente';
+            if (!array_key_exists($status, $statusCounts)) {
+                $statusCounts[$status] = 0;
+            }
+            $statusCounts[$status]++;
+        }
+
+        $offresPagination = $paginator->paginate(
+            $offres,
+            max(1, $request->query->getInt('offres_page', 1)),
+            8,
+            [
+                'pageParameterName' => 'offres_page',
+            ]
+        );
+
+        $candidaturesPagination = $paginator->paginate(
+            $candidatures,
+            max(1, $request->query->getInt('candidatures_page', 1)),
+            8,
+            [
+                'pageParameterName' => 'candidatures_page',
+            ]
+        );
+
         return $this->render('admin/recrutment/recrutment.html.twig', [
-            'offres' => $offres,
-            'candidatures' => $candidatures,
+            'offres' => $offresPagination,
+            'candidatures' => $candidaturesPagination,
             'search' => $search,
             'stats' => [
                 'offres' => count($offres),
@@ -111,11 +164,60 @@ class AdminController extends AbstractController
                 'postes' => $totalPostes,
                 'candidatures_en_attente' => $candidaturesEnAttente,
             ],
+            'kpi_charts' => [
+                'offers' => $monthlyOffers,
+                'applications' => $monthlyApplications,
+                'contracts' => [
+                    'labels' => array_keys($contractCounts),
+                    'series' => array_values($contractCounts),
+                ],
+                'statuses' => [
+                    'labels' => array_keys($statusCounts),
+                    'series' => array_values($statusCounts),
+                ],
+            ],
         ]);
     }
 
+    /**
+     * @template T
+     * @param array<int, T> $items
+     * @param callable(T): ?\DateTimeInterface $dateResolver
+     * @return array{labels:array<int,string>,series:array<int,int>}
+     */
+    private function buildMonthlySeries(array $items, callable $dateResolver, int $months = 6): array
+    {
+        $labels = [];
+        $counts = [];
+        $now = new \DateTimeImmutable('first day of this month');
+
+        for ($offset = $months - 1; $offset >= 0; --$offset) {
+            $month = $now->modify(sprintf('-%d months', $offset));
+            $key = $month->format('Y-m');
+            $labels[$key] = $month->format('M Y');
+            $counts[$key] = 0;
+        }
+
+        foreach ($items as $item) {
+            $date = $dateResolver($item);
+            if (!$date instanceof \DateTimeInterface) {
+                continue;
+            }
+
+            $key = $date->format('Y-m');
+            if (array_key_exists($key, $counts)) {
+                $counts[$key]++;
+            }
+        }
+
+        return [
+            'labels' => array_values($labels),
+            'series' => array_values($counts),
+        ];
+    }
+
     #[Route('/offres/new', name: 'admin_offre_new')]
-    public function newOffre(Request $request, EntityManagerInterface $entityManager): Response
+    public function newOffre(Request $request, EntityManagerInterface $entityManager, FacebookJobPublisher $facebookJobPublisher): Response
     {
         $offre = new OffreEmploi();
         $offre->setDatePublication(new \DateTime());
@@ -133,6 +235,17 @@ class AdminController extends AbstractController
             $entityManager->flush();
 
             $this->addFlash('success', "L'offre d'emploi a ete creee.");
+
+            if ($facebookJobPublisher->isConfigured()) {
+                try {
+                    $facebookJobPublisher->publishOffer($offre);
+                    $this->addFlash('success', 'L offre a aussi ete publiee automatiquement sur Facebook.');
+                } catch (\Throwable $exception) {
+                    $this->addFlash('warning', 'L offre a ete creee, mais la publication Facebook a echoue: '.$exception->getMessage());
+                }
+            } else {
+                $this->addFlash('info', 'Publication Facebook non configuree. Renseignez les variables FACEBOOK_PAGE_ID et FACEBOOK_PAGE_ACCESS_TOKEN pour l activer.');
+            }
 
             return $this->redirectToRoute('admin_offre_show', ['id' => $offre->getId()]);
         }
@@ -171,16 +284,11 @@ class AdminController extends AbstractController
     }
 
     #[Route('/offres/{id}/delete', name: 'admin_offre_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function deleteOffre(Request $request, OffreEmploi $offre, EntityManagerInterface $entityManager): Response
+    public function deleteOffre(Request $request, OffreEmploi $offre, OfferDeletionService $offerDeletionService): Response
     {
         if ($this->isCsrfTokenValid('delete_offre_'.$offre->getId(), (string) $request->request->get('_token'))) {
-            if ($offre->getCandidatures()->count() > 0 || $offre->getQuizs()->count() > 0) {
-                $this->addFlash('danger', "Suppression impossible: l'offre est liee a des candidatures ou des quiz.");
-            } else {
-                $entityManager->remove($offre);
-                $entityManager->flush();
-                $this->addFlash('success', "L'offre d'emploi a ete supprimee.");
-            }
+            $offerDeletionService->deleteOfferWithRelations($offre);
+            $this->addFlash('success', "L'offre d'emploi ainsi que ses candidatures, entretiens et quiz lies ont ete supprimes.");
         }
 
         return $this->redirectToRoute('admin_inventory');

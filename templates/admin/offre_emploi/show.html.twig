@@ -14,6 +14,12 @@
             <a href="{{ path('admin_candidature_new') }}" class="btn btn-outline-primary">Ajouter une candidature</a>
             <a href="{{ path('admin_offre_quiz_new', {id: offre.id}) }}" class="btn btn-outline-dark">Creer un quiz</a>
             <a href="{{ path('admin_offre_public_sourcing', {id: offre.id}) }}" class="btn btn-outline-info">Sourcing URLs publiques</a>
+            <form method="post" action="{{ path('admin_offre_publish_facebook', {id: offre.id}) }}" class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('publish_facebook_' ~ offre.id) }}">
+                <button type="submit" class="btn btn-outline-primary" {% if not facebook_publish_configured %}disabled title="Configuration Facebook manquante"{% endif %}>
+                    Publier sur Facebook
+                </button>
+            </form>
             <form method="post" action="{{ path('admin_offre_generate_quiz', {id: offre.id}) }}" class="d-inline">
                 <input type="hidden" name="_token" value="{{ csrf_token('generate_quiz_' ~ offre.id) }}">
                 <button type="submit" class="btn btn-outline-success">Generer un quiz</button>
@@ -52,7 +58,11 @@
                     <h2 class="fs-5 mb-3">Suivi</h2>
                     <p class="mb-2"><strong>Responsable:</strong> {{ offre.user ? offre.user.prenom ~ ' ' ~ offre.user.nom : 'Non assigne' }}</p>
                     <p class="mb-2"><strong>Email:</strong> {{ offre.user ? offre.user.email : '-' }}</p>
-                    <p class="mb-0"><strong>Candidatures associees:</strong> {{ offre.candidatures|length }}</p>
+                    <p class="mb-2"><strong>Candidatures associees:</strong> {{ offre.candidatures|length }}</p>
+                    <p class="mb-0">
+                        <strong>Facebook auto publish:</strong>
+                        {{ facebook_publish_configured ? 'Configure' : 'Non configure' }}
+                    </p>
                 </div>
             </div>
         </div>

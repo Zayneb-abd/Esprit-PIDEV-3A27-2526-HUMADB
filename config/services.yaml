@@ -10,6 +10,10 @@ parameters:
     app.external_ai_model: '%env(default::EXTERNAL_AI_MODEL)%'
     app.external_ai_timeout: 25
     app.external_ai_max_candidates: 3
+    app.facebook_page_id: '%env(default::FACEBOOK_PAGE_ID)%'
+    app.facebook_page_access_token: '%env(default::FACEBOOK_PAGE_ACCESS_TOKEN)%'
+    app.facebook_graph_api_version: '%env(default::FACEBOOK_GRAPH_API_VERSION)%'
+    app.public_base_url: '%env(default::APP_PUBLIC_BASE_URL)%'
 
 services:
     # default configuration for services in *this* file
@@ -44,6 +48,13 @@ services:
     App\Service\CvMatchingService:
         arguments:
             $advancedAiMaxCandidates: '%app.external_ai_max_candidates%'
+
+    App\Service\FacebookJobPublisher:
+        arguments:
+            $pageId: '%app.facebook_page_id%'
+            $pageAccessToken: '%app.facebook_page_access_token%'
+            $graphApiVersion: '%app.facebook_graph_api_version%'
+            $publicBaseUrl: '%app.public_base_url%'
 
     Smalot\PdfParser\Parser: ~
 

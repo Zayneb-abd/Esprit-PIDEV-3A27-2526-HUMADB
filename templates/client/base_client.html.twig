@@ -89,6 +89,10 @@
                        class="nav-item nav-link {% if app.request.attributes.get('_route') == 'client_services' %}active{% endif %}">
                        Services
                     </a>
+                    <a href="{{ path('client_jobs') }}"
+                       class="nav-item nav-link {% if app.request.attributes.get('_route') in ['client_jobs', 'client_job_show'] %}active{% endif %}">
+                       Jobs
+                    </a>
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Blog</a>
                         <div class="dropdown-menu m-0">

@@ -28,8 +28,8 @@
                     <p class="mb-2"><strong>Email:</strong> {{ candidature.user ? candidature.user.email : '-' }}</p>
                     <p class="mb-3">
                         <strong>CV:</strong>
-                        {% if candidature.cv %}
-                            <a href="{{ asset('uploads/candidatures/cv/' ~ candidature.cv) }}" target="_blank">Ouvrir le PDF</a>
+                        {% if cv_public_path %}
+                            <a href="{{ asset(cv_public_path) }}" target="_blank">Ouvrir dans un nouvel onglet</a>
                         {% else %}
                             -
                         {% endif %}
@@ -56,6 +56,30 @@
                     <p class="mb-0"><strong>Date du statut:</strong> {{ candidature.dateStatut ? candidature.dateStatut|date('d/m/Y') : '-' }}</p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+                <div>
+                    <h2 class="fs-5 mb-1">CV PDF</h2>
+                    <p class="mb-0 text-secondary">Le CV s ouvre directement dans cette page.</p>
+                </div>
+                {% if cv_public_path %}
+                    <a href="{{ asset(cv_public_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Ouvrir dans un nouvel onglet</a>
+                {% endif %}
+            </div>
+
+            {% if cv_public_path %}
+                <iframe
+                    src="{{ asset(cv_public_path) }}#view=FitH"
+                    title="CV PDF"
+                    style="width: 100%; min-height: 900px; border: 0; border-radius: 12px;"
+                ></iframe>
+            {% else %}
+                <p class="mb-0 text-secondary">Aucun fichier PDF n est disponible pour cette candidature.</p>
+            {% endif %}
         </div>
     </div>
 
