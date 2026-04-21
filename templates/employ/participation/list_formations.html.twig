@@ -76,13 +76,23 @@
                             <strong>Durée :</strong> {{ formation.duree }} jours<br>
                             <strong>Lieu/Localisation :</strong> {{ formation.localisation }}
                         </p>
+                        <div class="mt-2" id="weather-{{ formation.id }}">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                                <small class="text-muted">Chargement de la météo...</small>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-footer bg-white border-0">
-                        <form action="{{ path('employ_participation_inscrire', {'id': formation.id}) }}" method="POST">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="ti ti-check"></i> Participer
-                            </button>
-                        </form>
+                        <div class="d-flex gap-2">
+                                                        <form action="{{ path('employ_participation_inscrire', {'id': formation.id}) }}" method="POST" class="flex-grow-1">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="ti ti-check"></i> Participer
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -93,4 +103,340 @@
         {% endfor %}
     </div>
 </div>
+
+<script>
+const API_KEY = '713c7b6626efa9af193bb75e9f1ce972';
+const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/weather';
+
+// Store weather data to avoid multiple API calls
+const weatherCache = new Map();
+
+// Function to extract governorate from location string
+function extractGovernorate(locationName) {
+    console.log('Extracting governorate from:', locationName);
+    
+    // List of Tunisian governorates
+    const governorates = [
+        'Tunis', 'Ariana', 'Ben Arous', 'Manouba', 'Nabeul', 'Zaghouan', 'Bizerte', 'Béja', 'Jendouba',
+        'Le Kef', 'Siliana', 'Sousse', 'Monastir', 'Mahdia', 'Sfax', 'Kairouan', 'Kasserine', 'Sidi Bouzid',
+        'Gabès', 'Medenine', 'Tataouine', 'Gafsa', 'Tozeur', 'Kebili'
+    ];
+    
+    // Common Tunisian localities and their governorates
+    const localities = {
+        'Beb El Jazira': 'Tunis',
+        'Bab El Jazira': 'Tunis',
+        'El Menzah': 'Tunis',
+        'El Menzah 1': 'Tunis',
+        'El Menzah 2': 'Tunis',
+        'El Menzah 3': 'Tunis',
+        'El Menzah 4': 'Tunis',
+        'El Menzah 5': 'Tunis',
+        'El Menzah 6': 'Tunis',
+        'El Menzah 7': 'Tunis',
+        'El Menzah 8': 'Tunis',
+        'El Menzah 9': 'Tunis',
+        'El Menzah 10': 'Tunis',
+        'La Marsa': 'Tunis',
+        'Carthage': 'Tunis',
+        'Sidi Bou Said': 'Tunis',
+        'Le Bardo': 'Tunis',
+        'El Menzah': 'Ariana',
+        'Lac 1': 'Tunis',
+        'Lac 2': 'Tunis',
+        'Lac 3': 'Tunis',
+        'Les Berges du Lac': 'Tunis',
+        'Charguia 1': 'Tunis',
+        'Charguia 2': 'Tunis',
+        'Charguia 3': 'Tunis',
+        'El Omrane': 'Tunis',
+        'El Omrane Supérieur': 'Tunis',
+        'Hafsia': 'Tunis',
+        'Halfaouine': 'Tunis',
+        'Medina': 'Tunis',
+        'Montfleury': 'Tunis',
+        'Mutuelleville': 'Tunis',
+        'Petite Ariana': 'Ariana',
+        'Ennasr': 'Ariana',
+        'Ennasr 1': 'Ariana',
+        'Ennasr 2': 'Ariana',
+        'Ghazela': 'Ariana',
+        'El Menzah': 'Ariana',
+        'Ezzahra': 'Ben Arous',
+        'Rades': 'Ben Arous',
+        'Hammam Lif': 'Ben Arous',
+        'Hammam Chott': 'Ben Arous',
+        'Borj Cedria': 'Ben Arous',
+        'Mornag': 'Ben Arous',
+        'Mégrine': 'Ben Arous',
+        'Ezzouhour': 'Sfax',
+        'Sfax Jadida': 'Sfax',
+        'Sidi Mansour': 'Sfax',
+        'Thyna': 'Sfax',
+        'Sakiet Ezzit': 'Sfax',
+        'Sakiet Eddaier': 'Sfax',
+        'Ksour Essef': 'Mahdia',
+        'Boukhrine': 'Sidi Bouzid',
+        'Meknassy': 'Sidi Bouzid',
+        'Mezzouna': 'Sidi Bouzid',
+        'Ouled Haffouz': 'Sidi Bouzid',
+        'Regueb': 'Sidi Bouzid',
+        'Bir Ali Ben Khelifa': 'Sfax',
+        'Jebeniana': 'Sfax',
+        'El Amra': 'Sfax',
+        'Gremda': 'Sfax',
+        'Chihia': 'Sfax',
+        'Agareb': 'Sfax',
+        'Skhira': 'Sfax',
+        'El Hencha': 'Sfax',
+        'Menzel Chaker': 'Sfax'
+    };
+    
+    // First check for "Gouvernorat" pattern
+    const gouvernoratRegex = /Gouvernorat\s+([A-Za-z\s]+)/i;
+    const gouvernoratMatch = locationName.match(gouvernoratRegex);
+    
+    if (gouvernoratMatch && gouvernoratMatch[1]) {
+        const gouvernoratName = gouvernoratMatch[1].trim();
+        console.log('Found "Gouvernorat" pattern:', gouvernoratName);
+        
+        // Check if this is a valid governorate
+        for (const governorate of governorates) {
+            if (gouvernoratName.toLowerCase().includes(governorate.toLowerCase())) {
+                console.log('Matched governorate:', governorate);
+                return governorate;
+            }
+        }
+    }
+    
+    // Check for specific localities
+    for (const [locality, governorate] of Object.entries(localities)) {
+        if (locationName.toLowerCase().includes(locality.toLowerCase())) {
+            console.log('Found locality:', locality, '-> governorate:', governorate);
+            return governorate;
+        }
+    }
+    
+    // Check if any governorate is mentioned in the location name
+    for (const governorate of governorates) {
+        if (locationName.toLowerCase().includes(governorate.toLowerCase())) {
+            console.log('Found governorate in text:', governorate);
+            return governorate;
+        }
+    }
+    
+    // If no governorate found, try to extract city name (last part of address)
+    const parts = locationName.split(',');
+    if (parts.length > 1) {
+        const lastPart = parts[parts.length - 1].trim();
+        console.log('Using last part as location:', lastPart);
+        return lastPart;
+    }
+    
+    // Default to Tunis if nothing found
+    console.log('No governorate found, defaulting to Tunis');
+    return 'Tunis';
+}
+
+// Function to get coordinates from location name using geocoding
+async function getCoordinatesFromLocation(locationName) {
+    console.log('Getting coordinates for location:', locationName);
+    
+    // Check if location contains coordinates (lat,lng format) first
+    const coordsRegex = /(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/;
+    const match = locationName.match(coordsRegex);
+    
+    if (match && match.length >= 3) {
+        const coords = {
+            lat: parseFloat(match[1]),
+            lng: parseFloat(match[2])
+        };
+        console.log('Found coordinates in string:', coords);
+        
+        // Validate coordinates are reasonable
+        if (!isNaN(coords.lat) && !isNaN(coords.lng) && 
+            coords.lat >= -90 && coords.lat <= 90 && 
+            coords.lng >= -180 && coords.lng <= 180) {
+            return coords;
+        }
+    }
+    
+    // Extract governorate for better geocoding
+    const governorate = extractGovernorate(locationName);
+    console.log('Using governorate for geocoding:', governorate);
+    
+    // Use geocoding API with governorate
+    try {
+        const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(governorate)},TN&limit=1&appid=${API_KEY}`;
+        console.log('Geocoding URL:', geocodeUrl);
+        
+        const response = await fetch(geocodeUrl);
+        const data = await response.json();
+        
+        console.log('Geocoding response:', data);
+        
+        if (data && data.length > 0) {
+            const coords = {
+                lat: data[0].lat,
+                lng: data[0].lon
+            };
+            console.log('Geocoded coordinates:', coords);
+            return coords;
+        }
+    } catch (error) {
+        console.error('Error geocoding location:', error);
+    }
+    
+    console.log('No coordinates found for location:', locationName);
+    return null;
+}
+
+// Function to get weather for coordinates
+async function getWeatherForCoordinates(lat, lng) {
+    const cacheKey = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+    
+    if (weatherCache.has(cacheKey)) {
+        return weatherCache.get(cacheKey);
+    }
+    
+    try {
+        const response = await fetch(`${WEATHER_API_URL}?lat=${lat}&lon=${lng}&appid=${API_KEY}&units=metric&lang=fr`);
+        const data = await response.json();
+        
+        if (data.weather && data.main) {
+            const weatherData = {
+                temperature: Math.round(data.main.temp),
+                description: data.weather[0].description,
+                icon: data.weather[0].icon,
+                humidity: data.main.humidity,
+                windSpeed: data.wind.speed,
+                location: data.name
+            };
+            
+            weatherCache.set(cacheKey, weatherData);
+            return weatherData;
+        }
+    } catch (error) {
+        console.error('Error fetching weather:', error);
+        return null;
+    }
+    
+    return null;
+}
+
+// Function to get weather icon
+function getWeatherIcon(iconCode) {
+    const iconMap = {
+        '01d': 'ti-sun',
+        '01n': 'ti-moon',
+        '02d': 'ti-cloud-sun',
+        '02n': 'ti-cloud-moon',
+        '03d': 'ti-cloud',
+        '03n': 'ti-cloud',
+        '04d': 'ti-cloudy',
+        '04n': 'ti-cloudy',
+        '09d': 'ti-rain',
+        '09n': 'ti-rain',
+        '10d': 'ti-rain',
+        '10n': 'ti-rain',
+        '11d': 'ti-bolt',
+        '11n': 'ti-bolt',
+        '13d': 'ti-snow',
+        '13n': 'ti-snow',
+        '50d': 'ti-wind',
+        '50n': 'ti-wind'
+    };
+    return iconMap[iconCode] || 'ti-cloud';
+}
+
+// Function to display weather
+function displayWeather(formationId, weatherData) {
+    const weatherElement = document.getElementById(`weather-${formationId}`);
+    
+    if (!weatherElement) return;
+    
+    if (weatherData) {
+        weatherElement.innerHTML = `
+            <div class="d-flex align-items-center gap-2">
+                <i class="ti ${getWeatherIcon(weatherData.icon)} fs-4 text-primary"></i>
+                <div>
+                    <div class="fw-bold">${weatherData.temperature}°C</div>
+                    <small class="text-muted">${weatherData.description}</small>
+                    ${weatherData.location ? `<small class="text-info d-block">${weatherData.location}</small>` : ''}
+                </div>
+            </div>
+        `;
+    } else {
+        weatherElement.innerHTML = `
+            <div class="d-flex align-items-center gap-2">
+                <i class="ti ti-alert-circle fs-4 text-warning"></i>
+                <small class="text-muted">Météo indisponible</small>
+            </div>
+        `;
+    }
+}
+
+// Function to load weather for all formations
+async function loadWeatherForFormations() {
+    console.log('Starting weather loading for formations...');
+    const formations = document.querySelectorAll('[id^="weather-"]');
+    console.log('Found weather elements:', formations.length);
+    
+    for (const weatherElement of formations) {
+        const formationId = weatherElement.id.replace('weather-', '');
+        const formationCard = weatherElement.closest('.card');
+        console.log('Processing formation:', formationId);
+        
+        if (formationCard) {
+            // Find location text by looking for "Lieu/Localisation" label
+            const cardText = formationCard.querySelector('.card-text');
+            if (cardText) {
+                const textContent = cardText.textContent;
+                const lines = textContent.split('\n');
+                let locationText = '';
+                
+                console.log('Card text content:', textContent);
+                console.log('Lines:', lines);
+                
+                for (const line of lines) {
+                    if (line.includes('Lieu/Localisation :')) {
+                        locationText = line.replace('Lieu/Localisation :', '').trim();
+                        console.log('Found location text:', locationText);
+                        break;
+                    }
+                }
+                
+                if (locationText) {
+                    console.log('Getting coordinates for location:', locationText);
+                    const coordinates = await getCoordinatesFromLocation(locationText);
+                    
+                    if (coordinates) {
+                        console.log('Coordinates found, fetching weather...');
+                        const weatherData = await getWeatherForCoordinates(coordinates.lat, coordinates.lng);
+                        displayWeather(formationId, weatherData);
+                    } else {
+                        console.log('No coordinates found, showing unavailable');
+                        displayWeather(formationId, null);
+                    }
+                } else {
+                    console.log('No location text found, showing unavailable');
+                    displayWeather(formationId, null);
+                }
+            } else {
+                console.log('No card text found, showing unavailable');
+                displayWeather(formationId, null);
+            }
+        } else {
+            console.log('No formation card found, showing unavailable');
+            displayWeather(formationId, null);
+        }
+    }
+}
+
+// Load weather when page is ready
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(loadWeatherForFormations, 1000);
+});
+</script>
+
 {% endblock %}
