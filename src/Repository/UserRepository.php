@@ -121,4 +121,25 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     {
         return $this->findOneBy(['reset_token' => $token]);
     }
+
+    /**
+     * @return User[]
+     */
+    public function findForExport(string $search = '', ?string $role = null): array
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->orderBy('u.id', 'DESC');
+
+        if ($search !== '') {
+            $qb->andWhere('u.nom LIKE :search OR u.prenom LIKE :search OR u.email LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($role !== null && $role !== '') {
+            $qb->andWhere('u.role = :role')
+                ->setParameter('role', $role);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }

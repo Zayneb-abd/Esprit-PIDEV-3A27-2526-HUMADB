@@ -104,6 +104,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     )]
     private ?string $role = null;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    private bool $is_active = true;
+
     public function getRoles(): array
     {
         $roles = ['ROLE_USER'];
@@ -142,6 +145,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setRole(?string $role): self
     {
         $this->role = $role;
+
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+
+    public function setIsActive(bool $is_active): self
+    {
+        $this->is_active = $is_active;
 
         return $this;
     }
@@ -592,7 +607,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->publications = new ArrayCollection();
         $this->resultatQuizs = new ArrayCollection();
         $this->users = new ArrayCollection();
+        $this->notifications = new ArrayCollection();
     }
+
+    #[ORM\OneToMany(targetEntity: Notification::class, mappedBy: 'user')]
+    private Collection $notifications;
 
     /**
      * @return Collection<int, User>

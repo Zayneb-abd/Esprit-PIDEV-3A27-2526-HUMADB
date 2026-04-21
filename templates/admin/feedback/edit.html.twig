@@ -6,7 +6,7 @@
 <div class="mb-4 d-flex justify-content-between align-items-center">
     <div>
         <h1 class="fs-4 fw-bold mb-1">Détails du Feedback #{{ feedback.id }}</h1>
-        <p class="text-muted mb-0">Modifier le statut ou la catégorie.</p>
+        <p class="text-muted mb-0">Modifier le statut, la priorité ou la catégorie.</p>
     </div>
     <a href="{{ path('admin_feedback_index') }}" class="btn btn-outline-secondary">
         <i class="ti ti-arrow-left me-2"></i>Retour à la liste
@@ -40,6 +40,47 @@
                 </div>
             </div>
         </div>
+
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-primary"><i class="ti ti-robot me-2"></i>Réponse AI</h5>
+                <div class="d-flex gap-2">
+                    <form method="post" action="{{ path('admin_feedback_auto_response', {'id': feedback.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('feedback_ai_' ~ feedback.id) }}">
+                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                            <i class="ti ti-sparkles me-1"></i>Générer
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="{{ path('admin_feedback_send_reply', {'id': feedback.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('feedback_send_' ~ feedback.id) }}">
+                    <label class="form-label fw-bold">Réponse à envoyer à l'employé</label>
+                    <textarea
+                        name="reply_text"
+                        class="form-control"
+                        rows="7"
+                        placeholder="Rédigez ou générez une réponse, puis envoyez-la..."
+                    >{{ feedback.autoResponse }}</textarea>
+
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <div class="text-muted small">
+                            {% if feedback.autoResponseGeneratedAt %}
+                                Générée le {{ feedback.autoResponseGeneratedAt|date('d/m/Y H:i') }}
+                            {% endif %}
+                            {% if feedback.autoResponseSentAt %}
+                                {% if feedback.autoResponseGeneratedAt %} • {% endif %}
+                                Envoyée le {{ feedback.autoResponseSentAt|date('d/m/Y H:i') }}
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-success">
+                            <i class="ti ti-send me-1"></i>Envoyer à l'employé
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
     
     <div class="col-lg-5 mt-4 mt-lg-0">
@@ -52,6 +93,10 @@
                     <div class="mb-3">
                         {{ form_label(form.status, "Statut", {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.status, {'attr': {'class': 'form-select shadow-sm'}}) }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form_label(form.priority, "Priorité", {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.priority, {'attr': {'class': 'form-select shadow-sm'}}) }}
                     </div>
                     <div class="mb-4">
                         {{ form_label(form.category, "Catégorie", {'label_attr': {'class': 'form-label fw-bold'}}) }}

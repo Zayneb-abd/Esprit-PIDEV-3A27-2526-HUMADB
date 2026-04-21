@@ -20,13 +20,15 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # QrCodeService configuration
-    App\Service\QrCodeService:
-
-    # AIService configuration
-    App\Service\AIService:
+    App\Service\FeedbackAutoResponseGenerator:
         arguments:
-            $groqApiKey: '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'
+            $openAiApiKey: '%env(OPENAI_API_KEY)%'
+            $openAiModel: '%env(OPENAI_MODEL)%'
+
+    App\Service\FeedbackPriorityAnalyzer:
+        arguments:
+            $openAiApiKey: '%env(OPENAI_API_KEY)%'
+            $openAiModel: '%env(OPENAI_MODEL)%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

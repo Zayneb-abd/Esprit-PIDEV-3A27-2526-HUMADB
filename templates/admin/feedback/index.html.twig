@@ -3,10 +3,13 @@
 {% block title %}Gestion des Feedbacks{% endblock %}
 
 {% block body %}
-<div class="mb-4 d-flex justify-content-between align-items-center">
+<div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
         <h1 class="fs-4 fw-bold mb-1">Feedbacks</h1>
-        <p class="text-muted mb-0">Consultez et répondez aux retours des employés.</p>
+        <p class="text-muted mb-0">Priorités, statistiques et traitement des retours.</p>
+    </div>
+    <div class="text-muted small">
+        Total : <strong>{{ feedback_stats.total }}</strong>
     </div>
 </div>
 
@@ -19,20 +22,78 @@
     {% endfor %}
 {% endfor %}
 
+{# ── Statistics charts ── #}
+<div class="row g-3 mb-3">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 border-bottom-0">
+                <h6 class="mb-0 fw-semibold"><i class="ti ti-chart-line me-2 text-primary"></i>Feedbacks reçus (7 derniers jours)</h6>
+            </div>
+            <div class="card-body pt-0">
+                <canvas id="feedbackTimelineChart" height="110"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 border-bottom-0">
+                <h6 class="mb-0 fw-semibold"><i class="ti ti-chart-pie me-2 text-primary"></i>Répartition</h6>
+            </div>
+            <div class="card-body pt-0">
+                <canvas id="feedbackDoughnutChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-2 small fw-semibold">Par statut</div>
+            <div class="card-body py-3">
+                <canvas id="feedbackStatusChart" height="160"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-2 small fw-semibold">Par priorité</div>
+            <div class="card-body py-3">
+                <canvas id="feedbackPriorityChart" height="160"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card border-0 shadow-sm mt-3 mb-3">
     <div class="card-body py-3">
-        <form method="get" action="{{ path('admin_feedback_index') }}" class="d-flex gap-2">
-            <input
-                type="text"
-                name="q"
-                value="{{ query|default('') }}"
-                class="form-control form-control-sm"
-                placeholder="Rechercher par message, categorie, statut ou employe..."
-            >
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-search"></i></button>
-            {% if query is defined and query %}
-                <a href="{{ path('admin_feedback_index') }}" class="btn btn-sm btn-outline-secondary">Réinitialiser</a>
-            {% endif %}
+        <form method="get" action="{{ path('admin_feedback_index') }}" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small text-muted mb-1">Recherche</label>
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ query|default('') }}"
+                    class="form-control form-control-sm"
+                    placeholder="Message, catégorie, statut, priorité, ID employé..."
+                >
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Priorité</label>
+                <select name="priority" class="form-select form-select-sm">
+                    <option value="">Toutes</option>
+                    <option value="urgente" {{ priority_filter == 'urgente' ? 'selected' }}>Urgente</option>
+                    <option value="haute" {{ priority_filter == 'haute' ? 'selected' }}>Haute</option>
+                    <option value="normal" {{ priority_filter == 'normal' ? 'selected' }}>Normale</option>
+                    <option value="bas" {{ priority_filter == 'bas' ? 'selected' }}>Basse</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-search"></i> Filtrer</button>
+                {% if query or priority_filter %}
+                    <a href="{{ path('admin_feedback_index') }}" class="btn btn-sm btn-outline-secondary">Réinitialiser</a>
+                {% endif %}
+            </div>
         </form>
     </div>
 </div>
@@ -44,6 +105,7 @@
                 <thead class="bg-light">
                     <tr>
                         <th class="px-4 py-3">ID</th>
+                        <th class="py-3">Priorité</th>
                         <th class="py-3">Message</th>
                         <th class="py-3">Catégorie</th>
                         <th class="py-3">Statut</th>
@@ -57,7 +119,19 @@
                     <tr>
                         <td class="px-4 text-muted fw-medium">#{{ feedback.id }}</td>
                         <td>
-                            <div style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            {% set p = feedback.priority %}
+                            {% if p == 'urgente' %}
+                                <span class="badge bg-danger">Urgente</span>
+                            {% elseif p == 'haute' %}
+                                <span class="badge bg-warning text-dark">Haute</span>
+                            {% elseif p == 'bas' %}
+                                <span class="badge bg-secondary">Basse</span>
+                            {% else %}
+                                <span class="badge bg-info text-dark">Normale</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="max-width:280px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                                 {{ feedback.contenu }}
                             </div>
                         </td>
@@ -95,7 +169,7 @@
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">Aucun feedback trouvé.</td>
+                        <td colspan="8" class="text-center py-5 text-muted">Aucun feedback trouvé.</td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -103,4 +177,92 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block js %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const timelineLabels = {{ feedback_stats.timeline_labels|json_encode|raw }};
+    const timelineData = {{ feedback_stats.timeline_data|json_encode|raw }};
+    const byCategory = {{ feedback_stats.by_category|json_encode|raw }};
+    const byStatus = {{ feedback_stats.by_status|json_encode|raw }};
+    const byPriority = {{ feedback_stats.by_priority|json_encode|raw }};
+
+    const catLabels = Object.keys(byCategory);
+    const catData = Object.values(byCategory);
+
+    new Chart(document.getElementById('feedbackTimelineChart'), {
+        type: 'line',
+        data: {
+            labels: timelineLabels,
+            datasets: [{
+                label: 'Feedbacks',
+                data: timelineData,
+                borderColor: 'rgb(99, 102, 241)',
+                backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+
+    new Chart(document.getElementById('feedbackDoughnutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: catLabels.length ? catLabels : ['—'],
+            datasets: [{
+                data: catData.length ? catData : [0],
+                backgroundColor: ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#64748b']
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    const statusKeys = Object.keys(byStatus);
+    new Chart(document.getElementById('feedbackStatusChart'), {
+        type: 'bar',
+        data: {
+            labels: statusKeys.length ? statusKeys.map(s => ({ 'nouveau': 'Nouveau', 'en_cours': 'En cours', 'traite': 'Traité', 'rejete': 'Rejeté' }[s] || s)) : ['Aucune donnée'],
+            datasets: [{
+                label: 'Nombre',
+                data: statusKeys.length ? Object.values(byStatus) : [0],
+                backgroundColor: ['#ef4444', '#f59e0b', '#22c55e', '#64748b']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+
+    const prioOrder = ['urgente', 'haute', 'normal', 'bas'];
+    const prioLabels = { 'urgente': 'Urgente', 'haute': 'Haute', 'normal': 'Normale', 'bas': 'Basse' };
+    const prioKeys = prioOrder;
+    const prioData = prioKeys.map(k => byPriority[k] || 0);
+    new Chart(document.getElementById('feedbackPriorityChart'), {
+        type: 'bar',
+        data: {
+            labels: prioKeys.map(k => prioLabels[k] || k),
+            datasets: [{
+                label: 'Nombre',
+                data: prioData,
+                backgroundColor: ['#dc2626', '#f59e0b', '#0ea5e9', '#64748b']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+})();
+</script>
 {% endblock %}

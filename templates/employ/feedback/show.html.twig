@@ -16,8 +16,23 @@
 <div class="card border-0 shadow-sm p-4">
     <div class="card-body">
         
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-            <h5 class="fw-bold mb-0 text-primary"><i class="ti ti-tag me-2"></i>{{ feedback.category }}</h5>
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold mb-1 text-primary"><i class="ti ti-tag me-2"></i>{{ feedback.category }}</h5>
+                <div class="small text-muted">
+                    Priorité (RH) :
+                    {% set p = feedback.priority %}
+                    {% if p == 'urgente' %}
+                        <span class="badge bg-danger">Urgente</span>
+                    {% elseif p == 'haute' %}
+                        <span class="badge bg-warning text-dark">Haute</span>
+                    {% elseif p == 'bas' %}
+                        <span class="badge bg-secondary">Basse</span>
+                    {% else %}
+                        <span class="badge bg-info text-dark">Normale</span>
+                    {% endif %}
+                </div>
+            </div>
             
             {% if feedback.status == 'nouveau' %}
                 <span class="badge bg-danger rounded-pill px-3 py-2 fs-6 shadow-sm"><i class="ti ti-sparkles me-1 text-white"></i> Nouveau</span>
@@ -33,6 +48,18 @@
         <div class="mb-5 bg-light p-4 rounded-3 border-start border-4 border-primary">
             <p class="mb-0 fs-5" style="white-space: pre-wrap;">{{ feedback.contenu }}</p>
         </div>
+
+        {% if feedback.autoResponse and feedback.autoResponseSentAt %}
+            <div class="mb-4 p-4 rounded-3 border-start border-4 border-success bg-white shadow-sm">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="fw-bold mb-0 text-success"><i class="ti ti-message-check me-2"></i>Réponse (RH)</h6>
+                    <small class="text-muted">
+                        {{ feedback.autoResponseSentAt ? feedback.autoResponseSentAt|date('d/m/Y H:i') : '' }}
+                    </small>
+                </div>
+                <div style="white-space: pre-wrap;">{{ feedback.autoResponse }}</div>
+            </div>
+        {% endif %}
 
         <div class="row text-muted small border-top pt-3">
             <div class="col-md-6">

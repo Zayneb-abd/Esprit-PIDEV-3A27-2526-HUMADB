@@ -5,74 +5,314 @@ namespace App\Controller;
 use App\Entity\Candidature;
 use App\Entity\OffreEmploi;
 use App\Entity\User;
+use App\Form\CandidatureType;
 use App\Form\OffreEmploiType;
 use App\Repository\CandidatureRepository;
 use App\Repository\OffreEmploiRepository;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
-use App\Repository\CongeRepository;
+use App\Repository\FeedbackRepository;
+use App\Repository\PublicationRepository;
 use App\Repository\UserRepository;
+use App\Repository\LogRepository;
+use App\Repository\CongeRepository;
 use App\Repository\AbsenceRepository;
 use App\Repository\FormationRepository;
+use App\Repository\CommentaireRepository;
 use App\Entity\Conge;
 use App\Entity\Absence;
 use App\Entity\Formation;
 use App\Entity\Publication;
 use App\Entity\Commentaire;
-use App\Repository\PublicationRepository;
-use App\Repository\CommentaireRepository;
-use App\Service\FacebookJobPublisher;
-use App\Service\OfferDeletionService;
-use Knp\Component\Pager\PaginatorInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/admin')]
 class AdminController extends AbstractController
 {
     #[Route('/', name: 'admin_dashboard')]
-    public function dashboard(FormationRepository $formationRepository): Response
+    #[Route('/dashboard', name: 'admin_dashboard_alt')]
+    public function dashboard(UserRepository $userRepository, FeedbackRepository $feedbackRepository): Response
     {
-        // Get participation data for charts
-        $formations = $formationRepository->findAll();
-        
-        // Prepare data for bar chart: participants per training
-        $participantsPerTraining = [];
-        $trainingLabels = [];
-        
-        foreach ($formations as $formation) {
-            $participantsCount = count($formation->getParticipations());
-            $participantsPerTraining[] = $participantsCount;
-            $trainingLabels[] = $formation->getSujet() ?? 'Formation ' . $formation->getId();
-        }
-        
-        // Prepare data for pie chart: results distribution
-        $resultsDistribution = [
-            'validé' => 0,
-            'non validé' => 0,
-            'en cours' => 0
-        ];
-        
-        foreach ($formations as $formation) {
-            foreach ($formation->getParticipations() as $participation) {
-                $resultat = $participation->getResultat() ?? 'en cours';
-                if (isset($resultsDistribution[$resultat])) {
-                    $resultsDistribution[$resultat]++;
-                }
-            }
-        }
-        
-        return $this->render('admin/dashboard/index.html.twig', [
-            'participantsPerTraining' => $participantsPerTraining,
-            'trainingLabels' => $trainingLabels,
-            'resultsDistribution' => $resultsDistribution,
+        $totalUsers = $userRepository->count([]);
+        $countByRole = $userRepository->countByRole();
+        $recentUsers = $userRepository->findRecentUsers(5);
+
+        $feedbackByStatus = $feedbackRepository->countByStatus();
+        $feedbackTimeline = $feedbackRepository->countByDayLastDays(7);
+
+        return $this->render('admin/dashboard.html.twig', [
+            'total_users'  => $totalUsers,
+            'count_by_role' => $countByRole,
+            'recent_users' => $recentUsers,
+            'feedback_by_status' => $feedbackByStatus,
+            'feedback_timeline_labels' => $feedbackTimeline['labels'],
+            'feedback_timeline_data' => $feedbackTimeline['data'],
         ]);
     }
 
+    // ─────────────── USER CRUD ───────────────
+
+    #[Route('/users', name: 'admin_users', methods: ['GET'])]
+    public function listUsers(Request $request, UserRepository $userRepository): Response
+    {
+        $search = trim((string) $request->query->get('q', ''));
+        $role   = trim((string) $request->query->get('role', ''));
+        $page   = max(1, (int) $request->query->get('page', 1));
+        $limit  = 10;
+
+        $users = $userRepository->searchPaginated($search, $role, $page, $limit);
+        $total = $userRepository->countSearch($search, $role);
+        $pages = (int) ceil($total / $limit);
+
+        return $this->render('admin/users.html.twig', [
+            'users'  => $users,
+            'search' => $search,
+            'role'   => $role,
+            'page'   => $page,
+            'pages'  => $pages,
+            'total'  => $total,
+        ]);
+    }
+
+    #[Route('/users/add', name: 'admin_user_add', methods: ['GET', 'POST'])]
+    public function addUser(
+        Request $request,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $passwordHasher,
+        SluggerInterface $slugger,
+    ): Response {
+        $user = new User();
+        $form = $this->createForm(AdminUserType::class, $user, ['is_edit' => false]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $existing = $em->getRepository(User::class)->findOneBy(['email' => $user->getEmail()]);
+            if ($existing) {
+                $this->addFlash('danger', 'Cet email est déjà utilisé.');
+                return $this->render('admin/add_user.html.twig', ['form' => $form->createView()]);
+            }
+
+            $plainPassword = $form->get('plainPassword')->getData();
+            if ($plainPassword) {
+                $user->setMdp($passwordHasher->hashPassword($user, $plainPassword));
+            }
+
+            $faceImageFile = $form->get('faceImageFile')->getData();
+            if ($faceImageFile) {
+                $safeFilename = (string) $slugger->slug(pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_FILENAME));
+                $extension = $faceImageFile->guessExtension() ?: pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/faces';
+
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0775, true);
+                }
+
+                try {
+                    $faceImageFile->move($uploadDir, $newFilename);
+                    $user->setFaceImage($newFilename);
+                } catch (FileException) {
+                    $this->addFlash('warning', 'Erreur lors du téléchargement de l\'image.');
+                }
+            }
+
+            $user->setReputationScore(0);
+            $em->persist($user);
+            $em->flush();
+
+            $log = new Log();
+            $log->setUser($this->getUser() instanceof User ? $this->getUser() : null);
+            $log->setAction('user_created (admin: ' . $user->getEmail() . ')');
+            $em->persist($log);
+            $em->flush();
+
+            $this->addFlash('success', 'Utilisateur créé avec succès.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        return $this->render('admin/add_user.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/users/{id}/edit', name: 'admin_user_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    public function editUser(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $passwordHasher,
+        SluggerInterface $slugger,
+    ): Response {
+        $user = $userRepository->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        $form = $this->createForm(AdminUserType::class, $user, ['is_edit' => true]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $plainPassword = $form->get('plainPassword')->getData();
+            if ($plainPassword) {
+                $user->setMdp($passwordHasher->hashPassword($user, $plainPassword));
+            }
+
+            $faceImageFile = $form->get('faceImageFile')->getData();
+            if ($faceImageFile) {
+                $safeFilename = (string) $slugger->slug(pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_FILENAME));
+                $extension = $faceImageFile->guessExtension() ?: pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/faces';
+
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0775, true);
+                }
+
+                try {
+                    $faceImageFile->move($uploadDir, $newFilename);
+                    $user->setFaceImage($newFilename);
+                } catch (FileException) {
+                    $this->addFlash('warning', 'Erreur lors du téléchargement de l\'image.');
+                }
+            }
+
+            $em->flush();
+
+            $log = new Log();
+            $log->setUser($this->getUser() instanceof User ? $this->getUser() : null);
+            $log->setAction('user_updated (admin edited: ' . $user->getEmail() . ')');
+            $em->persist($log);
+            $em->flush();
+
+            $this->addFlash('success', 'Utilisateur mis à jour.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        return $this->render('admin/edit_user.html.twig', [
+            'form' => $form->createView(),
+            'user' => $user,
+        ]);
+    }
+
+    #[Route('/users/{id}/delete', name: 'admin_user_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function deleteUser(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+    ): Response {
+        $user = $userRepository->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        if ($this->isCsrfTokenValid('delete_user_' . $id, (string) $request->request->get('_token'))) {
+            $email = $user->getEmail();
+            $em->remove($user);
+            $em->flush();
+
+            $log = new Log();
+            $log->setUser(null);
+            $log->setAction('user_deleted (admin deleted: ' . $email . ')');
+            $em->persist($log);
+            $em->flush();
+
+            $this->addFlash('success', 'Utilisateur supprimé.');
+        }
+
+        return $this->redirectToRoute('admin_users');
+    }
+
+    #[Route('/users/{id}/toggle-status', name: 'admin_user_toggle_status', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function toggleUserStatus(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+    ): Response {
+        $user = $userRepository->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        if ($this->isCsrfTokenValid('toggle_status_user_' . $id, (string) $request->request->get('_token'))) {
+            $user->setIsActive(!$user->isActive());
+            $em->flush();
+
+            $this->addFlash('success', $user->isActive()
+                ? 'Compte utilisateur active.'
+                : 'Compte utilisateur desactive.');
+        }
+
+        return $this->redirectToRoute('admin_users', [
+            'q' => (string) $request->query->get('q', ''),
+            'role' => (string) $request->query->get('role', ''),
+            'page' => (int) $request->query->get('page', 1),
+        ]);
+    }
+
+    #[Route('/users/export', name: 'admin_users_export', methods: ['GET'])]
+    public function exportUsers(Request $request, UserRepository $userRepository): StreamedResponse
+    {
+        $search = trim((string) $request->query->get('q', ''));
+        $role = trim((string) $request->query->get('role', ''));
+        $users = $userRepository->findForExport($search, $role);
+
+        $response = new StreamedResponse(function () use ($users): void {
+            $handle = fopen('php://output', 'w');
+            if (!$handle) {
+                return;
+            }
+
+            fputcsv($handle, ['id', 'nom', 'prenom', 'email', 'role', 'is_active', 'reputation_score', 'date_naissance']);
+            foreach ($users as $user) {
+                fputcsv($handle, [
+                    $user->getId(),
+                    $user->getNom(),
+                    $user->getPrenom(),
+                    $user->getEmail(),
+                    $user->getRole(),
+                    $user->isActive() ? '1' : '0',
+                    $user->getReputationScore(),
+                    $user->getDateNaissance() ? $user->getDateNaissance()->format('Y-m-d') : '',
+                ]);
+            }
+            fclose($handle);
+        });
+
+        $filename = 'users_export_' . (new \DateTime())->format('Ymd_His') . '.csv';
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+        return $response;
+    }
+
+    // ─────────────── LOGS ───────────────
+
+    #[Route('/logs', name: 'admin_logs', methods: ['GET'])]
+    public function logs(Request $request, LogRepository $logRepository): Response
+    {
+        $page  = max(1, (int) $request->query->get('page', 1));
+        $limit = 20;
+        $logs  = $logRepository->findAllOrderedByDate($limit, ($page - 1) * $limit);
+
+        return $this->render('admin/logs.html.twig', [
+            'logs' => $logs,
+            'page' => $page,
+        ]);
+    }
+
+    // ─────────────── EXISTING ROUTES (preserved) ───────────────
+
+
     #[Route('/inventory', name: 'admin_inventory')]
-    public function inventory(Request $request, OffreEmploiRepository $offreEmploiRepository, CandidatureRepository $candidatureRepository, PaginatorInterface $paginator): Response
+    public function inventory(Request $request, OffreEmploiRepository $offreEmploiRepository, CandidatureRepository $candidatureRepository): Response
     {
         $offres = $offreEmploiRepository->findBy([], ['date_publication' => 'DESC', 'id' => 'DESC']);
         $candidatures = $candidatureRepository->findBy([], ['date_candidature' => 'DESC', 'id' => 'DESC']);
@@ -137,59 +377,9 @@ class AdminController extends AbstractController
             static fn (Candidature $candidature): bool => $candidature->getStatut() === 'En attente'
         ));
 
-        $monthlyOffers = $this->buildMonthlySeries(
-            $offres,
-            static fn (OffreEmploi $offre): ?\DateTimeInterface => $offre->getDatePublication()
-        );
-
-        $monthlyApplications = $this->buildMonthlySeries(
-            $candidatures,
-            static fn (Candidature $candidature): ?\DateTimeInterface => $candidature->getDateCandidature()
-        );
-
-        $contractCounts = [];
-        foreach ($offres as $offre) {
-            $label = $offre->getTypeContrat() ?: 'Non precise';
-            $contractCounts[$label] = ($contractCounts[$label] ?? 0) + ($offre->getNombrePostes() ?? 0);
-        }
-        arsort($contractCounts);
-        $contractCounts = array_slice($contractCounts, 0, 4, true);
-
-        $statusCounts = [
-            'En attente' => 0,
-            'En cours' => 0,
-            'Acceptee' => 0,
-            'Refusee' => 0,
-        ];
-        foreach ($candidatures as $candidature) {
-            $status = $candidature->getStatut() ?: 'En attente';
-            if (!array_key_exists($status, $statusCounts)) {
-                $statusCounts[$status] = 0;
-            }
-            $statusCounts[$status]++;
-        }
-
-        $offresPagination = $paginator->paginate(
-            $offres,
-            max(1, $request->query->getInt('offres_page', 1)),
-            8,
-            [
-                'pageParameterName' => 'offres_page',
-            ]
-        );
-
-        $candidaturesPagination = $paginator->paginate(
-            $candidatures,
-            max(1, $request->query->getInt('candidatures_page', 1)),
-            8,
-            [
-                'pageParameterName' => 'candidatures_page',
-            ]
-        );
-
-        return $this->render('admin/recrutment/recrutment.html.twig', [
-            'offres' => $offresPagination,
-            'candidatures' => $candidaturesPagination,
+        return $this->render('admin/inventory/index.html.twig', [
+            'offres' => $offres,
+            'candidatures' => $candidatures,
             'search' => $search,
             'stats' => [
                 'offres' => count($offres),
@@ -197,60 +387,11 @@ class AdminController extends AbstractController
                 'postes' => $totalPostes,
                 'candidatures_en_attente' => $candidaturesEnAttente,
             ],
-            'kpi_charts' => [
-                'offers' => $monthlyOffers,
-                'applications' => $monthlyApplications,
-                'contracts' => [
-                    'labels' => array_keys($contractCounts),
-                    'series' => array_values($contractCounts),
-                ],
-                'statuses' => [
-                    'labels' => array_keys($statusCounts),
-                    'series' => array_values($statusCounts),
-                ],
-            ],
         ]);
     }
 
-    /**
-     * @template T
-     * @param array<int, T> $items
-     * @param callable(T): ?\DateTimeInterface $dateResolver
-     * @return array{labels:array<int,string>,series:array<int,int>}
-     */
-    private function buildMonthlySeries(array $items, callable $dateResolver, int $months = 6): array
-    {
-        $labels = [];
-        $counts = [];
-        $now = new \DateTimeImmutable('first day of this month');
-
-        for ($offset = $months - 1; $offset >= 0; --$offset) {
-            $month = $now->modify(sprintf('-%d months', $offset));
-            $key = $month->format('Y-m');
-            $labels[$key] = $month->format('M Y');
-            $counts[$key] = 0;
-        }
-
-        foreach ($items as $item) {
-            $date = $dateResolver($item);
-            if (!$date instanceof \DateTimeInterface) {
-                continue;
-            }
-
-            $key = $date->format('Y-m');
-            if (array_key_exists($key, $counts)) {
-                $counts[$key]++;
-            }
-        }
-
-        return [
-            'labels' => array_values($labels),
-            'series' => array_values($counts),
-        ];
-    }
-
     #[Route('/offres/new', name: 'admin_offre_new')]
-    public function newOffre(Request $request, EntityManagerInterface $entityManager, FacebookJobPublisher $facebookJobPublisher): Response
+    public function newOffre(Request $request, EntityManagerInterface $entityManager): Response
     {
         $offre = new OffreEmploi();
         $offre->setDatePublication(new \DateTime());
@@ -269,22 +410,19 @@ class AdminController extends AbstractController
 
             $this->addFlash('success', "L'offre d'emploi a ete creee.");
 
-            if ($facebookJobPublisher->isConfigured()) {
-                try {
-                    $facebookJobPublisher->publishOffer($offre);
-                    $this->addFlash('success', 'L offre a aussi ete publiee automatiquement sur Facebook.');
-                } catch (\Throwable $exception) {
-                    $this->addFlash('warning', 'L offre a ete creee, mais la publication Facebook a echoue: '.$exception->getMessage());
-                }
-            } else {
-                $this->addFlash('info', 'Publication Facebook non configuree. Renseignez les variables FACEBOOK_PAGE_ID et FACEBOOK_PAGE_ACCESS_TOKEN pour l activer.');
-            }
-
             return $this->redirectToRoute('admin_offre_show', ['id' => $offre->getId()]);
         }
 
         return $this->render('admin/offre_emploi/new.html.twig', [
             'form' => $form->createView(),
+            'offre' => $offre,
+        ]);
+    }
+
+    #[Route('/offres/{id}', name: 'admin_offre_show', requirements: ['id' => '\d+'])]
+    public function showOffre(OffreEmploi $offre): Response
+    {
+        return $this->render('admin/offre_emploi/show.html.twig', [
             'offre' => $offre,
         ]);
     }
@@ -317,11 +455,86 @@ class AdminController extends AbstractController
     }
 
     #[Route('/offres/{id}/delete', name: 'admin_offre_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function deleteOffre(Request $request, OffreEmploi $offre, OfferDeletionService $offerDeletionService): Response
+    public function deleteOffre(Request $request, OffreEmploi $offre, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete_offre_'.$offre->getId(), (string) $request->request->get('_token'))) {
-            $offerDeletionService->deleteOfferWithRelations($offre);
-            $this->addFlash('success', "L'offre d'emploi ainsi que ses candidatures, entretiens et quiz lies ont ete supprimes.");
+            if ($offre->getCandidatures()->count() > 0 || $offre->getQuizs()->count() > 0) {
+                $this->addFlash('danger', "Suppression impossible: l'offre est liee a des candidatures ou des quiz.");
+            } else {
+                $entityManager->remove($offre);
+                $entityManager->flush();
+                $this->addFlash('success', "L'offre d'emploi a ete supprimee.");
+            }
+        }
+
+        return $this->redirectToRoute('admin_inventory');
+    }
+
+    #[Route('/candidatures/new', name: 'admin_candidature_new')]
+    public function newCandidature(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $candidature = new Candidature();
+        $candidature->setDateCandidature(new \DateTime());
+        $candidature->setDateStatut(new \DateTime());
+        $candidature->setStatut('En attente');
+
+        $form = $this->createForm(CandidatureType::class, $candidature);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($candidature);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'La candidature a ete creee.');
+
+            return $this->redirectToRoute('admin_candidature_show', ['id' => $candidature->getId()]);
+        }
+
+        return $this->render('admin/candidature/new.html.twig', [
+            'form' => $form->createView(),
+            'candidature' => $candidature,
+        ]);
+    }
+
+    #[Route('/candidatures/{id}', name: 'admin_candidature_show', requirements: ['id' => '\d+'])]
+    public function showCandidature(Candidature $candidature): Response
+    {
+        return $this->render('admin/candidature/show.html.twig', [
+            'candidature' => $candidature,
+        ]);
+    }
+
+    #[Route('/candidatures/{id}/edit', name: 'admin_candidature_edit', requirements: ['id' => '\d+'])]
+    public function editCandidature(Request $request, Candidature $candidature, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(CandidatureType::class, $candidature);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+
+            $this->addFlash('success', 'La candidature a ete mise a jour.');
+
+            return $this->redirectToRoute('admin_candidature_show', ['id' => $candidature->getId()]);
+        }
+
+        return $this->render('admin/candidature/edit.html.twig', [
+            'form' => $form->createView(),
+            'candidature' => $candidature,
+        ]);
+    }
+
+    #[Route('/candidatures/{id}/delete', name: 'admin_candidature_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function deleteCandidature(Request $request, Candidature $candidature, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete_candidature_'.$candidature->getId(), (string) $request->request->get('_token'))) {
+            if ($candidature->getEntretiens()->count() > 0) {
+                $this->addFlash('danger', 'Suppression impossible: la candidature est liee a des entretiens.');
+            } else {
+                $entityManager->remove($candidature);
+                $entityManager->flush();
+                $this->addFlash('success', 'La candidature a ete supprimee.');
+            }
         }
 
         return $this->redirectToRoute('admin_inventory');
