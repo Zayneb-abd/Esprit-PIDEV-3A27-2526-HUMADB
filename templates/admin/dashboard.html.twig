@@ -13,6 +13,30 @@
     </a>
 </div>
 
+{# ── PARTICIPATION CHARTS ── #}
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Graphique en barres : nombre de participants par formation</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="participantsChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Graphique en camembert : répartition des résultats</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="resultsChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 {# ── STAT CARDS ── #}
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
@@ -127,4 +151,90 @@
         </a>
     </div>
 </div>
+
+{# ── Chart.js SCRIPTS ── #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Bar Chart: Participants per Training
+const participantsCtx = document.getElementById('participantsChart').getContext('2d');
+const participantsChart = new Chart(participantsCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ trainingLabels|json_encode|raw }},
+        datasets: [{
+            label: 'Nombre de participants',
+            data: {{ participantsPerTraining|json_encode|raw }},
+            backgroundColor: 'rgba(54, 162, 235, 0.8)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            }
+        }
+    }
+});
+
+// Pie Chart: Results Distribution
+const resultsCtx = document.getElementById('resultsChart').getContext('2d');
+const resultsChart = new Chart(resultsCtx, {
+    type: 'pie',
+    data: {
+        labels: ['Validé', 'Non validé', 'En cours'],
+        datasets: [{
+            data: [
+                {{ resultsDistribution.validé }},
+                {{ resultsDistribution['non validé'] }},
+                {{ resultsDistribution['en cours'] }}
+            ],
+            backgroundColor: [
+                'rgba(40, 167, 69, 0.8)',
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(59, 130, 246, 0.8)'
+            ],
+            borderColor: [
+                'rgba(40, 167, 69, 1)',
+                'rgba(239, 68, 68, 1)',
+                'rgba(59, 130, 246, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return label + ': ' + value + ' (' + percentage + '%)';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+
 {% endblock %}

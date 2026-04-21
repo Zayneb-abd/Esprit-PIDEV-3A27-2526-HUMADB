@@ -56,7 +56,8 @@ class FormationType extends AbstractType
             ])
             ->add('localisation', TextType::class, [
                 'attr' => ['class' => 'form-control'],
-                'label' => 'Localisation'
+                'label' => 'Localisation',
+                'required' => false
             ])
         ;
     }

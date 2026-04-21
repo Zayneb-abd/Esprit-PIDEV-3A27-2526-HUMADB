@@ -4,22 +4,12 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    app.jitsi_base_url: 'https://meet.jit.si'
-    app.external_ai_url: '%env(default::EXTERNAL_AI_API_URL)%'
-    app.external_ai_key: '%env(default::EXTERNAL_AI_API_KEY)%'
-    app.external_ai_model: '%env(default::EXTERNAL_AI_MODEL)%'
-    app.external_ai_timeout: 25
-    app.external_ai_max_candidates: 3
-    app.facebook_page_id: '%env(default::FACEBOOK_PAGE_ID)%'
-    app.facebook_page_access_token: '%env(default::FACEBOOK_PAGE_ACCESS_TOKEN)%'
-    app.facebook_graph_api_version: '%env(default::FACEBOOK_GRAPH_API_VERSION)%'
-    app.public_base_url: '%env(default::APP_PUBLIC_BASE_URL)%'
 
 services:
     # default configuration for services in *this* file
     _defaults:
-        autowire: true
-        autoconfigure: true
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -30,33 +20,13 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    App\Service\CandidateCvManager:
-        arguments:
-            $projectDir: '%kernel.project_dir%'
+    # QrCodeService configuration
+    App\Service\QrCodeService:
 
-    App\Service\JitsiMeetService:
+    # AIService configuration
+    App\Service\AIService:
         arguments:
-            $baseUrl: '%app.jitsi_base_url%'
-
-    App\Service\ExternalAiRecruitmentAnalyzer:
-        arguments:
-            $apiUrl: '%app.external_ai_url%'
-            $apiKey: '%app.external_ai_key%'
-            $model: '%app.external_ai_model%'
-            $timeoutSeconds: '%app.external_ai_timeout%'
-
-    App\Service\CvMatchingService:
-        arguments:
-            $advancedAiMaxCandidates: '%app.external_ai_max_candidates%'
-
-    App\Service\FacebookJobPublisher:
-        arguments:
-            $pageId: '%app.facebook_page_id%'
-            $pageAccessToken: '%app.facebook_page_access_token%'
-            $graphApiVersion: '%app.facebook_graph_api_version%'
-            $publicBaseUrl: '%app.public_base_url%'
-
-    Smalot\PdfParser\Parser: ~
+            $groqApiKey: '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'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

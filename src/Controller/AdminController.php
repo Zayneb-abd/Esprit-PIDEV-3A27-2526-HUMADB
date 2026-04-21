@@ -33,9 +33,42 @@ use Knp\Component\Pager\PaginatorInterface;
 class AdminController extends AbstractController
 {
     #[Route('/', name: 'admin_dashboard')]
-    public function dashboard(): Response
+    public function dashboard(FormationRepository $formationRepository): Response
     {
-        return $this->render('admin/dashboard/index.html.twig');
+        // Get participation data for charts
+        $formations = $formationRepository->findAll();
+        
+        // Prepare data for bar chart: participants per training
+        $participantsPerTraining = [];
+        $trainingLabels = [];
+        
+        foreach ($formations as $formation) {
+            $participantsCount = count($formation->getParticipations());
+            $participantsPerTraining[] = $participantsCount;
+            $trainingLabels[] = $formation->getSujet() ?? 'Formation ' . $formation->getId();
+        }
+        
+        // Prepare data for pie chart: results distribution
+        $resultsDistribution = [
+            'validé' => 0,
+            'non validé' => 0,
+            'en cours' => 0
+        ];
+        
+        foreach ($formations as $formation) {
+            foreach ($formation->getParticipations() as $participation) {
+                $resultat = $participation->getResultat() ?? 'en cours';
+                if (isset($resultsDistribution[$resultat])) {
+                    $resultsDistribution[$resultat]++;
+                }
+            }
+        }
+        
+        return $this->render('admin/dashboard/index.html.twig', [
+            'participantsPerTraining' => $participantsPerTraining,
+            'trainingLabels' => $trainingLabels,
+            'resultsDistribution' => $resultsDistribution,
+        ]);
     }
 
     #[Route('/inventory', name: 'admin_inventory')]

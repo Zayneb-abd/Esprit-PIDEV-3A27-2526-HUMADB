@@ -62,6 +62,7 @@
                                     Statut {% if sort == 'statut' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
                                 </a>
                             </th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -77,10 +78,16 @@
                                     {{ participation.statut|capitalize }}
                                 </span>
                             </td>
+                            <td>
+                                <a href="{{ path('employ_participation_detail', {'id': participation.id}) }}" 
+                                   class="btn btn-sm btn-primary" title="Voir le détail et le QR code">
+                                    <i class="ti ti-qrcode"></i> Détail / QR
+                                </a>
+                            </td>
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="3" class="text-center py-4">Vous n'avez encore aucune demande d'inscription.</td>
+                            <td colspan="4" class="text-center py-4">Vous n'avez encore aucune demande d'inscription.</td>
                         </tr>
                     {% endfor %}
                     </tbody>
