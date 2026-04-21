@@ -311,76 +311,92 @@ document.addEventListener('DOMContentLoaded', function () {
         tooltip: { theme: 'light' },
     };
 
-    new ApexCharts(document.querySelector('#kpiOffersChart'), {
-        ...commonSparkline,
-        colors: ['#1a5f5f'],
-        series: [{ name: 'Offres', data: kpiCharts.offers.series }],
-        labels: kpiCharts.offers.labels,
-        fill: {
-            type: 'gradient',
-            gradient: { opacityFrom: 0.45, opacityTo: 0.06, stops: [0, 100] },
-        },
-    }).render();
-
-    new ApexCharts(document.querySelector('#kpiApplicationsChart'), {
-        ...commonSparkline,
-        colors: ['#ff8a65'],
-        series: [{ name: 'Candidatures', data: kpiCharts.applications.series }],
-        labels: kpiCharts.applications.labels,
-        fill: {
-            type: 'gradient',
-            gradient: { opacityFrom: 0.45, opacityTo: 0.08, stops: [0, 100] },
-        },
-    }).render();
-
-    new ApexCharts(document.querySelector('#kpiContractsChart'), {
-        chart: {
-            type: 'bar',
-            height: 120,
-            toolbar: { show: false },
-        },
-        colors: ['#4ecdc4'],
-        series: [{ name: 'Postes', data: kpiCharts.contracts.series }],
-        xaxis: {
-            categories: kpiCharts.contracts.labels,
-            labels: { style: { colors: '#94a3b8', fontSize: '10px' } },
-            axisBorder: { show: false },
-            axisTicks: { show: false },
-        },
-        yaxis: { labels: { show: false } },
-        dataLabels: { enabled: false },
-        grid: { borderColor: '#eef2f7', strokeDashArray: 3 },
-        plotOptions: {
-            bar: {
-                borderRadius: 6,
-                columnWidth: '50%',
+    const offersChartElement = document.querySelector('#kpiOffersChart');
+    if (offersChartElement && kpiCharts.offers) {
+        const offersChartOptions = {
+            ...commonSparkline,
+            colors: ['#1a5f5f'],
+            series: [{ name: 'Offres', data: kpiCharts.offers.series }],
+            labels: kpiCharts.offers.labels,
+            fill: {
+                type: 'gradient',
+                gradient: { opacityFrom: 0.45, opacityTo: 0.06, stops: [0, 100] },
             },
-        },
-        legend: { show: false },
-    }).render();
+        };
+        new ApexCharts(offersChartElement, offersChartOptions).render();
+    }
 
-    new ApexCharts(document.querySelector('#kpiStatusesChart'), {
-        chart: {
-            type: 'donut',
-            height: 140,
-        },
-        colors: ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444'],
-        series: kpiCharts.statuses.series,
-        labels: kpiCharts.statuses.labels,
-        legend: {
-            position: 'bottom',
-            fontSize: '10px',
-        },
-        dataLabels: { enabled: false },
-        stroke: { width: 0 },
-        plotOptions: {
-            pie: {
-                donut: {
-                    size: '62%',
+    const applicationsChartElement = document.querySelector('#kpiApplicationsChart');
+    if (applicationsChartElement && kpiCharts.applications) {
+        const applicationsChartOptions = {
+            ...commonSparkline,
+            colors: ['#ff8a65'],
+            series: [{ name: 'Candidatures', data: kpiCharts.applications.series }],
+            labels: kpiCharts.applications.labels,
+            fill: {
+                type: 'gradient',
+                gradient: { opacityFrom: 0.45, opacityTo: 0.08, stops: [0, 100] },
+            },
+        };
+        new ApexCharts(applicationsChartElement, applicationsChartOptions).render();
+    }
+
+    const contractsChartElement = document.querySelector('#kpiContractsChart');
+    if (contractsChartElement && kpiCharts.contracts) {
+        const contractsChartOptions = {
+            chart: {
+                type: 'bar',
+                height: 120,
+                toolbar: { show: false },
+            },
+            colors: ['#4ecdc4'],
+            series: [{ name: 'Postes', data: kpiCharts.contracts.series }],
+            xaxis: {
+                categories: kpiCharts.contracts.labels,
+                labels: { style: { colors: '#94a3b8', fontSize: '10px' } },
+                axisBorder: { show: false },
+                axisTicks: { show: false },
+            },
+            yaxis: { labels: { show: false } },
+            dataLabels: { enabled: false },
+            grid: { borderColor: '#eef2f7', strokeDashArray: 3 },
+            plotOptions: {
+                bar: {
+                    borderRadius: 6,
+                    columnWidth: '50%',
                 },
             },
-        },
-    }).render();
+            legend: { show: false },
+        };
+        new ApexCharts(contractsChartElement, contractsChartOptions).render();
+    }
+
+    const statusesChartElement = document.querySelector('#kpiStatusesChart');
+    if (statusesChartElement && kpiCharts.statuses) {
+        const statusesChartOptions = {
+            chart: {
+                type: 'donut',
+                height: 140,
+            },
+            colors: ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444'],
+            series: kpiCharts.statuses.series,
+            labels: kpiCharts.statuses.labels,
+            legend: {
+                position: 'bottom',
+                fontSize: '10px',
+            },
+            dataLabels: { enabled: false },
+            stroke: { width: 0 },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '62%',
+                    },
+                },
+            },
+        };
+        new ApexCharts(statusesChartElement, statusesChartOptions).render();
+    }
 });
 </script>
 {% endblock %}

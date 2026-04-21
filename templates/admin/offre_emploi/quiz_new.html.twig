@@ -16,16 +16,16 @@
         <div class="card-body p-4">
             <div class="row g-3 mb-4">
                 <div class="col-lg-6">
-                    <label class="form-label">Titre du quiz</label>
-                    <input type="text" name="titre" class="form-control" value="{{ app.request.request.get('titre', 'Quiz - ' ~ (offre.titre ?: 'Offre')) }}" required>
+                    <label for="quiz-titre" class="form-label">Titre du quiz</label>
+                    <input id="quiz-titre" type="text" name="titre" class="form-control" value="{{ app.request.request.get('titre', 'Quiz - ' ~ (offre.titre ?: 'Offre')) }}" required>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Duree (minutes)</label>
-                    <input type="number" name="duree_minutes" class="form-control" min="1" value="{{ app.request.request.get('duree_minutes', 12) }}" required>
+                    <label for="quiz-duree" class="form-label">Duree (minutes)</label>
+                    <input id="quiz-duree" type="number" name="duree_minutes" class="form-control" min="1" value="{{ app.request.request.get('duree_minutes', 12) }}" required>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Seuil de reussite (%)</label>
-                    <input type="number" name="seuil_pourcentage" class="form-control" min="0" max="100" value="{{ app.request.request.get('seuil_pourcentage', 70) }}" required>
+                    <label for="quiz-seuil" class="form-label">Seuil de reussite (%)</label>
+                    <input id="quiz-seuil" type="number" name="seuil_pourcentage" class="form-control" min="0" max="100" value="{{ app.request.request.get('seuil_pourcentage', 70) }}" required>
                 </div>
             </div>
 
@@ -44,12 +44,12 @@
 
                         <div class="row g-3">
                             <div class="col-lg-9">
-                                <label class="form-label">Question</label>
-                                <textarea name="questions[{{ q }}][question_text]" class="form-control" rows="2" required></textarea>
+                                <label for="question-text-{{ q }}" class="form-label">Question</label>
+                                <textarea id="question-text-{{ q }}" name="questions[{{ q }}][question_text]" class="form-control" rows="2" required></textarea>
                             </div>
                             <div class="col-lg-3">
-                                <label class="form-label">Points</label>
-                                <input type="number" name="questions[{{ q }}][points]" class="form-control" min="1" value="1" required>
+                                <label for="question-points-{{ q }}" class="form-label">Points</label>
+                                <input id="question-points-{{ q }}" type="number" name="questions[{{ q }}][points]" class="form-control" min="1" value="1" required>
                             </div>
                         </div>
 
@@ -58,7 +58,8 @@
                             {% for a in 0..3 %}
                                 <div class="row g-2 align-items-center mb-2">
                                     <div class="col-lg-9">
-                                        <input type="text" name="questions[{{ q }}][answers][{{ a }}][texte]" class="form-control" placeholder="Reponse {{ a + 1 }}" required>
+                                        <label for="question-{{ q }}-answer-{{ a }}" class="visually-hidden">Reponse {{ a + 1 }}</label>
+                                        <input id="question-{{ q }}-answer-{{ a }}" type="text" name="questions[{{ q }}][answers][{{ a }}][texte]" class="form-control" placeholder="Reponse {{ a + 1 }}" required>
                                     </div>
                                     <div class="col-lg-3">
                                         <div class="form-check">
@@ -90,12 +91,12 @@
 
         <div class="row g-3">
             <div class="col-lg-9">
-                <label class="form-label">Question</label>
-                <textarea name="questions[__INDEX__][question_text]" class="form-control" rows="2" required></textarea>
+                <label for="question-text-__INDEX__" class="form-label">Question</label>
+                <textarea id="question-text-__INDEX__" name="questions[__INDEX__][question_text]" class="form-control" rows="2" required></textarea>
             </div>
             <div class="col-lg-3">
-                <label class="form-label">Points</label>
-                <input type="number" name="questions[__INDEX__][points]" class="form-control" min="1" value="1" required>
+                <label for="question-points-__INDEX__" class="form-label">Points</label>
+                <input id="question-points-__INDEX__" type="number" name="questions[__INDEX__][points]" class="form-control" min="1" value="1" required>
             </div>
         </div>
 
@@ -103,7 +104,8 @@
             <label class="form-label">Reponses</label>
             <div class="row g-2 align-items-center mb-2">
                 <div class="col-lg-9">
-                    <input type="text" name="questions[__INDEX__][answers][0][texte]" class="form-control" placeholder="Reponse 1" required>
+                    <label for="question-__INDEX__-answer-0" class="visually-hidden">Reponse 1</label>
+                    <input id="question-__INDEX__-answer-0" type="text" name="questions[__INDEX__][answers][0][texte]" class="form-control" placeholder="Reponse 1" required>
                 </div>
                 <div class="col-lg-3">
                     <div class="form-check">
@@ -114,7 +116,8 @@
             </div>
             <div class="row g-2 align-items-center mb-2">
                 <div class="col-lg-9">
-                    <input type="text" name="questions[__INDEX__][answers][1][texte]" class="form-control" placeholder="Reponse 2" required>
+                    <label for="question-__INDEX__-answer-1" class="visually-hidden">Reponse 2</label>
+                    <input id="question-__INDEX__-answer-1" type="text" name="questions[__INDEX__][answers][1][texte]" class="form-control" placeholder="Reponse 2" required>
                 </div>
                 <div class="col-lg-3">
                     <div class="form-check">
@@ -125,7 +128,8 @@
             </div>
             <div class="row g-2 align-items-center mb-2">
                 <div class="col-lg-9">
-                    <input type="text" name="questions[__INDEX__][answers][2][texte]" class="form-control" placeholder="Reponse 3" required>
+                    <label for="question-__INDEX__-answer-2" class="visually-hidden">Reponse 3</label>
+                    <input id="question-__INDEX__-answer-2" type="text" name="questions[__INDEX__][answers][2][texte]" class="form-control" placeholder="Reponse 3" required>
                 </div>
                 <div class="col-lg-3">
                     <div class="form-check">
@@ -136,7 +140,8 @@
             </div>
             <div class="row g-2 align-items-center mb-2">
                 <div class="col-lg-9">
-                    <input type="text" name="questions[__INDEX__][answers][3][texte]" class="form-control" placeholder="Reponse 4" required>
+                    <label for="question-__INDEX__-answer-3" class="visually-hidden">Reponse 4</label>
+                    <input id="question-__INDEX__-answer-3" type="text" name="questions[__INDEX__][answers][3][texte]" class="form-control" placeholder="Reponse 4" required>
                 </div>
                 <div class="col-lg-3">
                     <div class="form-check">
