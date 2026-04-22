@@ -282,5 +282,28 @@
             </div>
         {% endfor %}
     </div>
+
+    <!-- Pagination des publications (simple et fonctionnelle) -->
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination">
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('employ_publication_index', { page: 1 }) }}">1</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('employ_publication_index', { page: 2 }) }}">2</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('employ_publication_index', { page: 3 }) }}">3</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('employ_publication_index', { page: 4 }) }}">4</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('employ_publication_index', { page: 5 }) }}">5</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
 </div>
 {% endblock %}
