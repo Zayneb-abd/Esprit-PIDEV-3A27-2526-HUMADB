@@ -34,6 +34,10 @@ services:
         arguments:
             $groqApiKey: '%env(GROQ_API_KEY)%'
 
+    App\Service\ChatbotService:
+        arguments:
+            $groqApiKey: '%env(GROQ_API_KEY)%'
+
     App\Service\CandidateCvManager:
         arguments:
             $projectDir: '%kernel.project_dir%'
@@ -49,6 +53,11 @@ services:
             $apiUrl: '%env(EXTERNAL_AI_API_URL)%'
             $apiKey: '%env(EXTERNAL_AI_API_KEY)%'
             $model: '%env(EXTERNAL_AI_MODEL)%'
+
+    App\Service\MeaningCloudSentimentService:
+        arguments:
+            $apiKey: '%env(MEANINGCLOUD_API_KEY)%'
+            $apiUrl: '%env(MEANINGCLOUD_API_URL)%'
 
     App\Service\FacebookJobPublisher:
         arguments:

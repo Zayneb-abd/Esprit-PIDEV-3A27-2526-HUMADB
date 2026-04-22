@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Test de détection de mots interdits{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1>Test de détection de mots interdits avec BanBuilder</h1>
+    
+    <div class="alert alert-info">
+        <h5>Comment fonctionne la validation :</h5>
+        <ul>
+            <li>Employé écrit un commentaire</li>
+            <li>BanBuilder vérifie les mots interdits</li>
+            <li>Si mot interdit détecté : Rejeté ou Censuré</li>
+            <li>Sinon : Commentaire publié normalement</li>
+        </ul>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <h3>Résultats des tests</h3>
+            
+            {% for result in results %}
+                <div class="card mb-3 {{ result.is_valid ? 'border-success' : 'border-danger' }}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Test #{{ loop.index }}</span>
+                        <span class="badge {{ result.is_valid ? 'bg-success' : 'bg-danger' }}">
+                            {{ result.is_valid ? 'Valide' : 'Rejeté' }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <h6>Commentaire original :</h6>
+                        <p class="bg-light p-2 rounded">{{ result.original }}</p>
+                        
+                        {% if not result.is_valid %}
+                            <h6 class="text-danger">Mots interdits détectés :</h6>
+                            <p class="text-danger">
+                                {% if result.bad_words_found|length > 0 %}
+                                    {{ result.bad_words_found|join(', ') }}
+                                {% else %}
+                                    Aucun mot spécifique détecté (filtrage par pattern)
+                                {% endif %}
+                            </p>
+                            
+                            <h6>Contenu censuré :</h6>
+                            <p class="bg-warning p-2 rounded">{{ result.censored_content }}</p>
+                        {% endif %}
+                        
+                        <small class="text-muted">{{ result.message }}</small>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ path('admin_publication') }}" class="btn btn-primary">Retour à la gestion des publications</a>
+    </div>
+</div>
+{% endblock %}

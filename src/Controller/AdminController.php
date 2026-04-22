@@ -17,14 +17,18 @@ use App\Repository\CongeRepository;
 use App\Repository\AbsenceRepository;
 use App\Repository\FormationRepository;
 use App\Repository\CommentaireRepository;
+use App\Form\PublicationType;
 use App\Entity\Conge;
 use App\Entity\Absence;
 use App\Entity\Formation;
 use App\Entity\Log;
 use App\Entity\Publication;
+use App\Entity\PublicationMedia;
 use App\Entity\Commentaire;
 use App\Form\AdminUserType;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -1234,26 +1238,32 @@ class AdminController extends AbstractController
     }
 
     #[Route('/publication/new', name: 'admin_publication_new', methods: ['GET', 'POST'])]
-    public function newPublication(Request $request, EntityManagerInterface $em): Response
+    public function newPublication(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
     {
-        if ($request->isMethod('POST')) {
-            $contenu = $request->request->get('contenu');
-            $type = $request->request->get('type');
+        $publication = new Publication();
+        $form = $this->createForm(PublicationType::class, $publication);
+        $form->handleRequest($request);
 
-            $publication = new Publication();
-            $publication->setContenu($contenu);
-            $publication->setType($type);
+        if ($form->isSubmitted() && $form->isValid()) {
             $publication->setDate_publication(new \DateTime());
             $publication->setUser($this->getUser());
 
             $em->persist($publication);
+            $this->handlePublicationMediaUploads(
+                $publication,
+                $form->get('mediaFiles')->getData() ?? [],
+                $slugger,
+                $em
+            );
             $em->flush();
 
             $this->addFlash('success', 'Publication créée avec succès.');
             return $this->redirectToRoute('admin_publication');
         }
 
-        return $this->render('admin/publication/new.html.twig');
+        return $this->render('admin/publication/new.html.twig', [
+            'form' => $form->createView(),
+        ]);
     }
 
     #[Route('/publication/{id}/edit', name: 'admin_publication_edit', methods: ['GET', 'POST'])]
@@ -1271,6 +1281,59 @@ class AdminController extends AbstractController
         return $this->render('admin/publication/edit.html.twig', [
             'publication' => $publication,
         ]);
+    }
+
+    /**
+     * @param UploadedFile[] $uploadedFiles
+     */
+    private function handlePublicationMediaUploads(
+        Publication $publication,
+        array $uploadedFiles,
+        SluggerInterface $slugger,
+        EntityManagerInterface $em
+    ): void {
+        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/publications';
+
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0775, true);
+        }
+
+        foreach ($uploadedFiles as $uploadedFile) {
+            if (!$uploadedFile instanceof UploadedFile) {
+                continue;
+            }
+
+            $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = (string) $slugger->slug($originalFilename);
+            $extension = $uploadedFile->guessExtension() ?: pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+            $mimeType = $uploadedFile->getClientMimeType() ?: '';
+
+            try {
+                $guessedMimeType = $uploadedFile->getMimeType();
+                if (is_string($guessedMimeType) && $guessedMimeType !== '') {
+                    $mimeType = $guessedMimeType;
+                }
+            } catch (\Throwable) {
+                // If Symfony cannot inspect the temporary file, fall back to the client MIME type.
+            }
+
+            $mediaType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+
+            try {
+                $uploadedFile->move($uploadDir, $newFilename);
+            } catch (FileException) {
+                $this->addFlash('warning', 'Une image ou vidéo n\'a pas pu être téléversée.');
+                continue;
+            }
+
+            $media = new PublicationMedia();
+            $media->setPublication($publication);
+            $media->setType($mediaType);
+            $media->setPath('/uploads/publications/' . $newFilename);
+
+            $em->persist($media);
+        }
     }
 
     #[Route('/publication/{id}/delete', name: 'admin_publication_delete', methods: ['POST'])]
