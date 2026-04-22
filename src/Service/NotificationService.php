@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Entity\Absence;
+use App\Entity\Conge;
 use App\Entity\Notification;
 use App\Entity\User;
 use App\Repository\UserRepository;
@@ -48,5 +50,69 @@ class NotificationService
         }
 
         $this->entityManager->flush();
+    }
+
+    public function notifyEmployeeRequestSubmitted(Conge $conge): void
+    {
+        $employee = $conge->getUser();
+        if (!$employee instanceof User) {
+            return;
+        }
+
+        $this->sendToUser(
+            $employee,
+            'Demande de congé envoyée',
+            'Votre demande de congé a bien été soumise et est en attente de validation.',
+            null
+        );
+    }
+
+    public function notifyManagerNewRequest(Conge $conge, User $manager): void
+    {
+        if (!$manager instanceof User) {
+            return;
+        }
+
+        $employee = $conge->getUser();
+        $employeeName = $employee instanceof User
+            ? trim($employee->getPrenom().' '.$employee->getNom())
+            : 'Un employé';
+
+        $this->sendToUser(
+            $manager,
+            'Nouvelle demande de congé',
+            sprintf('%s a soumis une nouvelle demande de congé.', $employeeName),
+            null
+        );
+    }
+
+    public function notifyEmployeeRequestApproved(Conge $conge, string $comment = ''): void
+    {
+        $employee = $conge->getUser();
+        if (!$employee instanceof User) {
+            return;
+        }
+
+        $message = 'Votre demande de congé a été approuvée.';
+        if (trim($comment) !== '') {
+            $message .= ' Commentaire: '.$comment;
+        }
+
+        $this->sendToUser($employee, 'Demande de congé approuvée', $message, null);
+    }
+
+    public function notifyEmployeeRequestRejected(Absence $absence, string $comment = ''): void
+    {
+        $employee = $absence->getUser();
+        if (!$employee instanceof User) {
+            return;
+        }
+
+        $message = 'Votre demande de congé a été refusée.';
+        if (trim($comment) !== '') {
+            $message .= ' Commentaire: '.$comment;
+        }
+
+        $this->sendToUser($employee, 'Demande de congé refusée', $message, null);
     }
 }

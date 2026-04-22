@@ -63,7 +63,7 @@ class AIAssistantController extends AbstractController
 
         $result = $this->aiService->parseRequest($message, $user);
 
-        return new JsonResponse($result);
+        return new JsonResponse($this->normalizeParsedRequestForJson($result));
     }
 
     /**
@@ -83,7 +83,14 @@ class AIAssistantController extends AbstractController
             ]);
         }
 
-        $conge = $this->aiService->createConge($data['parsed_request'], $user);
+        try {
+            $conge = $this->aiService->createConge($this->normalizeParsedRequestPayload($data['parsed_request']), $user);
+        } catch (\Throwable $exception) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Impossible de créer la demande: '.$exception->getMessage(),
+            ], 500);
+        }
 
         if ($conge === null) {
             return new JsonResponse([
@@ -246,5 +253,71 @@ class AIAssistantController extends AbstractController
         }
 
         return $calmPeriods;
+    }
+
+    /**
+     * @param array<string, mixed> $result
+     * @return array<string, mixed>
+     */
+    private function normalizeParsedRequestForJson(array $result): array
+    {
+        if (isset($result['dates']) && is_array($result['dates'])) {
+            $result['dates'] = $this->normalizeDatesForJson($result['dates']);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    private function normalizeParsedRequestPayload(array $payload): array
+    {
+        if (isset($payload['dates']) && is_array($payload['dates'])) {
+            $payload['dates'] = $this->normalizeDatesFromJson($payload['dates']);
+        }
+
+        return $payload;
+    }
+
+    /**
+     * @param array<string, mixed> $dates
+     * @return array<string, mixed>
+     */
+    private function normalizeDatesForJson(array $dates): array
+    {
+        foreach (['debut', 'fin'] as $key) {
+            if (($dates[$key] ?? null) instanceof \DateTimeInterface) {
+                $dates[$key] = $dates[$key]->format(\DateTimeInterface::ATOM);
+            }
+        }
+
+        return $dates;
+    }
+
+    /**
+     * @param array<string, mixed> $dates
+     * @return array<string, mixed>
+     */
+    private function normalizeDatesFromJson(array $dates): array
+    {
+        foreach (['debut', 'fin'] as $key) {
+            if (($dates[$key] ?? null) instanceof \DateTimeInterface) {
+                continue;
+            }
+
+            if (!isset($dates[$key]) || !is_string($dates[$key]) || trim($dates[$key]) === '') {
+                continue;
+            }
+
+            try {
+                $dates[$key] = new \DateTime($dates[$key]);
+            } catch (\Throwable) {
+                $dates[$key] = null;
+            }
+        }
+
+        return $dates;
     }
 }

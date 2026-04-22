@@ -379,11 +379,14 @@ class AIAssistantService
             return null;
         }
 
+        $dateDebut = $this->normalizeDateValue($parsedRequest['dates']['debut'] ?? null);
+        $dateFin = $this->normalizeDateValue($parsedRequest['dates']['fin'] ?? null);
+        if ($dateDebut === null || $dateFin === null) {
+            return null;
+        }
+
         $conge = new Conge();
         $conge->setUser($user);
-        $conge->setTypeConge($parsedRequest['type_conge']);
-        $conge->setDateDebut($parsedRequest['dates']['debut']);
-        $conge->setDateFin($parsedRequest['dates']['fin']);
         $conge->setNbJours($parsedRequest['nb_jours']);
         $conge->setMotif('Demande créée par l\'assistant IA');
         $conge->setDateDemande(new \DateTime());
@@ -391,10 +394,10 @@ class AIAssistantService
         // Créer l'absence associée
         $absence = new \App\Entity\Absence();
         $absence->setUser($user);
-        $absence->setDateDebut($parsedRequest['dates']['debut']);
-        $absence->setDateFin($parsedRequest['dates']['fin']);
+        $absence->setDateDebut($dateDebut);
+        $absence->setDateFin($dateFin);
         $absence->setStatut('en_attente');
-        $absence->setType($parsedRequest['type_conge']);
+        $absence->setTypeAbsence($this->mapAssistantTypeToAbsenceType((string) ($parsedRequest['type_conge'] ?? 'conge_annuel')));
         
         $conge->setAbsence($absence);
 
@@ -403,5 +406,35 @@ class AIAssistantService
         $this->em->flush();
 
         return $conge;
+    }
+
+    private function mapAssistantTypeToAbsenceType(string $typeConge): string
+    {
+        return match ($typeConge) {
+            'conge_maladie' => 'MALADIE',
+            'conge_sans_solde' => 'CONGE_SANS_SOLDE',
+            'conge_familial', 'conge_exceptionnel' => 'AUTRE',
+            default => 'CONGE_PAYE',
+        };
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private function normalizeDateValue(mixed $value): ?\DateTimeInterface
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value;
+        }
+
+        if (!is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return new \DateTime($value);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }
