@@ -7,8 +7,10 @@ use App\Form\AdminFeedbackType;
 use App\Repository\FeedbackRepository;
 use App\Repository\UserRepository;
 use App\Service\FeedbackAutoResponseGenerator;
+use App\Service\MeaningCloudSentimentService;
 use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,13 +22,19 @@ use Symfony\Component\Routing\Annotation\Route;
 class AdminFeedbackController extends AbstractController
 {
     #[Route('/', name: 'admin_feedback_index', methods: ['GET'])]
-    public function index(Request $request, FeedbackRepository $feedbackRepository): Response
+    public function index(Request $request, FeedbackRepository $feedbackRepository, PaginatorInterface $paginator): Response
     {
         $query = trim((string) $request->query->get('q', ''));
         $priorityFilter = trim((string) $request->query->get('priority', ''));
         $priorityFilter = $priorityFilter !== '' ? $priorityFilter : null;
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 10;
 
-        $feedbacks = $feedbackRepository->searchForAdmin($query, $priorityFilter);
+        $feedbacks = $paginator->paginate(
+            $feedbackRepository->searchForAdmin($query, $priorityFilter),
+            $page,
+            $limit
+        );
 
         $byStatus = $feedbackRepository->countByStatus();
         $byCategory = $feedbackRepository->countByCategory();
@@ -50,10 +58,16 @@ class AdminFeedbackController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'admin_feedback_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Feedback $feedback, EntityManagerInterface $entityManager): Response
+    public function edit(
+        Request $request,
+        Feedback $feedback,
+        EntityManagerInterface $entityManager,
+        MeaningCloudSentimentService $meaningCloudSentimentService
+    ): Response
     {
         $form = $this->createForm(AdminFeedbackType::class, $feedback);
         $form->handleRequest($request);
+        $sentiment = $meaningCloudSentimentService->analyze((string) $feedback->getContenu(), 'fr');
 
         if ($form->isSubmitted() && $form->isValid()) {
             
@@ -73,6 +87,7 @@ class AdminFeedbackController extends AbstractController
         return $this->render('admin/feedback/edit.html.twig', [
             'feedback' => $feedback,
             'form' => $form->createView(),
+            'sentiment' => $sentiment,
         ]);
     }
 

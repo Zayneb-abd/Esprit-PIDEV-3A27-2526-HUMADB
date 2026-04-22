@@ -5,7 +5,9 @@ namespace App\Controller;
 use App\Entity\Feedback;
 use App\Form\FeedbackType;
 use App\Repository\FeedbackRepository;
+use App\Service\MeaningCloudSentimentService;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +17,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class EmployeFeedbackController extends AbstractController
 {
     #[Route('/', name: 'employ_feedback_index', methods: ['GET'])]
-    public function index(Request $request, FeedbackRepository $feedbackRepository): Response
+    public function index(Request $request, FeedbackRepository $feedbackRepository, PaginatorInterface $paginator): Response
     {
         $user = $this->getUser();
         if (!$user) {
@@ -23,7 +25,14 @@ class EmployeFeedbackController extends AbstractController
         }
 
         $query = trim((string) $request->query->get('q', ''));
-        $feedbacks = $feedbackRepository->searchForEmployee($user->getId(), $query);
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 9;
+
+        $feedbacks = $paginator->paginate(
+            $feedbackRepository->searchForEmployee($user->getId(), $query),
+            $page,
+            $limit
+        );
 
         return $this->render('employ/feedback/index.html.twig', [
             'feedbacks' => $feedbacks,
@@ -82,7 +91,7 @@ class EmployeFeedbackController extends AbstractController
     }
 
     #[Route('/{id}', name: 'employ_feedback_show', methods: ['GET'])]
-    public function show(Feedback $feedback): Response
+    public function show(Feedback $feedback, MeaningCloudSentimentService $meaningCloudSentimentService): Response
     {
         $user = $this->getUser();
         // Security check: Employee can only view their own feedback
@@ -90,8 +99,11 @@ class EmployeFeedbackController extends AbstractController
             throw $this->createAccessDeniedException("Vous n'êtes pas autorisé à voir ce feedback.");
         }
 
+        $sentiment = $meaningCloudSentimentService->analyze((string) $feedback->getContenu(), 'fr');
+
         return $this->render('employ/feedback/show.html.twig', [
             'feedback' => $feedback,
+            'sentiment' => $sentiment,
         ]);
     }
 

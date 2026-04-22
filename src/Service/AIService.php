@@ -49,7 +49,7 @@ class AIService
         return $descriptions['default'];
     }
 
-    public function generateFormationObjectives(string $formationTitle, string $formationDescription = null): array
+    public function generateFormationObjectives(string $formationTitle, ?string $formationDescription = null): array
     {
         $context = $formationDescription ? "Basé sur cette description : '$formationDescription'" : "";
         $prompt = "Génère 5-8 objectifs pédagogiques spécifiques et mesurables pour la formation : '$formationTitle'. $context. 
@@ -78,7 +78,7 @@ class AIService
         });
     }
     
-    private function generateObjectivesWithRetry(string $formationTitle, string $formationDescription = null): array
+    private function generateObjectivesWithRetry(string $formationTitle, ?string $formationDescription = null): array
     {
         $simplePrompt = "Génère 5 objectifs pour la formation '$formationTitle'. Réponds avec uniquement une liste JSON : [\"obj1\", \"obj2\", \"obj3\", \"obj4\", \"obj5\"]";
         
@@ -237,5 +237,43 @@ class AIService
         } catch (\Exception $e) {
             return 'Erreur de connexion: ' . $e->getMessage();
         }
+    }
+
+    public function translateText(string $text, string $targetLocale): string
+    {
+        $text = trim($text);
+        $targetLocale = strtolower(trim($targetLocale));
+
+        if ($text === '') {
+            return '';
+        }
+
+        if ($targetLocale === 'fr') {
+            return $text;
+        }
+
+        $languageNames = [
+            'en' => 'anglais',
+            'ar' => 'arabe',
+            'ru' => 'russe',
+        ];
+
+        if (!isset($languageNames[$targetLocale])) {
+            throw new \InvalidArgumentException('Langue cible non supportée.');
+        }
+
+        $prompt = sprintf(
+            "Traduis le texte suivant du français vers %s. Garde le sens, le ton et les sauts de ligne. Réponds uniquement avec la traduction, sans guillemets ni explication.\n\nTexte:\n%s",
+            $languageNames[$targetLocale],
+            $text
+        );
+
+        $translated = trim($this->callGroqAPI($prompt));
+
+        if ($translated === '' || str_starts_with($translated, 'Erreur') || str_starts_with($translated, 'Format de réponse')) {
+            throw new \RuntimeException('Impossible de traduire le texte.');
+        }
+
+        return $translated;
     }
 }

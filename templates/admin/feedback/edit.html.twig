@@ -42,6 +42,49 @@
         </div>
 
         <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-semibold text-primary"><i class="ti ti-mood-smile me-2"></i>Analyse du sentiment</h5>
+            </div>
+            <div class="card-body p-4">
+                {% if sentiment.success %}
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                        <div>
+                            <div class="fw-bold fs-5">{{ sentiment.label }}</div>
+                            <div class="text-muted small">{{ sentiment.description }}</div>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary">
+                            Confiance {{ sentiment.confidence }}%
+                        </span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-light h-100">
+                                <div class="text-muted small mb-1">Score tag</div>
+                                <div class="fw-semibold">{{ sentiment.score_tag }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-light h-100">
+                                <div class="text-muted small mb-1">Subjectivité</div>
+                                <div class="fw-semibold">{{ sentiment.subjectivity }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-light h-100">
+                                <div class="text-muted small mb-1">Ironie</div>
+                                <div class="fw-semibold">{{ sentiment.irony }}</div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning mb-0">
+                        {{ sentiment.error|default('MeaningCloud n\'est pas disponible pour le moment.') }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mt-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-semibold text-primary"><i class="ti ti-robot me-2"></i>Réponse AI</h5>
                 <div class="d-flex gap-2">

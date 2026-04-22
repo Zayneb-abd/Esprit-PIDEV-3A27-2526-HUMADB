@@ -383,6 +383,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Entretien::class, mappedBy: 'user')]
     private Collection $entretiens;
 
+    #[ORM\OneToMany(targetEntity: Entretien::class, mappedBy: 'manager')]
+    private Collection $entretiensManager;
+
     /**
      * @return Collection<int, Entretien>
      */
@@ -405,6 +408,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeEntretien(Entretien $entretien): self
     {
         $this->getEntretiens()->removeElement($entretien);
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Entretien>
+     */
+    public function getEntretiensManager(): Collection
+    {
+        if (!$this->entretiensManager instanceof Collection) {
+            $this->entretiensManager = new ArrayCollection();
+        }
+        return $this->entretiensManager;
+    }
+
+    public function addEntretienManager(Entretien $entretien): self
+    {
+        if (!$this->getEntretiensManager()->contains($entretien)) {
+            $this->getEntretiensManager()->add($entretien);
+        }
+        return $this;
+    }
+
+    public function removeEntretienManager(Entretien $entretien): self
+    {
+        $this->getEntretiensManager()->removeElement($entretien);
         return $this;
     }
 
@@ -600,6 +628,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->commentaires = new ArrayCollection();
         $this->conges = new ArrayCollection();
         $this->entretiens = new ArrayCollection();
+        $this->entretiensManager = new ArrayCollection();
         $this->feedbacks = new ArrayCollection();
         $this->formations = new ArrayCollection();
         $this->offreEmplois = new ArrayCollection();
