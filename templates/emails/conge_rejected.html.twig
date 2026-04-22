@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #EF4444; color: white; padding: 20px; text-align: center; }
+        .content { background: #f9f9f9; padding: 20px; margin: 20px 0; }
+        .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+        .btn { display: inline-block; background: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; }
+        .info-box { background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #EF4444; }
+        .reject { background: #FEE2E2; border: 1px solid #EF4444; padding: 10px; border-radius: 5px; }
+        .reason { background: #FEF3C7; padding: 15px; border-radius: 5px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>❌ Demande Refusée</h1>
+        </div>
+        
+        <div class="content">
+            <p>Bonjour {{ user.prenom }} {{ user.nom }},</p>
+            
+            <div class="reject">
+                <strong>Information :</strong> Votre demande de congé a été <strong>REFUSÉE</strong> par votre manager.
+            </div>
+            
+            <div class="info-box">
+                <h3>Détails de la demande refusée :</h3>
+                <ul>
+                    <li><strong>Type :</strong> {{ conge.absence.typeAbsence }}</li>
+                    <li><strong>Date début :</strong> {{ conge.absence.dateDebut|date('d/m/Y') }}</li>
+                    <li><strong>Date fin :</strong> {{ conge.absence.dateFin|date('d/m/Y') }}</li>
+                    <li><strong>Statut :</strong> <span style="color: #EF4444; font-weight: bold;">Refusé</span></li>
+                </ul>
+            </div>
+            
+            <div class="reason">
+                <strong>Motif du refus :</strong><br>
+                {{ reason }}
+            </div>
+            
+            <p>Si vous avez des questions, veuillez contacter directement votre manager.</p>
+            
+            <p style="text-align: center; margin-top: 30px;">
+                <a href="http://127.0.0.1:8000/employ/conges" class="btn">Voir mes congés</a>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>HUMA RH System - Gestion des Congés et Absences</p>
+        </div>
+    </div>
+</body>
+</html>

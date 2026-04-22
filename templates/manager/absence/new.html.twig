@@ -1,0 +1,73 @@
+{% extends 'manager/base_manager.html.twig' %}
+
+{% block title %}Nouvelle Absence{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-4">
+                <h1 class="fs-3 mb-1">Nouvelle Absence</h1>
+                <p class="mb-0 text-muted">Déclarer une nouvelle absence</p>
+            </div>
+
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post" id="absenceForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date_debut" class="form-label">Date de début <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="date_debut" name="date_debut">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_fin" class="form-label">Date de fin <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="date_fin" name="date_fin">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="type_absence" class="form-label">Type d'absence <span class="text-danger">*</span></label>
+                                <select class="form-select" id="type_absence" name="type_absence">
+                                    <option value="">Sélectionner un type</option>
+                                    <option value="maladie">Maladie</option>
+                                    <option value="accident">Accident</option>
+                                    <option value="absence_injustifiee">Absence injustifiée</option>
+                                    <option value="retard">Retard</option>
+                                    <option value="formation">Formation</option>
+                                    <option value="autre">Autre</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="motif" class="form-label">Motif / Justification</label>
+                                <textarea class="form-control" id="motif" name="motif" rows="3" placeholder="Décrivez le motif de l'absence..."></textarea>
+                                <div class="form-text text-muted">Obligatoire pour les absences maladie de plus de 3 jours.</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('manager_mes_absences') }}" class="btn btn-outline-secondary">
+                                <i class="ti ti-arrow-left"></i> Retour
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-check"></i> Déclarer l'absence
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

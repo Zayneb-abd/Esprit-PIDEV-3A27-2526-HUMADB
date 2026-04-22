@@ -17,13 +17,13 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="date_debut" class="form-label">Date de début <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="date_debut" name="date_debut" value="{{ absence ? absence.getDate_debut()|date('Y-m-d') : '' }}" required>
+                                <input type="date" class="form-control" id="date_debut" name="date_debut" value="{{ absence ? absence.getDate_debut()|date('Y-m-d') : '' }}">
                                 <div class="invalid-feedback">Veuillez sélectionner une date de début valide.</div>
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label for="date_fin" class="form-label">Date de fin <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="date_fin" name="date_fin" value="{{ absence ? absence.getDate_fin()|date('Y-m-d') : '' }}" required>
+                                <input type="date" class="form-control" id="date_fin" name="date_fin" value="{{ absence ? absence.getDate_fin()|date('Y-m-d') : '' }}">
                                 <div class="invalid-feedback">Veuillez sélectionner une date de fin valide.</div>
                             </div>
                         </div>
@@ -31,7 +31,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="type" class="form-label">Type de congé <span class="text-danger">*</span></label>
-                                <select class="form-select" id="type" name="type" required>
+                                <select class="form-select" id="type" name="type">
                                     <option value="">Sélectionner un type</option>
                                     <option value="ANNUEL" {{ absence and absence.getType_absence() == 'ANNUEL' ? 'selected' : '' }}>Congé annuel</option>
                                     <option value="MALADIE" {{ absence and absence.getType_absence() == 'MALADIE' ? 'selected' : '' }}>Congé maladie</option>
@@ -63,47 +63,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('congeEditForm');
-    const dateDebut = document.getElementById('date_debut');
-    const dateFin = document.getElementById('date_fin');
-
-    // Validation dates
-    function validateDates() {
-        const debut = new Date(dateDebut.value);
-        const fin = new Date(dateFin.value);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (debut < today) {
-            dateDebut.classList.add('is-invalid');
-            return false;
-        } else {
-            dateDebut.classList.remove('is-invalid');
-        }
-
-        if (fin <= debut) {
-            dateFin.classList.add('is-invalid');
-            return false;
-        } else {
-            dateFin.classList.remove('is-invalid');
-        }
-
-        return true;
-    }
-
-    dateDebut.addEventListener('change', validateDates);
-    dateFin.addEventListener('change', validateDates);
-
-    form.addEventListener('submit', function(e) {
-        if (!validateDates()) {
-            e.preventDefault();
-        }
-    });
-});
-</script>
 {% endblock %}

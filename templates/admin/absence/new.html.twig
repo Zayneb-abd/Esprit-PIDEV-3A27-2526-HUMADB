@@ -24,7 +24,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="employe_id" class="form-label">Employé <span class="text-danger">*</span></label>
-                                <select name="employe_id" id="employe_id" class="form-select" required>
+                                <select name="employe_id" id="employe_id" class="form-select">
                                     <option value="">-- Sélectionner un employé --</option>
                                     {% for user in users %}
                                         <option value="{{ user.id }}">{{ user.nom|default('') }} {{ user.prenom|default('') }} ({{ user.email|default('') }})</option>
@@ -35,7 +35,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="type_absence" class="form-label">Type d'absence <span class="text-danger">*</span></label>
-                                <select name="type_absence" id="type_absence" class="form-select" required>
+                                <select name="type_absence" id="type_absence" class="form-select">
                                     <option value="">-- Sélectionner un type --</option>
                                     <option value="maladie">Maladie</option>
                                     <option value="accident">Accident</option>
@@ -49,7 +49,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="date_debut" class="form-label">Date de début <span class="text-danger">*</span></label>
-                                <input type="date" name="date_debut" id="date_debut" class="form-control" required>
+                                <input type="date" name="date_debut" id="date_debut" class="form-control">
                                 <div class="form-text text-muted">
                                     <i class="ti ti-info-circle"></i> La date de début doit être aujourd'hui ou dans le futur.
                                 </div>
@@ -58,25 +58,16 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="date_fin" class="form-label">Date de fin <span class="text-danger">*</span></label>
-                                <input type="date" name="date_fin" id="date_fin" class="form-control" required>
+                                <input type="date" name="date_fin" id="date_fin" class="form-control">
                                 <div class="form-text text-muted">
                                     <i class="ti ti-info-circle"></i> La date de fin doit être après la date de début.
                                 </div>
                                 <div class="invalid-feedback" id="date_fin_error">La date de fin doit être après la date de début.</div>
                             </div>
 
-                            <div class="col-12 mb-3">
-                                <div id="dureeInfo" class="alert alert-info d-none">
-                                    <i class="ti ti-calendar"></i> <strong>Durée calculée:</strong> <span id="dureeJours">0</span> jour(s)
-                                    <span id="weekendWarning" class="d-none text-warning ms-2">
-                                        <i class="ti ti-alert-triangle"></i> Inclut un week-end
-                                    </span>
-                                </div>
-                            </div>
-
                             <div class="col-md-6 mb-3">
                                 <label for="statut" class="form-label">Statut <span class="text-danger">*</span></label>
-                                <select name="statut" id="statut" class="form-select" required>
+                                <select name="statut" id="statut" class="form-select">
                                     <option value="en_attente" selected>En attente</option>
                                     <option value="approuve">Approuvé</option>
                                     <option value="refuse">Refusé</option>
@@ -91,10 +82,6 @@
                                     <i class="ti ti-alert-circle text-warning"></i> Obligatoire pour les absences maladie de plus de 3 jours.
                                 </div>
                             </div>
-                        </div>
-
-                        <div id="errorAlert" class="alert alert-danger d-none" role="alert">
-                            <ul class="mb-0" id="errorList"></ul>
                         </div>
 
                         <div class="d-flex justify-content-between mt-4">
@@ -112,276 +99,4 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('absenceForm');
-    const dateDebut = document.getElementById('date_debut');
-    const dateFin = document.getElementById('date_fin');
-    const typeAbsence = document.getElementById('type_absence');
-    const motif = document.getElementById('motif');
-    const motifHelp = document.getElementById('motif_help');
-    const errorAlert = document.getElementById('errorAlert');
-    const errorList = document.getElementById('errorList');
-    const MAX_DUREE = 30;
-
-    const today = new Date().toISOString().split('T')[0];
-    dateDebut.min = today;
-    dateFin.min = today;
-
-    function showFieldError(fieldId, message) {
-        const field = document.getElementById(fieldId);
-        const errorDiv = document.getElementById(fieldId + '_error');
-        field.classList.add('is-invalid');
-        if (errorDiv) {
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-        }
-    }
-
-    function clearFieldError(fieldId) {
-        const field = document.getElementById(fieldId);
-        const errorDiv = document.getElementById(fieldId + '_error');
-        field.classList.remove('is-invalid');
-        if (errorDiv) {
-            errorDiv.textContent = '';
-            errorDiv.style.display = 'none';
-        }
-    }
-
-    function showErrors(errors) {
-        errorList.innerHTML = '';
-        errors.forEach(error => {
-            const li = document.createElement('li');
-            li.textContent = error;
-            errorList.appendChild(li);
-        });
-        errorAlert.classList.remove('d-none');
-    }
-
-    function hideErrors() {
-        errorAlert.classList.add('d-none');
-        errorList.innerHTML = '';
-    }
-
-    function calculateDuration() {
-        if (dateDebut.value && dateFin.value) {
-            const d1 = new Date(dateDebut.value);
-            const d2 = new Date(dateFin.value);
-            const diffTime = Math.abs(d2 - d1);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            return diffDays;
-        }
-        return 0;
-    }
-
-    function hasWeekendBetweenDates() {
-        if (!dateDebut.value || !dateFin.value) return false;
-        
-        const start = new Date(dateDebut.value);
-        const end = new Date(dateFin.value);
-        
-        let current = new Date(start);
-        while (current <= end) {
-            const dayOfWeek = current.getDay();
-            if (dayOfWeek === 0 || dayOfWeek === 6) {
-                return true;
-            }
-            current.setDate(current.getDate() + 1);
-        }
-        return false;
-    }
-
-    function updateDurationDisplay() {
-        const duree = calculateDuration();
-        const dureeInfo = document.getElementById('dureeInfo');
-        const dureeJours = document.getElementById('dureeJours');
-        const weekendWarning = document.getElementById('weekendWarning');
-        
-        if (duree > 0) {
-            dureeJours.textContent = duree;
-            dureeInfo.classList.remove('d-none');
-            
-            if (hasWeekendBetweenDates()) {
-                weekendWarning.classList.remove('d-none');
-            } else {
-                weekendWarning.classList.add('d-none');
-            }
-            
-            if (duree > MAX_DUREE) {
-                dureeInfo.classList.remove('alert-info');
-                dureeInfo.classList.add('alert-danger');
-            } else if (duree > 20) {
-                dureeInfo.classList.remove('alert-info');
-                dureeInfo.classList.add('alert-warning');
-            } else {
-                dureeInfo.classList.remove('alert-danger', 'alert-warning');
-                dureeInfo.classList.add('alert-info');
-            }
-        } else {
-            dureeInfo.classList.add('d-none');
-        }
-    }
-
-    function validateEmploye() {
-        const employe = document.getElementById('employe_id').value;
-        if (!employe) {
-            showFieldError('employe_id', 'Veuillez sélectionner un employé.');
-            return false;
-        }
-        clearFieldError('employe_id');
-        return true;
-    }
-
-    function validateType() {
-        const type = typeAbsence.value;
-        if (!type) {
-            showFieldError('type_absence', 'Veuillez sélectionner un type d\'absence.');
-            return false;
-        }
-        clearFieldError('type_absence');
-        return true;
-    }
-
-    function validateDateDebut() {
-        const dateDebutValue = dateDebut.value;
-        if (!dateDebutValue) {
-            showFieldError('date_debut', 'La date de début est obligatoire.');
-            return false;
-        }
-        const selectedDate = new Date(dateDebutValue);
-        const year = selectedDate.getFullYear();
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        
-        if (selectedDate < now) {
-            showFieldError('date_debut', 'La date de début ne peut pas être dans le passé.');
-            return false;
-        }
-        if (year > 2026) {
-            showFieldError('date_debut', 'La date de début ne peut pas être en 2027 ou au-delà.');
-            return false;
-        }
-        clearFieldError('date_debut');
-        return true;
-    }
-
-    function validateDateFin() {
-        const dateDebutValue = dateDebut.value;
-        const dateFinValue = dateFin.value;
-        if (!dateFinValue) {
-            showFieldError('date_fin', 'La date de fin est obligatoire.');
-            return false;
-        }
-        const selectedDate = new Date(dateFinValue);
-        const year = selectedDate.getFullYear();
-        
-        if (year > 2026) {
-            showFieldError('date_fin', 'La date de fin ne peut pas être en 2027 ou au-delà.');
-            return false;
-        }
-        if (dateDebutValue && new Date(dateFinValue) <= new Date(dateDebutValue)) {
-            showFieldError('date_fin', 'La date de fin doit être après la date de début.');
-            return false;
-        }
-        const duree = calculateDuration();
-        if (duree > MAX_DUREE) {
-            showFieldError('date_fin', 'La durée maximale est de ' + MAX_DUREE + ' jours.');
-            return false;
-        }
-        clearFieldError('date_fin');
-        return true;
-    }
-
-    function validateStatut() {
-        const statut = document.getElementById('statut').value;
-        if (!statut) {
-            showFieldError('statut', 'Veuillez sélectionner un statut.');
-            return false;
-        }
-        clearFieldError('statut');
-        return true;
-    }
-
-    function validateMotif() {
-        const type = typeAbsence.value;
-        const duree = calculateDuration();
-        const motifValue = motif.value.trim();
-        
-        if (type === 'maladie' && duree > 3 && !motifValue) {
-            motif.classList.add('is-invalid');
-            motifHelp.innerHTML = '<i class="ti ti-alert-circle text-danger"></i> <strong>Le motif est obligatoire pour les absences maladie de plus de 3 jours.</strong>';
-            return false;
-        }
-        motif.classList.remove('is-invalid');
-        motifHelp.innerHTML = '<i class="ti ti-alert-circle text-warning"></i> Obligatoire pour les absences maladie de plus de 3 jours.';
-        return true;
-    }
-
-    function validateForm() {
-        const errors = [];
-        let isValid = true;
-
-        hideErrors();
-
-        if (!validateEmploye()) {
-            errors.push('Veuillez sélectionner un employé.');
-            isValid = false;
-        }
-        if (!validateType()) {
-            errors.push('Veuillez sélectionner un type d\'absence.');
-            isValid = false;
-        }
-        if (!validateDateDebut()) {
-            errors.push('La date de début est invalide.');
-            isValid = false;
-        }
-        if (!validateDateFin()) {
-            errors.push('La date de fin est invalide.');
-            isValid = false;
-        }
-        if (!validateStatut()) {
-            errors.push('Veuillez sélectionner un statut.');
-            isValid = false;
-        }
-        if (!validateMotif()) {
-            errors.push('Le motif est obligatoire pour les absences maladie de plus de 3 jours.');
-            isValid = false;
-        }
-
-        if (!isValid) {
-            showErrors(errors);
-        }
-
-        return isValid;
-    }
-
-    document.getElementById('employe_id').addEventListener('change', validateEmploye);
-    typeAbsence.addEventListener('change', function() {
-        validateType();
-        validateMotif();
-    });
-    dateDebut.addEventListener('change', function() {
-        if (this.value) {
-            dateFin.min = this.value;
-        }
-        validateDateDebut();
-        validateDateFin();
-        validateMotif();
-        updateDurationDisplay();
-    });
-    dateFin.addEventListener('change', function() {
-        validateDateFin();
-        validateMotif();
-        updateDurationDisplay();
-    });
-    document.getElementById('statut').addEventListener('change', validateStatut);
-    motif.addEventListener('input', validateMotif);
-
-    form.addEventListener('submit', function(e) {
-        if (!validateForm()) {
-            e.preventDefault();
-        }
-    });
-});
-</script>
 {% endblock %}
