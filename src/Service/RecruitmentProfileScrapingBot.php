@@ -10,6 +10,7 @@ use Symfony\Component\HttpClient\HttpClient;
 class RecruitmentProfileScrapingBot
 {
     private const SEARCH_ENDPOINT = 'https://html.duckduckgo.com/html/';
+    private const KEYWORD = 'symfony';
 
     /**
      * Public professional/recruitment-oriented sources queried through a site-filtered search.
@@ -42,22 +43,31 @@ class RecruitmentProfileScrapingBot
      */
     public function discoverProfilesForOffer(OffreEmploi $offreEmploi, int $limit = 8): array
     {
-        $queries = $this->buildQueries($offreEmploi);
-        $results = [];
+        $results = $this->discoverProfilesByQueries($this->buildQueries($offreEmploi), $limit);
 
-        foreach (self::SOURCES as $source) {
-            foreach ($queries as $query) {
-                foreach ($this->searchSource($source, $query, $limit) as $candidate) {
-                    $results[$candidate['url']] = $candidate;
-
-                    if (count($results) >= $limit) {
-                        return array_values($results);
-                    }
-                }
-            }
+        if ($results !== []) {
+            return $results;
         }
 
-        return array_values($results);
+        return $this->discoverSymfonyDeveloperProfiles($limit);
+    }
+
+    /**
+     * Discover public Symfony developer profiles with broad fallback queries.
+     *
+     * @return array<int, array{url:string,title:string,snippet:string,source:string,source_label:string}>
+     */
+    public function discoverSymfonyDeveloperProfiles(int $limit = 8): array
+    {
+        $queries = [
+            'Symfony developer',
+            'Symfony PHP developer',
+            'Développeur Symfony',
+            'Symfony backend engineer',
+            'Symfony consultant',
+        ];
+
+        return $this->discoverProfilesByQueries($queries, $limit);
     }
 
     /**
@@ -125,6 +135,50 @@ class RecruitmentProfileScrapingBot
     }
 
     /**
+     * Scrape multiple profile pages and keep only profiles mentioning Symfony.
+     *
+     * @param array<int, string> $urls
+     * @return array<int, array{name:string,title:string,link:string}>
+     */
+    public function scrapeSymfonyDeveloperProfiles(array $urls): array
+    {
+        $results = [];
+        $seen = [];
+
+        foreach ($urls as $url) {
+            $url = trim((string) $url);
+            if ($url === '') {
+                continue;
+            }
+
+            try {
+                $profile = $this->scrapeProfile($url, 'manual_url', 'URL manuelle');
+            } catch (\Throwable) {
+                continue;
+            }
+
+            if (!$this->containsSymfonyKeyword($profile)) {
+                continue;
+            }
+
+            $link = $profile['url'];
+            $dedupeKey = $this->dedupeKey($profile['name'], $profile['title'], $link);
+            if (isset($seen[$dedupeKey])) {
+                continue;
+            }
+
+            $seen[$dedupeKey] = true;
+            $results[] = [
+                'name' => $profile['name'],
+                'title' => $profile['title'],
+                'link' => $link,
+            ];
+        }
+
+        return $results;
+    }
+
+    /**
      * @param array{key:string,label:string,site_query:string} $source
      * @return array<int, array{url:string,title:string,snippet:string,source:string,source_label:string}>
      */
@@ -167,6 +221,29 @@ class RecruitmentProfileScrapingBot
 
             if (count($results) >= $limit) {
                 break;
+            }
+        }
+
+        return array_values($results);
+    }
+
+    /**
+     * @param array<int,string> $queries
+     * @return array<int, array{url:string,title:string,snippet:string,source:string,source_label:string}>
+     */
+    private function discoverProfilesByQueries(array $queries, int $limit): array
+    {
+        $results = [];
+
+        foreach (self::SOURCES as $source) {
+            foreach ($queries as $query) {
+                foreach ($this->searchSource($source, $query, $limit) as $candidate) {
+                    $results[$candidate['url']] = $candidate;
+
+                    if (count($results) >= $limit) {
+                        return array_values($results);
+                    }
+                }
             }
         }
 
@@ -316,5 +393,24 @@ class RecruitmentProfileScrapingBot
         }
 
         return rtrim(mb_substr($text, 0, max(0, $limit - 3))).'...';
+    }
+
+    /**
+     * @param array{title:string,description:string,preview:string} $profile
+     */
+    private function containsSymfonyKeyword(array $profile): bool
+    {
+        $haystack = mb_strtolower(trim(implode(' ', [
+            $profile['title'] ?? '',
+            $profile['description'] ?? '',
+            $profile['preview'] ?? '',
+        ])));
+
+        return str_contains($haystack, self::KEYWORD);
+    }
+
+    private function dedupeKey(string $name, string $title, string $link): string
+    {
+        return mb_strtolower(trim($name)).'|'.mb_strtolower(trim($title)).'|'.mb_strtolower(trim($link));
     }
 }

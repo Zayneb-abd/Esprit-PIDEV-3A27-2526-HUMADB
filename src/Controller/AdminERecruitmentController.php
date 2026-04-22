@@ -20,8 +20,10 @@ use App\Service\FacebookJobPublisher;
 use App\Service\JitsiMeetService;
 use App\Service\PdfCvPreviewService;
 use App\Service\PublicProfileSourcingService;
+use App\Service\RecruitmentProfileScrapingBot;
 use App\Service\QuizGenerationService;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,6 +33,97 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/admin')]
 class AdminERecruitmentController extends AbstractController
 {
+    #[Route('/inventory', name: 'admin_inventory_redirect', methods: ['GET'])]
+    public function inventoryRedirect(Request $request): Response
+    {
+        return $this->redirectToRoute('admin_inventory', [
+            'q' => (string) $request->query->get('q', ''),
+            'page' => (int) $request->query->get('page', 1),
+        ]);
+    }
+
+    #[Route('/recrutment', name: 'admin_inventory')]
+    public function inventory(Request $request, EntityManagerInterface $entityManager, PaginatorInterface $paginator): Response
+    {
+        $search = trim((string) $request->query->get('q', ''));
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 10;
+
+        $offersQb = $entityManager->createQueryBuilder()
+            ->select('DISTINCT o')
+            ->from(OffreEmploi::class, 'o')
+            ->leftJoin('o.candidatures', 'oc')
+            ->addSelect('oc')
+            ->orderBy('o.date_publication', 'DESC')
+            ->addOrderBy('o.id', 'DESC');
+
+        $candidaturesQb = $entityManager->createQueryBuilder()
+            ->select('c', 'u', 'o')
+            ->from(Candidature::class, 'c')
+            ->innerJoin('c.offreEmploi', 'o')
+            ->leftJoin('c.user', 'u')
+            ->orderBy('c.date_candidature', 'DESC')
+            ->addOrderBy('c.id', 'DESC');
+
+        if ($search !== '') {
+            $query = '%' . $search . '%';
+            $offersQb->andWhere(
+                $offersQb->expr()->orX(
+                    'o.titre LIKE :query',
+                    'o.departement LIKE :query',
+                    'o.typeContrat LIKE :query',
+                    'o.description LIKE :query'
+                )
+            )->setParameter('query', $query);
+
+            $candidaturesQb->andWhere(
+                $candidaturesQb->expr()->orX(
+                    'c.statut LIKE :query',
+                    'c.cv LIKE :query',
+                    'u.nom LIKE :query',
+                    'u.prenom LIKE :query',
+                    'u.email LIKE :query',
+                    'o.titre LIKE :query'
+                )
+            )->setParameter('query', $query);
+        }
+
+        $offres = $offersQb->getQuery()->getResult();
+        $candidatures = $candidaturesQb->getQuery()->getResult();
+
+        $totalPostes = array_reduce(
+            $offres,
+            static fn (int $carry, OffreEmploi $offre): int => $carry + ($offre->getNombrePostes() ?? 0),
+            0
+        );
+
+        $candidaturesEnAttente = count(array_filter(
+            $candidatures,
+            static fn (Candidature $candidature): bool => $candidature->getStatut() === 'En attente'
+        ));
+
+        $kpiCharts = [
+            'offers' => $this->buildMonthlySeries($offres, static fn (OffreEmploi $offre): ?\DateTimeInterface => $offre->getDatePublication(), 6),
+            'applications' => $this->buildMonthlySeries($candidatures, static fn (Candidature $candidature): ?\DateTimeInterface => $candidature->getDateCandidature(), 6),
+            'contracts' => $this->buildCategorySeries($offres, static fn (OffreEmploi $offre): string => $offre->getTypeContrat() ?: 'Non défini'),
+            'statuses' => $this->buildCategorySeries($candidatures, static fn (Candidature $candidature): string => $candidature->getStatut() ?: 'Non défini'),
+        ];
+
+        return $this->render('admin/recrutment/recrutment.html.twig', [
+            'offres' => $paginator->paginate($offres, $page, $limit),
+            'candidatures' => $paginator->paginate($candidatures, $page, $limit),
+            'search' => $search,
+            'page' => $page,
+            'stats' => [
+                'offres' => count($offres),
+                'candidatures' => count($candidatures),
+                'postes' => $totalPostes,
+                'candidatures_en_attente' => $candidaturesEnAttente,
+            ],
+            'kpi_charts' => $kpiCharts,
+        ]);
+    }
+
     #[Route('/offres/{id}', name: 'admin_offre_show', requirements: ['id' => '\d+'])]
     public function showOffre(OffreEmploi $offre, CvMatchingService $cvMatchingService, ExternalAiRecruitmentAnalyzer $externalAiRecruitmentAnalyzer, FacebookJobPublisher $facebookJobPublisher): Response
     {
@@ -40,6 +133,81 @@ class AdminERecruitmentController extends AbstractController
             'external_ai_configured' => $externalAiRecruitmentAnalyzer->isConfigured(),
             'facebook_publish_configured' => $facebookJobPublisher->isConfigured(),
         ]);
+    }
+
+    #[Route('/recrutment/symfony-profiles', name: 'admin_recruitment_symfony_profiles', methods: ['GET', 'POST'])]
+    public function symfonyProfiles(Request $request, RecruitmentProfileScrapingBot $scrapingBot): JsonResponse
+    {
+        $urls = [];
+
+        if ($request->isMethod('POST')) {
+            $contentType = (string) $request->headers->get('Content-Type', '');
+            if (str_contains($contentType, 'application/json')) {
+                try {
+                    $payload = $request->toArray();
+                    $urls = $payload['urls'] ?? [];
+                } catch (\Throwable) {
+                    $urls = [];
+                }
+            } else {
+                $urls = $request->request->all('urls');
+            }
+        } else {
+            $urls = $request->query->all('urls');
+        }
+
+        if (!is_array($urls)) {
+            $urls = [$urls];
+        }
+
+        $profiles = $scrapingBot->scrapeSymfonyDeveloperProfiles($urls);
+
+        return $this->json([
+            'query' => [
+                'urls' => array_values(array_filter(array_map('trim', array_map('strval', $urls)))),
+            ],
+            'count' => count($profiles),
+            'results' => $profiles,
+        ]);
+    }
+
+    #[Route('/recrutment/cleanup-orphans', name: 'admin_recruitment_cleanup_orphans', methods: ['POST'])]
+    public function cleanupOrphanCandidatures(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        if (!$this->isCsrfTokenValid('cleanup_orphan_candidatures', (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton de sécurité invalide.');
+            return $this->redirectToRoute('admin_inventory');
+        }
+
+        $connection = $entityManager->getConnection();
+
+        $deletedEntretiens = $connection->executeStatement(<<<SQL
+DELETE e
+FROM entretien e
+LEFT JOIN candidature c ON c.id = e.candidature_id
+LEFT JOIN offre_emploi o ON o.id = c.offre_id
+LEFT JOIN users u ON u.id = c.candidat_id
+WHERE c.id IS NULL OR o.id IS NULL OR u.id IS NULL
+SQL);
+
+        $deletedCandidatures = $connection->executeStatement(<<<SQL
+DELETE c
+FROM candidature c
+LEFT JOIN offre_emploi o ON o.id = c.offre_id
+LEFT JOIN users u ON u.id = c.candidat_id
+WHERE c.offre_id IS NULL OR c.candidat_id IS NULL OR o.id IS NULL OR u.id IS NULL
+SQL);
+
+        $this->addFlash(
+            'success',
+            sprintf(
+                'Nettoyage terminé: %d entretien(s) et %d candidature(s) orphelin(s) supprimé(s).',
+                $deletedEntretiens,
+                $deletedCandidatures
+            )
+        );
+
+        return $this->redirectToRoute('admin_inventory');
     }
 
     #[Route('/offres/{id}/sourcing/public-urls', name: 'admin_offre_public_sourcing', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
@@ -303,6 +471,69 @@ class AdminERecruitmentController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_offre_show', ['id' => $offre->getId()]);
+    }
+
+    /**
+     * @template T of object
+     * @param array<int, T> $items
+     * @param callable(T): ?\DateTimeInterface $dateAccessor
+     * @return array{labels: array<int, string>, series: array<int, int>}
+     */
+    private function buildMonthlySeries(array $items, callable $dateAccessor, int $months = 6): array
+    {
+        $labels = [];
+        $series = [];
+        $counts = [];
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $month = (new \DateTimeImmutable('first day of this month'))->modify(sprintf('-%d months', $i));
+            $key = $month->format('Y-m');
+            $labels[] = $month->format('M Y');
+            $counts[$key] = 0;
+        }
+
+        foreach ($items as $item) {
+            $date = $dateAccessor($item);
+            if (!$date instanceof \DateTimeInterface) {
+                continue;
+            }
+
+            $key = $date->format('Y-m');
+            if (array_key_exists($key, $counts)) {
+                $counts[$key]++;
+            }
+        }
+
+        foreach ($counts as $count) {
+            $series[] = $count;
+        }
+
+        return ['labels' => $labels, 'series' => $series];
+    }
+
+    /**
+     * @template T of object
+     * @param array<int, T> $items
+     * @param callable(T): string $categoryAccessor
+     * @return array{labels: array<int, string>, series: array<int, int>}
+     */
+    private function buildCategorySeries(array $items, callable $categoryAccessor): array
+    {
+        $counts = [];
+
+        foreach ($items as $item) {
+            $label = trim($categoryAccessor($item));
+            if ($label === '') {
+                $label = 'Non défini';
+            }
+
+            $counts[$label] = ($counts[$label] ?? 0) + 1;
+        }
+
+        return [
+            'labels' => array_keys($counts),
+            'series' => array_values($counts),
+        ];
     }
 
     #[Route('/offres/{id}/quiz/new', name: 'admin_offre_quiz_new', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]

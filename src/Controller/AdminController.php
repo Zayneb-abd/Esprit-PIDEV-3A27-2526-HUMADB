@@ -36,11 +36,37 @@ class AdminController extends AbstractController
 {
     #[Route('/', name: 'admin_dashboard')]
     #[Route('/dashboard', name: 'admin_dashboard_alt')]
-    public function dashboard(UserRepository $userRepository, FeedbackRepository $feedbackRepository): Response
+    public function dashboard(
+        UserRepository $userRepository,
+        FeedbackRepository $feedbackRepository,
+        FormationRepository $formationRepository
+    ): Response
     {
         $totalUsers = $userRepository->count([]);
         $countByRole = $userRepository->countByRole();
         $recentUsers = $userRepository->findRecentUsers(5);
+
+        $formations = $formationRepository->findAll();
+        $participantsPerTraining = [];
+        $trainingLabels = [];
+        $resultsDistribution = [
+            'validé' => 0,
+            'non validé' => 0,
+            'en cours' => 0,
+        ];
+
+        foreach ($formations as $formation) {
+            $participations = $formation->getParticipations();
+            $participantsPerTraining[] = count($participations);
+            $trainingLabels[] = $formation->getSujet() ?? 'Formation ' . $formation->getId();
+
+            foreach ($participations as $participation) {
+                $resultat = $participation->getResultat() ?? 'en cours';
+                if (isset($resultsDistribution[$resultat])) {
+                    $resultsDistribution[$resultat]++;
+                }
+            }
+        }
 
         $feedbackByStatus = $feedbackRepository->countByStatus();
         $feedbackTimeline = $feedbackRepository->countByDayLastDays(7);
@@ -49,6 +75,9 @@ class AdminController extends AbstractController
             'total_users'  => $totalUsers,
             'count_by_role' => $countByRole,
             'recent_users' => $recentUsers,
+            'trainingLabels' => $trainingLabels,
+            'participantsPerTraining' => $participantsPerTraining,
+            'resultsDistribution' => $resultsDistribution,
             'feedback_by_status' => $feedbackByStatus,
             'feedback_timeline_labels' => $feedbackTimeline['labels'],
             'feedback_timeline_data' => $feedbackTimeline['data'],
@@ -311,83 +340,76 @@ class AdminController extends AbstractController
     // ─────────────── EXISTING ROUTES (preserved) ───────────────
 
 
-    #[Route('/inventory', name: 'admin_inventory')]
-    public function inventory(Request $request, OffreEmploiRepository $offreEmploiRepository, CandidatureRepository $candidatureRepository): Response
+    #[Route('/inventory-legacy', name: 'admin_inventory_legacy')]
+    public function inventory(Request $request): Response
     {
-        $offres = $offreEmploiRepository->findBy([], ['date_publication' => 'DESC', 'id' => 'DESC']);
-        $candidatures = $candidatureRepository->findBy([], ['date_candidature' => 'DESC', 'id' => 'DESC']);
-        $search = trim((string) $request->query->get('q', ''));
+        return $this->redirectToRoute('admin_inventory', [
+            'q' => (string) $request->query->get('q', ''),
+            'page' => (int) $request->query->get('page', 1),
+        ]);
+    }
 
-        if ($search !== '') {
-            $searchLower = mb_strtolower($search);
+    /**
+     * @template T of object
+     * @param array<int, T> $items
+     * @param callable(T): ?\DateTimeInterface $dateAccessor
+     * @return array{labels: array<int, string>, series: array<int, int>}
+     */
+    private function buildMonthlySeries(array $items, callable $dateAccessor, int $months = 6): array
+    {
+        $labels = [];
+        $series = [];
+        $counts = [];
 
-            $offres = array_values(array_filter(
-                $offres,
-                static function (OffreEmploi $offre) use ($searchLower): bool {
-                    $haystacks = [
-                        $offre->getTitre(),
-                        $offre->getDepartement(),
-                        $offre->getTypeContrat(),
-                        $offre->getDescription(),
-                    ];
-
-                    foreach ($haystacks as $value) {
-                        if ($value !== null && str_contains(mb_strtolower($value), $searchLower)) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }
-            ));
-
-            $candidatures = array_values(array_filter(
-                $candidatures,
-                static function (Candidature $candidature) use ($searchLower): bool {
-                    $user = $candidature->getUser();
-                    $offre = $candidature->getOffreEmploi();
-                    $haystacks = [
-                        $candidature->getStatut(),
-                        $candidature->getCv(),
-                        $user?->getNom(),
-                        $user?->getPrenom(),
-                        $user?->getEmail(),
-                        $offre?->getTitre(),
-                    ];
-
-                    foreach ($haystacks as $value) {
-                        if ($value !== null && str_contains(mb_strtolower($value), $searchLower)) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }
-            ));
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $month = (new \DateTimeImmutable('first day of this month'))->modify(sprintf('-%d months', $i));
+            $key = $month->format('Y-m');
+            $labels[] = $month->format('M Y');
+            $counts[$key] = 0;
         }
 
-        $totalPostes = array_reduce(
-            $offres,
-            static fn (int $carry, OffreEmploi $offre): int => $carry + ($offre->getNombrePostes() ?? 0),
-            0
-        );
+        foreach ($items as $item) {
+            $date = $dateAccessor($item);
+            if (!$date instanceof \DateTimeInterface) {
+                continue;
+            }
 
-        $candidaturesEnAttente = count(array_filter(
-            $candidatures,
-            static fn (Candidature $candidature): bool => $candidature->getStatut() === 'En attente'
-        ));
+            $key = $date->format('Y-m');
+            if (array_key_exists($key, $counts)) {
+                $counts[$key]++;
+            }
+        }
 
-        return $this->render('admin/inventory/index.html.twig', [
-            'offres' => $offres,
-            'candidatures' => $candidatures,
-            'search' => $search,
-            'stats' => [
-                'offres' => count($offres),
-                'candidatures' => count($candidatures),
-                'postes' => $totalPostes,
-                'candidatures_en_attente' => $candidaturesEnAttente,
-            ],
-        ]);
+        foreach ($counts as $count) {
+            $series[] = $count;
+        }
+
+        return ['labels' => $labels, 'series' => $series];
+    }
+
+    /**
+     * @template T of object
+     * @param array<int, T> $items
+     * @param callable(T): string $categoryAccessor
+     * @return array{labels: array<int, string>, series: array<int, int>}
+     */
+    private function buildCategorySeries(array $items, callable $categoryAccessor): array
+    {
+        $counts = [];
+
+        foreach ($items as $item) {
+            $label = trim($categoryAccessor($item));
+            if ($label === '') {
+                $label = 'Non défini';
+            }
+
+            $counts[$label] = ($counts[$label] ?? 0) + 1;
+        }
+
+        return [
+            'labels' => array_keys($counts),
+            'series' => array_values($counts),
+        ];
     }
 
     #[Route('/offres/new', name: 'admin_offre_new')]

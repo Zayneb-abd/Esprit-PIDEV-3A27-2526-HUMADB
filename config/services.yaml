@@ -30,5 +30,32 @@ services:
             $openAiApiKey: '%env(OPENAI_API_KEY)%'
             $openAiModel: '%env(OPENAI_MODEL)%'
 
+    App\Service\AIService:
+        arguments:
+            $groqApiKey: '%env(GROQ_API_KEY)%'
+
+    App\Service\CandidateCvManager:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Smalot\PdfParser\Parser: ~
+
+    App\Service\PdfCvPreviewService:
+        arguments:
+            $parser: '@Smalot\PdfParser\Parser'
+
+    App\Service\ExternalAiRecruitmentAnalyzer:
+        arguments:
+            $apiUrl: '%env(EXTERNAL_AI_API_URL)%'
+            $apiKey: '%env(EXTERNAL_AI_API_KEY)%'
+            $model: '%env(EXTERNAL_AI_MODEL)%'
+
+    App\Service\FacebookJobPublisher:
+        arguments:
+            $pageId: '%env(FACEBOOK_PAGE_ID)%'
+            $pageAccessToken: '%env(FACEBOOK_PAGE_ACCESS_TOKEN)%'
+            $graphApiVersion: '%env(resolve:FACEBOOK_GRAPH_API_VERSION)%'
+            $publicBaseUrl: '%env(resolve:APP_PUBLIC_BASE_URL)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -3,13 +3,13 @@
 namespace App\Service;
 
 use Endroid\QrCode\Builder\Builder;
-use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\Writer\SvgWriter;
 
 class QrCodeService
 {
-    public function generateQrCodeBase64(string $data, string $label = null): string
+    public function generateQrCodeBase64(string $data, ?string $label = null): string
     {
         $builder = Builder::create()
             ->writer(new SvgWriter())

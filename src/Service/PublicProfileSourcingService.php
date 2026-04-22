@@ -114,6 +114,9 @@ class PublicProfileSourcingService
     public function searchForOffer(OffreEmploi $offreEmploi, int $limit = 8): array
     {
         $discoveredProfiles = $this->scrapingBot->discoverProfilesForOffer($offreEmploi, $limit);
+        if ($discoveredProfiles === []) {
+            $discoveredProfiles = $this->scrapingBot->discoverSymfonyDeveloperProfiles($limit);
+        }
         $results = [];
 
         foreach ($discoveredProfiles as $candidate) {

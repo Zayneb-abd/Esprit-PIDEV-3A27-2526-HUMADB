@@ -1,7 +1,9 @@
 security:
     password_hashers:
         App\Entity\User:
-            algorithm: plaintext
+            algorithm: auto
+            migrate_from:
+                - plaintext
 
     providers:
         app_user_provider:
