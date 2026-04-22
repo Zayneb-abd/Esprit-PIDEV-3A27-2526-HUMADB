@@ -394,6 +394,68 @@ Utilite:
 
 - salle video publique sans login
 
+### KnpPaginatorBundle
+
+Utilite:
+
+- pagination des listes du module recrutement
+- affichage des offres, candidatures et resultats en plusieurs pages
+
+Chemins principaux:
+
+- [src/Controller/AdminERecruitmentController.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Controller/AdminERecruitmentController.php)
+- [templates/admin/recrutment/recrutment.html.twig](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/templates/admin/recrutment/recrutment.html.twig)
+
+---
+
+## Mise a jour du module recrutement
+
+### Integration et personnalisation d'un ou plusieurs bundles externes
+
+- **VichUploaderBundle**
+  - chemin: [config/packages/vich_uploader.yaml](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/config/packages/vich_uploader.yaml)
+  - usage: upload et gestion des fichiers utilises par le recrutement
+- **KnpPaginatorBundle**
+  - chemin: [src/Controller/AdminERecruitmentController.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Controller/AdminERecruitmentController.php)
+  - vue: [templates/admin/recrutment/recrutment.html.twig](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/templates/admin/recrutment/recrutment.html.twig)
+  - usage: pagination des offres et des candidatures
+
+### Integration des API
+
+- **Jitsi Meet**
+  - chemin: [src/Service/JitsiMeetService.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Service/JitsiMeetService.php)
+  - usage: generation de liens de visio pour les entretiens
+- **API IA compatible OpenAI/Groq**
+  - chemin: [src/Service/ExternalAiRecruitmentAnalyzer.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Service/ExternalAiRecruitmentAnalyzer.php)
+  - configuration: [config/services.yaml](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/config/services.yaml)
+  - usage: analyse automatique offre/profil
+
+### Integration de l'IA
+
+- **QuizGenerationService**
+  - chemin: [src/Service/QuizGenerationService.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Service/QuizGenerationService.php)
+  - usage: generation automatique de quiz de recrutement
+- **ExternalAiRecruitmentAnalyzer**
+  - chemin: [src/Service/ExternalAiRecruitmentAnalyzer.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Service/ExternalAiRecruitmentAnalyzer.php)
+  - usage: score, synthese, recommandations, forces et risques
+- **RecruitmentProfileScrapingBot**
+  - chemin: [src/Service/RecruitmentProfileScrapingBot.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Service/RecruitmentProfileScrapingBot.php)
+  - usage: extraction et normalisation de profils candidats publics
+
+### Developpement de fonctionnalites metiers avancees
+
+- gestion complete des offres et des candidatures
+  - chemin: [src/Controller/AdminERecruitmentController.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Controller/AdminERecruitmentController.php)
+- postulation candidat en deux etapes avec CV PDF
+  - chemin: [src/Controller/CondidatController.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Controller/CondidatController.php)
+  - formulaire: [src/Form/CandidatPostulationType.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Form/CandidatPostulationType.php)
+- quiz de recrutement avec correction automatique
+  - chemin: [src/Controller/CandidatQuizController.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Controller/CandidatQuizController.php)
+  - service: [src/Service/QuizEvaluator.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Service/QuizEvaluator.php)
+- planification des entretiens et lien Jitsi
+  - chemin: [src/Form/EntretienType.php](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/src/Form/EntretienType.php)
+  - vues: [templates/admin/candidature/show.html.twig](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/templates/admin/candidature/show.html.twig), [templates/candidat/offre/show.html.twig](/Applications/MAMP/htdocs/Esprit-PIDEV-3A27-2526-HUMADB/templates/candidat/offre/show.html.twig)
+
 ---
 
 ## Points techniques importants
@@ -459,4 +521,3 @@ Ce n'est pas encore:
 3. Ajouter notifications email pour quiz et entretien.
 4. Ajouter analyse IA avancee via API externe.
 5. Ajouter import legal de profils depuis CSV ou API autorisee.
-

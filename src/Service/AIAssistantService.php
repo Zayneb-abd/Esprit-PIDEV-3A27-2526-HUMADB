@@ -387,8 +387,7 @@ class AIAssistantService
 
         $conge = new Conge();
         $conge->setUser($user);
-        $conge->setNbJours($parsedRequest['nb_jours']);
-        $conge->setMotif('Demande créée par l\'assistant IA');
+        $conge->setCommentaireValidation('Demande créée par l\'assistant IA');
         $conge->setDateDemande(new \DateTime());
         
         // Créer l'absence associée

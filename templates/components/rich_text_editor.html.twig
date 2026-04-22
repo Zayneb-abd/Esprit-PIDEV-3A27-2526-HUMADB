@@ -1,0 +1,34 @@
+<script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js"></script>
+<script>
+(function () {
+    function initPublicationEditors() {
+        if (!window.tinymce) {
+            return;
+        }
+
+        document.querySelectorAll('textarea.js-rich-editor').forEach(function (textarea) {
+            if (textarea.dataset.richEditorInitialized === '1') {
+                return;
+            }
+
+            textarea.dataset.richEditorInitialized = '1';
+            tinymce.init({
+                target: textarea,
+                height: 360,
+                menubar: false,
+                plugins: 'link lists code table autoresize',
+                toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link table | removeformat | code',
+                branding: false,
+                promotion: false,
+                content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }'
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPublicationEditors);
+    } else {
+        initPublicationEditors();
+    }
+})();
+</script>
