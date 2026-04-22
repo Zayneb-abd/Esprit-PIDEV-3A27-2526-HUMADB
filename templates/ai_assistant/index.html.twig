@@ -1,0 +1,333 @@
+{% extends user.role == 'MANAGER' ? 'manager/base_manager.html.twig' : 'employ/base_employe.html.twig' %}
+
+{% block title %}🤖 Assistant IA - Demande de Congés{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 500px;
+        }
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 12px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        .chat-message.user {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        .chat-message.ai {
+            background: white;
+            border: 1px solid #dee2e6;
+            color: #333;
+        }
+        .chat-message.ai .suggestion-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .chat-input {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        .suggestion-pills {
+            margin-bottom: 15px;
+        }
+        .suggestion-pill {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background: #e9ecef;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .suggestion-pill:hover {
+            background: #007bff;
+            color: white;
+        }
+        .typing-indicator {
+            display: none;
+            padding: 10px;
+            color: #6c757d;
+            font-style: italic;
+        }
+        .typing-indicator.active {
+            display: block;
+        }
+        .confirmation-buttons {
+            margin-top: 15px;
+        }
+        .date-highlight {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .conflict-warning {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .conflict-critical {
+            color: #721c24;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><span class="text-primary">🤖</span> Assistant IA - Demande de Congés</h1>
+                <a href="{{ path(role == 'MANAGER' ? 'manager_conges' : 'employ_conges') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            <div class="suggestion-pills text-center">
+                <span class="suggestion-pill" onclick="setMessage('Je veux 3 jours de congé la semaine prochaine')">
+                    📅 3 jours semaine prochaine
+                </span>
+                <span class="suggestion-pill" onclick="setMessage('Congé maladie demain')">
+                    🤒 Maladie demain
+                </span>
+                <span class="suggestion-pill" onclick="setMessage('Je pars du 15/04 au 20/04')">
+                    🗓️ Du 15/04 au 20/04
+                </span>
+                <span class="suggestion-pill" onclick="setMessage('5 jours à partir du 1er mai')">
+                    🌸 5 jours en mai
+                </span>
+                <span class="suggestion-pill" onclick="setMessage('Congé familial naissance du 10/05 au 12/05')">
+                    👶 Naissance 10-12/05
+                </span>
+            </div>
+
+            <div class="chat-container" id="chatContainer">
+                <!-- Message de bienvenue -->
+                <div class="chat-message ai">
+                    <strong>🤖 Assistant IA</strong><br>
+                    Bonjour {{ user.prenom }} ! Je suis là pour vous aider à créer votre demande de congé.
+                    <br><br>
+                    <strong>Exemples de ce que vous pouvez me demander :</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>"Je veux 5 jours de congé la semaine prochaine"</li>
+                        <li>"Demain je suis malade"</li>
+                        <li>"Du 15/04 au 20/04 en congé annuel"</li>
+                        <li>"3 jours à partir de lundi prochain"</li>
+                    </ul>
+                    <br>
+                    <small class="text-muted">💡 Je vérifie automatiquement votre solde et les conflits d'équipe !</small>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                🤖 L'assistant réfléchit...
+            </div>
+
+            <div class="chat-input mt-3">
+                <form id="chatForm" onsubmit="handleSubmit(event)">
+                    <div class="input-group">
+                        <input type="text" 
+                               id="messageInput" 
+                               class="form-control" 
+                               placeholder="Décrivez votre demande de congé..."
+                               autocomplete="off">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Envoyer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+    let currentParsedRequest = null;
+
+    function setMessage(text) {
+        document.getElementById('messageInput').value = text;
+        document.getElementById('messageInput').focus();
+    }
+
+    function addMessage(text, isUser = false) {
+        const container = document.getElementById('chatContainer');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${isUser ? 'user' : 'ai'}`;
+        messageDiv.innerHTML = isUser ? text : `<strong>🤖 Assistant IA</strong><br>${text}`;
+        container.appendChild(messageDiv);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function showTyping() {
+        document.getElementById('typingIndicator').classList.add('active');
+    }
+
+    function hideTyping() {
+        document.getElementById('typingIndicator').classList.remove('active');
+    }
+
+    async function handleSubmit(event) {
+        event.preventDefault();
+        
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        // Afficher le message de l'utilisateur
+        addMessage(message, true);
+        input.value = '';
+        
+        // Montrer l'indicateur de frappe
+        showTyping();
+        
+        try {
+            // Envoyer au serveur
+            const response = await fetch('{{ path('ai_assistant_parse') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ message: message })
+            });
+            
+            const data = await response.json();
+            hideTyping();
+            
+            if (data.success) {
+                currentParsedRequest = data;
+                displayAIResponse(data);
+            } else {
+                addMessage('❌ Désolé, je n\'ai pas compris. Pouvez-vous reformuler ?');
+            }
+        } catch (error) {
+            hideTyping();
+            addMessage('❌ Une erreur est survenue. Veuillez réessayer.');
+            console.error(error);
+        }
+    }
+
+    function displayAIResponse(data) {
+        let html = `<div class="suggestion-box">`;
+        html += data.suggestion.replace(/\n/g, '<br>');
+        
+        // Afficher les dates détectées
+        if (data.dates && data.dates.debut && data.dates.fin) {
+            html += `<br><br><strong>📅 Dates :</strong> `;
+            html += `<span class="date-highlight">${formatDate(data.dates.debut)}</span> `;
+            html += `au <span class="date-highlight">${formatDate(data.dates.fin)}</span>`;
+            html += ` (${data.nb_jours} jour${data.nb_jours > 1 ? 's' : ''})`;
+        }
+        
+        html += `</div>`;
+        
+        // Boutons de confirmation si possible
+        if (data.can_create) {
+            html += `
+                <div class="confirmation-buttons">
+                    <button onclick="createRequest()" class="btn btn-success">
+                        <i class="fas fa-check"></i> ✅ Confirmer et créer la demande
+                    </button>
+                    <button onclick="modifyRequest()" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-edit"></i> Modifier
+                    </button>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="mt-3">
+                    <button onclick="modifyRequest()" class="btn btn-outline-primary">
+                        <i class="fas fa-redo"></i> Essayer avec d'autres dates
+                    </button>
+                </div>
+            `;
+        }
+        
+        addMessage(html, false);
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR');
+    }
+
+    async function createRequest() {
+        if (!currentParsedRequest) return;
+        
+        showTyping();
+        
+        try {
+            const response = await fetch('{{ path('ai_assistant_create') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ 
+                    parsed_request: currentParsedRequest 
+                })
+            });
+            
+            const data = await response.json();
+            hideTyping();
+            
+            if (data.success) {
+                addMessage(`
+                    <div class="alert alert-success">
+                        <strong>🎉 Demande créée avec succès !</strong><br>
+                        ${data.message}<br><br>
+                        <a href="${data.redirect_url}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-list"></i> Voir mes congés
+                        </a>
+                    </div>
+                `, false);
+            } else {
+                addMessage(`❌ Erreur : ${data.error}`);
+            }
+        } catch (error) {
+            hideTyping();
+            addMessage('❌ Une erreur est survenue lors de la création.');
+        }
+    }
+
+    function modifyRequest() {
+        addMessage('
+            <div class="suggestion-box">
+                <strong>📝 D\'accord, modifions votre demande.</strong><br>
+                Décrivez vos nouvelles dates ou préférences :
+            </div>
+        ', false);
+        document.getElementById('messageInput').focus();
+    }
+
+    // Focus sur l'input au chargement
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('messageInput').focus();
+    });
+</script>
+{% endblock %}
+{% endblock %}

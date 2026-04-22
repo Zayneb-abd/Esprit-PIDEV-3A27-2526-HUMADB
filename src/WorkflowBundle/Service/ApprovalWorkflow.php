@@ -5,15 +5,18 @@ namespace App\WorkflowBundle\Service;
 use App\Entity\Conge;
 use App\Entity\Absence;
 use App\WorkflowBundle\Entity\ApprovalHistory;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 
 class ApprovalWorkflow
 {
     private EntityManagerInterface $em;
+    private NotificationService $notificationService;
     
-    public function __construct(EntityManagerInterface $em)
+    public function __construct(EntityManagerInterface $em, NotificationService $notificationService)
     {
         $this->em = $em;
+        $this->notificationService = $notificationService;
     }
     
     /**
@@ -60,7 +63,8 @@ class ApprovalWorkflow
         $this->em->persist($history);
         $this->em->flush();
         
-        // TODO: Send notification to employee
+        // Send notification to employee
+        $this->notificationService->notifyEmployeeRequestApproved($conge, $comment);
         
         return [
             'success' => true,
@@ -165,6 +169,9 @@ class ApprovalWorkflow
         $this->em->persist($absence);
         $this->em->persist($history);
         $this->em->flush();
+        
+        // Send notification to employee
+        $this->notificationService->notifyEmployeeRequestRejected($absence, $comment);
         
         return [
             'success' => true,

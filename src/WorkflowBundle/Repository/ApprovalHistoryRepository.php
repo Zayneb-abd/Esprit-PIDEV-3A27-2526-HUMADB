@@ -34,4 +34,36 @@ class ApprovalHistoryRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findByApprover($approver): array
+    {
+        return $this->createQueryBuilder('h')
+            ->andWhere('h.approver = :approver')
+            ->setParameter('approver', $approver)
+            ->orderBy('h.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findAllOrdered(): array
+    {
+        return $this->createQueryBuilder('h')
+            ->orderBy('h.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findByEmployee($employee): array
+    {
+        return $this->createQueryBuilder('h')
+            ->leftJoin('h.conge', 'c')
+            ->leftJoin('h.absence', 'a')
+            ->leftJoin('c.user', 'cu')
+            ->leftJoin('a.user', 'au')
+            ->andWhere('cu = :employee OR au = :employee')
+            ->setParameter('employee', $employee)
+            ->orderBy('h.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

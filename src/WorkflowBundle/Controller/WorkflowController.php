@@ -7,6 +7,7 @@ use App\Entity\Absence;
 use App\Repository\CongeRepository;
 use App\Repository\AbsenceRepository;
 use App\WorkflowBundle\Service\ApprovalWorkflow;
+use App\WorkflowBundle\Repository\ApprovalHistoryRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -151,17 +152,20 @@ class WorkflowController extends AbstractController
     }
     
     #[Route('/history', name: 'workflow_history')]
-    public function history(): Response
+    public function history(ApprovalHistoryRepository $historyRepo): Response
     {
         $user = $this->getUser();
         
         // Get approval history based on user role
         if ($user->getRole() === 'MANAGER') {
-            $history = []; // TODO: Get manager's team approval history
+            // Get all team history where approver is this manager
+            $history = $historyRepo->findByApprover($user);
         } elseif ($user->getRole() === 'ADMIN_RH') {
-            $history = []; // TODO: Get all approval history
+            // Get all history
+            $history = $historyRepo->findAllOrdered();
         } else {
-            $history = []; // TODO: Get personal approval history
+            // Employee: get history for their requests
+            $history = $historyRepo->findByEmployee($user);
         }
         
         return $this->render('@Workflow/workflow/history.html.twig', [

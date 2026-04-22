@@ -7,6 +7,8 @@ use App\Entity\Absence;
 use App\Repository\CongeRepository;
 use App\Repository\AbsenceRepository;
 use App\Repository\UserRepository;
+use App\Repository\JourFerieRepository;
+use App\Service\JourFerieService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,7 +21,8 @@ class PlanningController extends AbstractController
     public function calendar(
         CongeRepository $congeRepository,
         AbsenceRepository $absenceRepository,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        JourFerieService $jourFerieService
     ): Response {
         $user = $this->getUser();
         $year = date('Y');
@@ -45,6 +48,25 @@ class PlanningController extends AbstractController
         // Convert to calendar events
         $events = $this->convertToEvents($conges, $absences);
         
+        // Get holidays for the current month
+        $start = new \DateTime("{$year}-{$month}-01");
+        $end = clone $start;
+        $end->modify('last day of this month');
+        $joursFeries = $jourFerieService->getJoursFeriesForPeriod($start, $end, 'TN');
+        
+        // Add holidays to events
+        foreach ($joursFeries as $jour) {
+            $events[] = [
+                'id' => 'holiday_' . $jour->getId(),
+                'title' => '🎉 ' . $jour->getNom(),
+                'start' => $jour->getDate()->format('Y-m-d'),
+                'end' => $jour->getDate()->format('Y-m-d'),
+                'color' => '#dc3545',
+                'type' => 'holiday',
+                'allDay' => true
+            ];
+        }
+        
         // Calculate conflict risks
         $conflicts = $this->detectConflicts($events, $teamMembers ?? []);
         
@@ -66,6 +88,7 @@ class PlanningController extends AbstractController
             'current_year' => $year,
             'calendar_days' => $calendarDays,
             'teamMembers' => $teamMembers ?? [],
+            'joursFeries' => $joursFeries,
         ]);
     }
     
