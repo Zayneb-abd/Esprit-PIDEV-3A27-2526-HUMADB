@@ -1,0 +1,10 @@
+fos_ck_editor:
+    default_config: publication
+    base_path: https://cdn.ckeditor.com/4.25.1-lts/full
+    js_path: https://cdn.ckeditor.com/4.25.1-lts/full/ckeditor.js
+    configs:
+        publication:
+            toolbar: basic
+            height: 360
+            language: fr
+            removePlugins: elementspath

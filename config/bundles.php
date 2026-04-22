@@ -15,6 +15,7 @@ return [
     Symfony\Bundle\MakerBundle\MakerBundle::class => ['dev' => true],
     Vich\UploaderBundle\VichUploaderBundle::class => ['all' => true],
     Knp\Bundle\PaginatorBundle\KnpPaginatorBundle::class => ['all' => true],
+    FOS\CKEditorBundle\FOSCKEditorBundle::class => ['all' => true],
     App\ReportBundle\ReportBundle::class => ['all' => true],
     App\WorkflowBundle\WorkflowBundle::class => ['all' => true],
     App\PlanningBundle\PlanningBundle::class => ['all' => true],

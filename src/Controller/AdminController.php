@@ -34,6 +34,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
@@ -972,7 +974,13 @@ class AdminController extends AbstractController
     }
 
     #[Route('/conge/{id}/edit', name: 'admin_conge_edit', methods: ['GET', 'POST'])]
-    public function editConge(Conge $conge, Request $request, EntityManagerInterface $em, UserRepository $userRepository): Response
+    public function editConge(
+        Conge $conge,
+        Request $request,
+        EntityManagerInterface $em,
+        UserRepository $userRepository,
+        MailerInterface $mailer
+    ): Response
     {
         $users = $userRepository->findAll();
         $errors = [];
@@ -1044,6 +1052,7 @@ class AdminController extends AbstractController
             // Si pas d'erreurs, mettre à jour
             if (empty($errors)) {
                 $absence = $conge->getAbsence();
+                $previousStatus = $absence ? $absence->getStatut() : null;
                 $absence->setDateDebut(new \DateTime($dateDebutStr));
                 $absence->setDateFin(new \DateTime($dateFinStr));
                 $absence->setTypeAbsence($typeAbsence);
@@ -1062,6 +1071,27 @@ class AdminController extends AbstractController
                     }
 
                     $em->flush();
+
+                    if ($absence->getUser() && $previousStatus !== $statut && in_array($statut, ['approuve', 'refuse'], true)) {
+                        try {
+                            $email = (new TemplatedEmail())
+                                ->from('noreply@huma.tn')
+                                ->to($absence->getUser()->getEmail())
+                                ->subject($statut === 'approuve' ? 'Votre demande de congé a été approuvée' : 'Votre demande de congé a été refusée')
+                                ->htmlTemplate($statut === 'approuve' ? 'emails/conge_approved.html.twig' : 'emails/conge_rejected.html.twig')
+                                ->context([
+                                    'user' => $absence->getUser(),
+                                    'conge' => $conge,
+                                    'absence' => $absence,
+                                    'comment' => $conge->getCommentaireValidation(),
+                                    'reason' => $conge->getCommentaireValidation(),
+                                ]);
+
+                            $mailer->send($email);
+                        } catch (\Throwable) {
+                            $this->addFlash('warning', 'Le congé a été enregistré, mais l\'email n\'a pas pu être envoyé.');
+                        }
+                    }
 
                     $this->addFlash('success', 'Demande de congé modifiée avec succès.');
                     return $this->redirectToRoute('admin_conge');
