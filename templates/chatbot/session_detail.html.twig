@@ -1,0 +1,345 @@
+{% extends 'base_user.html.twig' %}
+
+{% block title %}Chat Session - {{ sessionId|slice(0, 8) }}...{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('css/chatbot.css') }}">
+    <style>
+        .session-detail-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: 'Rajdhani', sans-serif;
+        }
+        
+        .session-header {
+            background: rgba(10, 10, 15, 0.9);
+            border: 1px solid rgba(0,245,255,0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .session-info h1 {
+            font-family: 'Orbitron', monospace;
+            color: #00f5ff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 0 5px 0;
+        }
+        
+        .session-info .session-meta {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+        }
+        
+        .session-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            background: rgba(0,245,255,0.1);
+            border: 1px solid rgba(0,245,255,0.4);
+            color: #00f5ff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+        }
+        
+        .action-btn:hover {
+            background: rgba(0,245,255,0.2);
+            box-shadow: 0 0 10px rgba(0,245,255,0.5);
+            transform: translateY(-1px);
+        }
+        
+        .danger-btn {
+            background: rgba(255,0,110,0.1);
+            border-color: rgba(255,0,110,0.4);
+            color: #ff006e;
+        }
+        
+        .danger-btn:hover {
+            background: rgba(255,0,110,0.2);
+            box-shadow: 0 0 10px rgba(255,0,110,0.5);
+        }
+        
+        .messages-container {
+            background: rgba(10, 10, 15, 0.9);
+            border: 1px solid rgba(0,245,255,0.3);
+            border-radius: 16px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .messages-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .messages-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #00f5ff;
+            border-radius: 2px;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            animation: slide-up 0.3s ease-out;
+        }
+        
+        .message-user {
+            text-align: right;
+        }
+        
+        .message-bubble {
+            display: inline-block;
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+        }
+        
+        .message-user .message-bubble {
+            background: linear-gradient(135deg, #bf00ff, #7b00ff);
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+            box-shadow: 0 0 10px rgba(191,0,255,0.5);
+        }
+        
+        .message-bot .message-bubble {
+            background: rgba(0,245,255,0.1);
+            color: #e0e0ff;
+            border: 1px solid rgba(0,245,255,0.3);
+            border-radius: 18px 18px 18px 4px;
+            box-shadow: 0 0 10px rgba(0,245,255,0.2);
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 5px;
+            font-family: 'Orbitron', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .message-user .message-time {
+            text-align: right;
+        }
+        
+        .message-role {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .message-user .message-role {
+            color: #bf00ff;
+            text-align: right;
+        }
+        
+        .message-bot .message-role {
+            color: #00f5ff;
+        }
+        
+        .empty-session {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .empty-session h2 {
+            font-family: 'Orbitron', monospace;
+            color: #00f5ff;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,245,255,0.1);
+            border: 1px solid rgba(0,245,255,0.4);
+            color: #00f5ff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 500;
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+        
+        .back-btn:hover {
+            background: rgba(0,245,255,0.2);
+            box-shadow: 0 0 10px rgba(0,245,255,0.5);
+        }
+        
+        @media (max-width: 768px) {
+            .session-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .session-actions {
+                justify-content: center;
+            }
+            
+            .message-bubble {
+                max-width: 85%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="session-detail-container">
+        <a href="{{ path('chatbot_history') }}" class="back-btn">â Back to History</a>
+        
+        <div class="session-header">
+            <div class="session-info">
+                <h1>Chat Session</h1>
+                <div class="session-meta">
+                    Session ID: {{ sessionId|slice(0, 8) }}... | 
+                    {% if messages|length > 0 %}
+                        {{ messages|length }} messages | 
+                        Started: {{ messages[0].createdAt|date('M j, Y g:i A') }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="session-actions">
+                <button class="action-btn" onclick="window.print()">
+                    ð Print
+                </button>
+                <button class="action-btn" onclick="continueChat()">
+                    ð Continue Chat
+                </button>
+                <button class="action-btn danger-btn" onclick="clearSession()">
+                    ð Clear Session
+                </button>
+            </div>
+        </div>
+        
+        <div class="messages-container">
+            {% if messages|length > 0 %}
+                {% for message in messages %}
+                    <div class="message message-{{ message.role }}">
+                        <div class="message-role">
+                            {% if message.role == 'user' %}
+                                You
+                            {% else %}
+                                HumaBot
+                            {% endif %}
+                        </div>
+                        <div class="message-bubble">
+                            {{ message.content|nl2br }}
+                        </div>
+                        <div class="message-time">
+                            {{ message.createdAt|date('g:i A') }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-session">
+                    <h2>No Messages Found</h2>
+                    <p>This session appears to be empty or has been cleared.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function continueChat() {
+            if (window.HumaChatbot) {
+                window.HumaChatbot.open();
+                // Set the session ID if available
+                {% if sessionId %}
+                    localStorage.setItem('chatbot_session', '{{ sessionId }}');
+                {% endif %}
+            } else {
+                // Fallback: go to a page with the chatbot
+                window.location.href = '{{ path("app_user_index") }}';
+            }
+        }
+        
+        async function clearSession() {
+            if (!confirm('Are you sure you want to clear this entire chat session? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/chatbot/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        session_id: '{{ sessionId }}'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('Chat session cleared successfully.');
+                        window.location.href = '{{ path("chatbot_history") }}';
+                    } else {
+                        alert('Failed to clear session: ' + (data.error || 'Unknown error'));
+                    }
+                } else {
+                    alert('Failed to clear session. Please try again.');
+                }
+            } catch (error) {
+                console.error('Clear session error:', error);
+                alert('An error occurred while clearing the session.');
+            }
+        }
+        
+        // Auto-scroll to bottom when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.messages-container');
+            if (container) {
+                setTimeout(() => {
+                    container.scrollTop = container.scrollHeight;
+                }, 100);
+            }
+        });
+    </script>
+{% endblock %}

@@ -11,6 +11,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\UserRepository;
+use App\Entity\ChatMessage;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
@@ -581,6 +582,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: User::class, mappedBy: 'user')]
     private Collection $users;
 
+    #[ORM\OneToMany(targetEntity: ChatMessage::class, mappedBy: 'user')]
+    private Collection $chatMessages;
+
     public function __construct()
     {
         $this->absences = new ArrayCollection();
@@ -596,6 +600,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->resultatQuizs = new ArrayCollection();
         $this->users = new ArrayCollection();
         $this->notifications = new ArrayCollection();
+        $this->chatMessages = new ArrayCollection();
     }
 
     #[ORM\OneToMany(targetEntity: Notification::class, mappedBy: 'user')]
@@ -686,6 +691,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getPassword(): string
     {
         return $this->mdp;
+    }
+
+    /**
+     * @return Collection<int, ChatMessage>
+     */
+    public function getChatMessages(): Collection
+    {
+        if (!$this->chatMessages instanceof Collection) {
+            $this->chatMessages = new ArrayCollection();
+        }
+        return $this->chatMessages;
+    }
+
+    public function addChatMessage(ChatMessage $chatMessage): self
+    {
+        if (!$this->getChatMessages()->contains($chatMessage)) {
+            $this->getChatMessages()->add($chatMessage);
+        }
+        return $this;
+    }
+
+    public function removeChatMessage(ChatMessage $chatMessage): self
+    {
+        $this->getChatMessages()->removeElement($chatMessage);
+        return $this;
     }
 
     private function normalizeSecurityRolesToDatabaseRole(array $roles): ?string

@@ -265,4 +265,11 @@
     });
 })();
 </script>
+
+{# HumaBot AI Support Chatbot - Only on feedback pages #}
+{% if app.user %}
+    {% include 'chatbot/_widget.html.twig' %}
+    <link rel="stylesheet" href="{{ asset('css/chatbot.css') }}">
+    <script src="{{ asset('js/chatbot.js') }}"></script>
+{% endif %}
 {% endblock %}

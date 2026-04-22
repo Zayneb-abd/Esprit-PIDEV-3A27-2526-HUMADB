@@ -1,0 +1,80 @@
+{# HumaBot - AI Support Chatbot Widget #}
+{# Floating chatbot interface for employee support #}
+
+<!-- Floating Toggle Button -->
+<button id="chatbot-toggle" class="chatbot-fab">
+    <span>ð¤</span>
+    <span>HumaBot</span>
+    <span class="chatbot-badge" id="chatbot-badge" style="display: none;">1</span>
+</button>
+
+<!-- Chat Window -->
+<div id="chatbot-window" class="chatbot-window hidden">
+    
+    <!-- Header -->
+    <div class="chatbot-header">
+        <div class="chatbot-avatar">ð¤</div>
+        <div class="chatbot-info">
+            <span class="chatbot-name">HumaBot</span>
+            <span class="chatbot-status">Online</span>
+        </div>
+        <div class="chatbot-actions">
+            <button id="chatbot-clear" title="Clear chat history">â²</button>
+            <button id="chatbot-close" title="Close chat">â</button>
+        </div>
+    </div>
+
+    <!-- Messages Area -->
+    <div id="chatbot-messages" class="chatbot-messages">
+        <!-- Welcome message will be injected by JavaScript -->
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="chatbot-typing" class="chatbot-typing hidden">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <!-- Quick Questions -->
+    <div class="chatbot-quick-btns">
+        <button class="quick-btn" data-msg="How do I submit feedback?">
+            ð Submit feedback
+        </button>
+        <button class="quick-btn" data-msg="What is my reputation score?">
+            â Reputation
+        </button>
+        <button class="quick-btn" data-msg="How do I reset my password?">
+            ð Reset password
+        </button>
+        <button class="quick-btn" data-msg="How do I contact admin?">
+            ð Contact admin
+        </button>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chatbot-input-area">
+        <input 
+            type="text" 
+            id="chatbot-input" 
+            placeholder="Ask HumaBot anything..."
+            autocomplete="off"
+            maxlength="500"
+        />
+        <button id="chatbot-send" title="Send message">â¤</button>
+    </div>
+
+</div>
+
+{# Add link to chat history for authenticated users #}
+{% if app.user %}
+    <div style="position: fixed; bottom: 30px; right: 180px; z-index: 9997;">
+        <a href="{{ path('chatbot_history') }}" 
+           style="color: #00f5ff; font-family: 'Orbitron', monospace; font-size: 10px; text-decoration: none; opacity: 0.7; transition: opacity 0.2s;"
+           onmouseover="this.style.opacity='1'"
+           onmouseout="this.style.opacity='0.7'"
+           title="View chat history">
+            ð History
+        </a>
+    </div>
+{% endif %}
