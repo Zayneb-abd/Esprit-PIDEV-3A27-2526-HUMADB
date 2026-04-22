@@ -1,0 +1,183 @@
+<div class="chatbot-assistant" style="position: fixed; right: 20px; top: 100px; width: 350px; height: 500px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; display: flex; flex-direction: column;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px 8px 0 0;">
+        <h5 style="margin: 0; font-size: 16px; font-weight: bold;">🤖 Assistant IA</h5>
+        <small style="opacity: 0.9;">Aide à créer des publications</small>
+    </div>
+    
+    <div style="padding: 15px; flex: 1; overflow-y: auto;">
+        <div class="mb-3">
+            <label for="chatbot-subject" style="display: block; margin-bottom: 5px; font-weight: 500;">Sujet de la publication:</label>
+            <input type="text" id="chatbot-subject" class="form-control" placeholder="Ex: Nouveau collaborateur" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <div class="mb-3">
+            <label for="chatbot-context" style="display: block; margin-bottom: 5px; font-weight: 500;">Contexte (optionnel):</label>
+            <textarea id="chatbot-context" class="form-control" rows="3" placeholder="Ex: Développeur Symfony avec 3 ans d'expérience" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+        </div>
+        
+        <button id="generate-suggestion" class="btn btn-primary" style="width: 100%; padding: 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            🚀 Générer une suggestion
+        </button>
+        
+        <div id="chatbot-loading" style="display: none; text-align: center; padding: 20px;">
+            <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-radius: 50%; border-top-color: #667eea; animation: spin 1s linear infinite;"></div>
+            <small style="display: block; margin-top: 10px; color: #666;">Génération en cours...</small>
+        </div>
+        
+        <div id="chatbot-result" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 4px; border-left: 4px solid #667eea;">
+            <div id="chatbot-suggestion"></div>
+            <button id="apply-suggestion" class="btn btn-success btn-sm mt-2" style="display: none;">
+                ✅ Appliquer cette suggestion
+            </button>
+        </div>
+        
+        <div id="chatbot-error" style="display: none; margin-top: 15px; padding: 15px; background: #f8d7da; border-radius: 4px; border-left: 4px solid #dc3545; color: #721c24;">
+            <div id="chatbot-error-message"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.chatbot-assistant {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.chatbot-assistant input:focus,
+.chatbot-assistant textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.chatbot-assistant button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.chatbot-assistant button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const generateBtn = document.getElementById('generate-suggestion');
+    const applyBtn = document.getElementById('apply-suggestion');
+    const loadingDiv = document.getElementById('chatbot-loading');
+    const resultDiv = document.getElementById('chatbot-result');
+    const errorDiv = document.getElementById('chatbot-error');
+    const suggestionDiv = document.getElementById('chatbot-suggestion');
+    const errorMessageDiv = document.getElementById('chatbot-error-message');
+    
+    generateBtn.addEventListener('click', generateSuggestion);
+    applyBtn.addEventListener('click', applySuggestion);
+    
+    async function generateSuggestion() {
+        const subject = document.getElementById('chatbot-subject').value.trim();
+        const context = document.getElementById('chatbot-context').value.trim();
+        
+        if (!subject) {
+            showError('Veuillez entrer un sujet pour la publication.');
+            return;
+        }
+        
+        // Afficher le chargement
+        generateBtn.style.display = 'none';
+        loadingDiv.style.display = 'block';
+        resultDiv.style.display = 'none';
+        errorDiv.style.display = 'none';
+        
+        try {
+            const response = await fetch('/chatbot/suggest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'subject': subject,
+                    'context': context
+                })
+            });
+            
+            const data = await response.json();
+            
+            // Masquer le chargement
+            loadingDiv.style.display = 'none';
+            
+            if (data.success) {
+                showSuccess(data.suggestion);
+            } else {
+                showError(data.error || 'Erreur lors de la génération de la suggestion.');
+            }
+        } catch (error) {
+            loadingDiv.style.display = 'none';
+            showError('Erreur de connexion au serveur. Veuillez réessayer.');
+        }
+    }
+    
+    function showSuccess(suggestion) {
+        suggestionDiv.innerHTML = suggestion.replace(/\n/g, '<br>');
+        resultDiv.style.display = 'block';
+        applyBtn.style.display = 'inline-block';
+    }
+    
+    function showError(message) {
+        errorMessageDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        generateBtn.style.display = 'block';
+    }
+    
+    function applySuggestion() {
+        const suggestion = suggestionDiv.textContent;
+        
+        // Parser la suggestion
+        const lines = suggestion.split('\n');
+        let title = '';
+        let content = '';
+        let type = 'actualité';
+        
+        for (const line of lines) {
+            if (line.startsWith('Titre :')) {
+                title = line.replace('Titre :', '').trim();
+            } else if (line.startsWith('Contenu :')) {
+                content = line.replace('Contenu :', '').trim();
+            } else if (line.startsWith('Type :')) {
+                type = line.replace('Type :', '').trim();
+            }
+        }
+        
+        // Appliquer au formulaire
+        const titleField = document.querySelector('input[name="publication[titre]"], input[name="titre"]');
+        const contentField = document.querySelector('textarea[name="publication[contenu]"], textarea[name="contenu"]');
+        const typeField = document.querySelector('select[name="publication[type]"], select[name="type"]');
+        
+        if (titleField && title) {
+            titleField.value = title;
+            titleField.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        
+        if (contentField && content) {
+            contentField.value = content;
+            contentField.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        
+        if (typeField && type) {
+            typeField.value = type;
+            typeField.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        
+        // Message de confirmation
+        alert('✅ Suggestion appliquée avec succès !');
+        
+        // Fermer le chatbot
+        document.querySelector('.chatbot-assistant').style.display = 'none';
+    }
+});
+</script>

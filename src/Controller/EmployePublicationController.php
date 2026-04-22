@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Service\CommentValidatorService;
 
 #[Route('/employ/publication')]
 #[IsGranted('ROLE_EMPLOYE')]
@@ -26,13 +27,24 @@ class EmployePublicationController extends AbstractController
     }
 
     #[Route('/{id}/comment', name: 'employ_publication_comment', methods: ['POST'])]
-    public function addComment(Publication $publication, Request $request, EntityManagerInterface $em): Response
+    public function addComment(Publication $publication, Request $request, EntityManagerInterface $em, CommentValidatorService $commentValidator): Response
     {
         $contenu = $request->request->get('contenu');
         
         if (empty($contenu)) {
             $this->addFlash('error', 'Le commentaire ne peut pas être vide.');
             return $this->redirectToRoute('employ_publication_index');
+        }
+
+        // Valider le commentaire avec BanBuilder
+        $validation = $commentValidator->validateComment($contenu);
+
+        if (!$validation['is_valid']) {
+            // Si des mots interdits sont détectés
+            if ($validation['is_censored']) {
+                $this->addFlash('error', 'Commentaire rejeté : contient des mots inappropriés : ' . implode(', ', $validation['bad_words_found']));
+                return $this->redirectToRoute('employ_publication_index');
+            }
         }
 
         $commentaire = new Commentaire();

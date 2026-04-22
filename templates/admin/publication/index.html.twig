@@ -229,7 +229,7 @@
                             <a href="{{ path('admin_publication_edit', { id: publication.id }) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
                             <form method="post" action="{{ path('admin_publication_delete', { id: publication.id }) }}" style="display: inline;">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete_publication_' ~ publication.id) }}">
-                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette publication ?');">Supprimer</button>
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button>
                             </form>
                         </div>
                     </div>
@@ -285,7 +285,7 @@
                                             <a href="{{ path('admin_commentaire_edit', { id: commentaire.id }) }}" class="facebook-comment-action">Modifier</a>
                                             <form method="post" action="{{ path('admin_commentaire_delete', { id: commentaire.id }) }}" style="display: inline;">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ commentaire.id) }}">
-                                                <button class="facebook-comment-action" onclick="return confirm('Supprimer ce commentaire ?');">Supprimer</button>
+                                                <button class="facebook-comment-action" type="submit">Supprimer</button>
                                             </form>
                                         </div>
                                     </div>

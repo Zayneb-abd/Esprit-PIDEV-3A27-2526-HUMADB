@@ -28,6 +28,7 @@ use App\Entity\PublicationMedia;
 use App\Repository\PublicationRepository;
 use App\Repository\CommentaireRepository;
 use App\Form\PublicationType;
+use App\Service\CommentValidatorService;
 
 #[Route('/admin')]
 class AdminController extends AbstractController
@@ -1048,7 +1049,7 @@ class AdminController extends AbstractController
     }
 
     #[Route('/commentaire/new', name: 'admin_commentaire_new', methods: ['GET', 'POST'])]
-    public function newCommentaire(Request $request, EntityManagerInterface $em): Response
+    public function newCommentaire(Request $request, EntityManagerInterface $em, CommentValidatorService $commentValidator): Response
     {
         $publicationId = $request->query->get('publication');
         $publication = $em->getRepository(Publication::class)->find($publicationId);
@@ -1058,17 +1059,45 @@ class AdminController extends AbstractController
             $publicationId = $request->request->get('publication_id');
             $publication = $em->getRepository(Publication::class)->find($publicationId);
 
-            $commentaire = new Commentaire();
-            $commentaire->setContenu($contenu);
-            $commentaire->setDate_commentaire(new \DateTime());
-            $commentaire->setPublication($publication);
-            $commentaire->setUser($this->getUser());
+            // Valider le commentaire avec BanBuilder
+            $validation = $commentValidator->validateComment($contenu);
 
-            $em->persist($commentaire);
-            $em->flush();
+            if (!$validation['is_valid']) {
+                // Si des mots interdits sont détectés
+                if ($validation['is_censored']) {
+                    // Option 1: Rejeter complètement le commentaire
+                    $this->addFlash('error', 'Commentaire rejeté : contient des mots inappropriés : ' . implode(', ', $validation['bad_words_found']));
+                    
+                    // Option 2: Censurer et publier (décommentez si vous préférez cette option)
+                    /*
+                    $commentaire = new Commentaire();
+                    $commentaire->setContenu($validation['censored_content']);
+                    $commentaire->setDate_commentaire(new \DateTime());
+                    $commentaire->setPublication($publication);
+                    $commentaire->setUser($this->getUser());
+                    $commentaire->setCensure(true); // Ajouter un champ pour marquer comme censuré
 
-            $this->addFlash('success', 'Commentaire ajouté avec succès.');
-            return $this->redirectToRoute('admin_publication');
+                    $em->persist($commentaire);
+                    $em->flush();
+
+                    $this->addFlash('warning', 'Commentaire publié avec censorship (mots inappropriés détectés : ' . implode(', ', $validation['bad_words_found']) . ')');
+                    return $this->redirectToRoute('admin_publication');
+                    */
+                }
+            } else {
+                // Si le commentaire est valide, le publier normalement
+                $commentaire = new Commentaire();
+                $commentaire->setContenu($contenu);
+                $commentaire->setDate_commentaire(new \DateTime());
+                $commentaire->setPublication($publication);
+                $commentaire->setUser($this->getUser());
+
+                $em->persist($commentaire);
+                $em->flush();
+
+                $this->addFlash('success', 'Commentaire ajouté avec succès.');
+                return $this->redirectToRoute('admin_publication');
+            }
         }
 
         return $this->render('admin/commentaire/new.html.twig', [
