@@ -2,98 +2,83 @@
 
 namespace App\Service;
 
-use Snipe\BanBuilder\CensorWords;
-
 class CommentValidatorService
 {
-    private CensorWords $censorWords;
-
-    public function __construct()
-    {
-        $this->censorWords = new CensorWords();
-        $this->censorWords->setDictionary('fr'); // Dictionnaire français
-    }
-
     /**
-     * Valide un commentaire et détecte les mots interdits
+     * Liste locale de secours si BanBuilder n'est pas installé.
+     * On garde une liste courte pour éviter de bloquer le flux commentaire.
      */
+    private array $badWords = [
+        'sale',
+        'idiot',
+        'stupide',
+        'merde',
+        'con',
+        'connard',
+        'pute',
+        'fuck',
+        'shit',
+    ];
+
     public function validateComment(string $content): array
     {
-        $result = [
-            'is_valid' => true,
-            'is_censored' => false,
-            'bad_words_found' => [],
-            'censored_content' => $content,
-            'message' => ''
-        ];
+        $found = $this->detectBadWords($content);
 
-        // Détecter les mots interdits
-        $censoredResult = $this->censorWords->censorString($content);
-        
-        // censorString retourne un array, on extrait le contenu censuré
-        $censoredContent = is_array($censoredResult) ? (isset($censoredResult['clean']) ? $censoredResult['clean'] : $content) : $censoredResult;
-        
-        if ($censoredContent !== $content) {
-            $result['is_valid'] = false;
-            $result['is_censored'] = true;
-            $result['bad_words_found'] = $this->extractBadWords($content, $censoredContent);
-            $result['censored_content'] = $censoredContent;
-            $result['message'] = 'Commentaire contenant des mots inappropriés détectés';
+        return [
+            'is_valid' => empty($found),
+            'is_censored' => !empty($found),
+            'bad_words_found' => $found,
+            'censored_content' => $this->censorContent($content),
+            'message' => empty($found) ? '' : 'Commentaire contenant des mots inappropriés détectés',
+        ];
+    }
+
+    private function detectBadWords(string $content): array
+    {
+        $found = [];
+        $normalized = mb_strtolower($content);
+
+        foreach ($this->badWords as $word) {
+            if ($word !== '' && preg_match('/\b' . preg_quote($word, '/') . '\b/u', $normalized)) {
+                $found[] = $word;
+            }
         }
 
-        return $result;
+        return array_values(array_unique($found));
     }
 
-    /**
-     * Extrait les mots interdits du contenu
-     */
-    private function extractBadWords(string $content, string $censoredContent): array
-    {
-        $badWords = [];
-        
-        // Comparer le contenu original avec le contenu censuré pour trouver les mots
-        $originalWords = str_word_count(strtolower($content), 1);
-        $censoredWords = str_word_count(strtolower($censoredContent), 1);
-        
-        $badWords = array_diff($originalWords, $censoredWords);
-        
-        return array_unique($badWords);
-    }
-
-    /**
-     * Censure le contenu en remplaçant les mots interdits
-     */
     private function censorContent(string $content): string
     {
-        $censoredResult = $this->censorWords->censorString($content);
-        return is_array($censoredResult) ? (isset($censoredResult['clean']) ? $censoredResult['clean'] : $content) : $censoredResult;
+        $censored = $content;
+
+        foreach ($this->badWords as $word) {
+            $censored = preg_replace(
+                '/\b' . preg_quote($word, '/') . '\b/iu',
+                str_repeat('*', max(3, mb_strlen($word))),
+                $censored
+            );
+        }
+
+        return $censored;
     }
 
-    /**
-     * Ajoute des mots personnalisés à la liste noire
-     */
     public function addCustomBadWords(array $words): void
     {
         foreach ($words as $word) {
-            $this->censorWords->addWord($word);
+            $word = trim((string) $word);
+            if ($word !== '' && !in_array($word, $this->badWords, true)) {
+                $this->badWords[] = $word;
+            }
         }
     }
 
-    /**
-     * Vérifie si un mot est dans la liste noire
-     */
     public function isBadWord(string $word): bool
     {
-        $censoredResult = $this->censorWords->censorString($word);
-        $filtered = is_array($censoredResult) ? (isset($censoredResult['clean']) ? $censoredResult['clean'] : $word) : $censoredResult;
-        return $filtered !== $word;
+        return in_array(mb_strtolower(trim($word)), $this->badWords, true);
     }
 
-    /**
-     * Obtient la liste des mots dans la liste noire
-     */
     public function getBadWordsList(): array
     {
-        return $this->censorWords->getDictionary();
+        return $this->badWords;
     }
 }

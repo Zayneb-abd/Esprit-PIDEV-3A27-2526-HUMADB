@@ -13,50 +13,31 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/employ/publication')]
+#[Route('/employ/publication-legacy')]
 #[IsGranted('ROLE_EMPLOY')]
 class EmployPublicationController extends AbstractController
 {
     private $reactionRepository;
     private $entityManager;
-    private $paginator;
 
-    public function __construct(ReactionPublicationRepository $reactionRepository, EntityManagerInterface $entityManager, PaginatorInterface $paginator)
+    public function __construct(ReactionPublicationRepository $reactionRepository, EntityManagerInterface $entityManager)
     {
         $this->reactionRepository = $reactionRepository;
         $this->entityManager = $entityManager;
-        $this->paginator = $paginator;
     }
 
     /**
      * Afficher la liste des publications avec les réactions
      */
-    #[Route('/', name: 'employ_publication_index', methods: ['GET'])]
-    public function index(Request $request): Response
+    #[Route('/', name: 'employ_publication_legacy_index', methods: ['GET'])]
+    public function index(Request $request, PaginatorInterface $paginator): Response
     {
-        // Paginer avec findBy simple
-        $page = $request->query->getInt('page', 1);
-        $limit = 5; // 5 publications par page
-        $offset = ($page - 1) * $limit;
-        
-        // Récupérer toutes les publications triées par ID DESC
-        $allPublications = $this->entityManager->getRepository(Publication::class)
-            ->findBy([], ['id' => 'DESC']);
-        
-        // Extraire seulement les publications pour la page actuelle
-        $publications = array_slice($allPublications, $offset, $limit);
-        
-        // Debug simple
-        dump([
-            'page' => $page,
-            'offset' => $offset,
-            'limit' => $limit,
-            'total_publications' => count($allPublications),
-            'count_publications_page' => count($publications),
-            'ids_page' => array_map(fn($p) => $p->getId(), $publications)
-        ]);
+        $publications = $this->entityManager->getRepository(Publication::class)
+            ->findBy([], ['datePublication' => 'DESC']);
 
-        
+        $page = max(1, (int) $request->query->get('page', 1));
+        $publications = $paginator->paginate($publications, $page, 6);
+
         return $this->render('employ/publication/index.html.twig', [
             'publications' => $publications,
             'reaction_repository' => $this->reactionRepository
@@ -76,7 +57,7 @@ class EmployPublicationController extends AbstractController
 
         $contenu = $request->request->get('contenu');
         if (empty(trim($contenu))) {
-            return $this->redirectToRoute('employ_publication_index');
+            return $this->redirectToRoute('employ_publication_legacy_index');
         }
 
         $commentaire = new Commentaire();
@@ -88,7 +69,7 @@ class EmployPublicationController extends AbstractController
         $this->entityManager->persist($commentaire);
         $this->entityManager->flush();
 
-        return $this->redirectToRoute('employ_publication_index');
+        return $this->redirectToRoute('employ_publication_legacy_index');
     }
 
     /**
@@ -99,12 +80,12 @@ class EmployPublicationController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user || $commentaire->getUser() !== $user) {
-            return $this->redirectToRoute('employ_publication_index');
+            return $this->redirectToRoute('employ_publication_legacy_index');
         }
 
         $this->entityManager->remove($commentaire);
         $this->entityManager->flush();
 
-        return $this->redirectToRoute('employ_publication_index');
+        return $this->redirectToRoute('employ_publication_legacy_index');
     }
 }

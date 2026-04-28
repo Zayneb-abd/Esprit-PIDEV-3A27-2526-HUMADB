@@ -13,6 +13,30 @@
     </a>
 </div>
 
+{# ── PARTICIPATION CHARTS ── #}
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Graphique en barres : nombre de participants par formation</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="participantsChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Graphique en camembert : répartition des résultats</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="resultsChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 {# ── STAT CARDS ── #}
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
@@ -40,6 +64,31 @@
         </div>
     </div>
     {% endfor %}
+</div>
+
+{# ── FEEDBACK STATS ── #}
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-semibold"><i class="ti ti-message-2 me-2 text-primary"></i>Feedbacks — 7 derniers jours</h6>
+                <a href="{{ path('admin_feedback_index') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+            </div>
+            <div class="card-body">
+                <canvas id="adminDashboardFeedbackLine" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-semibold"><i class="ti ti-chart-donut me-2 text-primary"></i>Feedbacks par statut</h6>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="adminDashboardFeedbackStatus" style="max-height:220px;"></canvas>
+            </div>
+        </div>
+    </div>
 </div>
 
 {# ── RECENT USERS ── #}
@@ -127,4 +176,139 @@
         </a>
     </div>
 </div>
+
+{# ── Chart.js SCRIPTS ── #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Bar Chart: Participants per Training
+const participantsCtx = document.getElementById('participantsChart').getContext('2d');
+const participantsChart = new Chart(participantsCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ trainingLabels|json_encode|raw }},
+        datasets: [{
+            label: 'Nombre de participants',
+            data: {{ participantsPerTraining|json_encode|raw }},
+            backgroundColor: 'rgba(54, 162, 235, 0.8)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            }
+        }
+    }
+});
+
+// Pie Chart: Results Distribution
+const resultsCtx = document.getElementById('resultsChart').getContext('2d');
+const resultsChart = new Chart(resultsCtx, {
+    type: 'pie',
+    data: {
+        labels: ['Validé', 'Non validé', 'En cours'],
+        datasets: [{
+            data: [
+                {{ resultsDistribution.validé }},
+                {{ resultsDistribution['non validé'] }},
+                {{ resultsDistribution['en cours'] }}
+            ],
+            backgroundColor: [
+                'rgba(40, 167, 69, 0.8)',
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(59, 130, 246, 0.8)'
+            ],
+            borderColor: [
+                'rgba(40, 167, 69, 1)',
+                'rgba(239, 68, 68, 1)',
+                'rgba(59, 130, 246, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return label + ': ' + value + ' (' + percentage + '%)';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+
+{% endblock %}
+
+{% block js %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const labels = {{ feedback_timeline_labels|json_encode|raw }};
+    const data = {{ feedback_timeline_data|json_encode|raw }};
+    const byStatus = {{ feedback_by_status|json_encode|raw }};
+    const stLabels = Object.keys(byStatus).map(s => ({ 'nouveau': 'Nouveau', 'en_cours': 'En cours', 'traite': 'Traité', 'rejete': 'Rejeté' }[s] || s));
+    const stData = Object.values(byStatus);
+
+    if (document.getElementById('adminDashboardFeedbackLine')) {
+        new Chart(document.getElementById('adminDashboardFeedbackLine'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Feedbacks',
+                    data: data,
+                    borderColor: 'rgb(99, 102, 241)',
+                    backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                    fill: true,
+                    tension: 0.35
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+    if (document.getElementById('adminDashboardFeedbackStatus')) {
+        new Chart(document.getElementById('adminDashboardFeedbackStatus'), {
+            type: 'doughnut',
+            data: {
+                labels: stLabels.length ? stLabels : ['—'],
+                datasets: [{
+                    data: stData.length ? stData : [0],
+                    backgroundColor: ['#ef4444', '#f59e0b', '#22c55e', '#64748b', '#6366f1']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+})();
+</script>
 {% endblock %}

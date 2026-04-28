@@ -152,7 +152,7 @@ class Publication
         return $this;
     }
 
-    #[ORM\OneToOne(targetEntity: ReactionPublication::class, mappedBy: 'publication')]
+    #[ORM\OneToOne(targetEntity: ReactionPublication::class, mappedBy: 'publication', fetch: 'LAZY')]
     private ?ReactionPublication $reactionPublication = null;
 
     public function __construct()

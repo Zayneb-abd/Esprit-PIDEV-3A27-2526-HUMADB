@@ -23,6 +23,16 @@ class AdminFeedbackType extends AbstractType
                 ],
                 'attr' => ['class' => 'form-select']
             ])
+            ->add('priority', ChoiceType::class, [
+                'label' => 'Priorité',
+                'choices' => [
+                    'Basse' => 'bas',
+                    'Normale' => 'normal',
+                    'Haute' => 'haute',
+                    'Urgente' => 'urgente',
+                ],
+                'attr' => ['class' => 'form-select']
+            ])
             ->add('category', ChoiceType::class, [
                 'label' => 'Catégorie Actuelle',
                 'choices' => [

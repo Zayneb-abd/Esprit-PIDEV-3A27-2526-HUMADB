@@ -1,0 +1,86 @@
+{% extends app.user.role == 'MANAGER' ? 'manager/base_manager.html.twig' : 'employ/base_employe.html.twig' %}
+
+{% block title %}Solde de congés - Rapport{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="fs-3 fw-bold mb-1">
+                        <i class="ti ti-scale me-2 text-success"></i>Solde de congés
+                    </h1>
+                    <p class="text-muted">Balance des congés par employé</p>
+                </div>
+                <a href="{{ path('report_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="ti ti-arrow-left me-1"></i>Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 15px;">
+        <div class="card-header bg-white border-bottom-0 py-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="ti ti-users me-2"></i>Soldes de l'équipe
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if balances|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Employé</th>
+                                <th>Solde total</th>
+                                <th>Utilisé</th>
+                                <th>Restant</th>
+                                <th>En attente</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for balance in balances %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-success text-white me-2" style="width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                                                {{ balance.employee|split(' ')|map(n => n|first)|join('') }}
+                                            </div>
+                                            <span class="fw-medium">{{ balance.employee }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ balance.total|default(30) }} jours</td>
+                                    <td>{{ balance.used|default(0) }} jours</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ balance.remaining|default(30) }} jours</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">{{ balance.pending|default(0) }}</span>
+                                    </td>
+                                    <td>
+                                        {% if balance.remaining|default(30) > 10 %}
+                                            <span class="badge bg-success">OK</span>
+                                        {% elseif balance.remaining|default(30) > 5 %}
+                                            <span class="badge bg-warning">Attention</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Critique</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="ti ti-scale fs-1 text-muted mb-3"></i>
+                    <h5>Aucune donnée disponible</h5>
+                    <p class="text-muted">Les soldes de congés seront affichés ici.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

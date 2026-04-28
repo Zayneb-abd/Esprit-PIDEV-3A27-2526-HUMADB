@@ -235,8 +235,10 @@
                     </div>
                     
                     <div class="facebook-post-content">
-                        {{ publication.contenu|nl2br }}
+                        {{ publication.contenu|raw }}
                     </div>
+
+                    {% include 'components/publication_translation_widget.html.twig' with {'publication': publication} %}
 
                     {% if publication.publicationMedias|length > 0 %}
                         <div class="facebook-post-media">

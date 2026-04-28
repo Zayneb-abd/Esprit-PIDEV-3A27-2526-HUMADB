@@ -1,0 +1,107 @@
+{% extends app.user.role == 'MANAGER' ? 'manager/base_manager.html.twig' : 'employ/base_employe.html.twig' %}
+
+{% block title %}Résumé mensuel - Rapport{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="fs-3 fw-bold mb-1">
+                        <i class="ti ti-calendar-month me-2 text-info"></i>Résumé mensuel
+                    </h1>
+                    <p class="text-muted">Synthèse globale de {{ month }}/{{ year }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <form method="get" class="d-flex gap-2">
+                        <select name="month" class="form-select" style="width: auto;">
+                            {% for m in 1..12 %}
+                                <option value="{{ m }}" {{ m == month ? 'selected' : '' }}>
+                                    {{ ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'][m-1] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <select name="year" class="form-select" style="width: auto;">
+                            {% for y in (year-2)..(year+1) %}
+                                <option value="{{ y }}" {{ y == year ? 'selected' : '' }}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ti ti-search"></i>
+                        </button>
+                    </form>
+                    <a href="{{ path('report_dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="ti ti-arrow-left me-1"></i>Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Summary Cards #}
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center" style="border-radius: 15px;">
+                <div class="card-body">
+                    <i class="ti ti-inbox fs-1 text-primary mb-2"></i>
+                    <h4 class="fw-bold">{{ summary.total_requests|default(0) }}</h4>
+                    <p class="text-muted mb-0">Demandes totales</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center" style="border-radius: 15px;">
+                <div class="card-body">
+                    <i class="ti ti-check fs-1 text-success mb-2"></i>
+                    <h4 class="fw-bold">{{ summary.approved|default(0) }}</h4>
+                    <p class="text-muted mb-0">Approuvées</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center" style="border-radius: 15px;">
+                <div class="card-body">
+                    <i class="ti ti-x fs-1 text-danger mb-2"></i>
+                    <h4 class="fw-bold">{{ summary.rejected|default(0) }}</h4>
+                    <p class="text-muted mb-0">Refusées</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center" style="border-radius: 15px;">
+                <div class="card-body">
+                    <i class="ti ti-clock fs-1 text-warning mb-2"></i>
+                    <h4 class="fw-bold">{{ summary.pending|default(0) }}</h4>
+                    <p class="text-muted mb-0">En attente</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Graphique de répartition #}
+    <div class="card border-0 shadow-sm" style="border-radius: 15px;">
+        <div class="card-header bg-white border-bottom-0 py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">
+                <i class="ti ti-chart-bar me-2"></i>Répartition des demandes
+            </h5>
+            <span class="text-muted small">Mois sélectionné</span>
+        </div>
+        <div class="card-body">
+            <div style="height: 320px;">
+                <canvas id="monthlySummaryChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+{{ parent() }}
+{% include '@Report/report/_monthly_summary_chart.html.twig' %}
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+{% include '@Report/report/_monthly_summary_chart.html.twig' %}
+{% endblock %}

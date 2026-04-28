@@ -1,0 +1,75 @@
+{% extends 'manager/base_manager.html.twig' %}
+
+{% block title %}Nouvelle Demande de Congé{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-4">
+                <h1 class="fs-3 mb-1">Nouvelle Demande de Congé</h1>
+                <p class="mb-0 text-muted">Soumettre une nouvelle demande de congé</p>
+            </div>
+
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post" id="congeForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date_debut" class="form-label">Date de début <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="date_debut" name="date_debut">
+                                <div class="form-text text-muted">La date de début doit être aujourd'hui ou dans le futur.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_fin" class="form-label">Date de fin <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="date_fin" name="date_fin">
+                                <div class="form-text text-muted">La date de fin doit être après la date de début.</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="type" class="form-label">Type de congé <span class="text-danger">*</span></label>
+                                <select class="form-select" id="type" name="type">
+                                    <option value="">Sélectionner un type</option>
+                                    <option value="ANNUEL">Congé annuel</option>
+                                    <option value="MALADIE">Congé maladie</option>
+                                    <option value="MATERNITE">Congé maternité</option>
+                                    <option value="PATERNITE">Congé paternité</option>
+                                    <option value="SANS_SOLDE">Congé sans solde</option>
+                                    <option value="FORMATION">Congé formation</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="motif" class="form-label">Motif</label>
+                                <textarea class="form-control" id="motif" name="motif" rows="3" placeholder="Précisez le motif de votre demande..."></textarea>
+                                <div class="form-text text-muted">Obligatoire pour les congés maladie > 3 jours.</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('manager_mes_conges') }}" class="btn btn-outline-secondary">
+                                <i class="ti ti-arrow-left"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-send"></i> Soumettre la demande
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -6,6 +6,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Entity\Absence;
 use App\Entity\Conge;
 use App\Repository\CongeRepository;
+use App\WorkflowBundle\Repository\ApprovalHistoryRepository;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -40,18 +42,28 @@ class EmployeController extends AbstractController
     }
 
     #[Route('/conges', name: 'employ_conges')]
-    public function mesConges(CongeRepository $congeRepository): Response
+    public function mesConges(CongeRepository $congeRepository, ApprovalHistoryRepository $historyRepo): Response
     {
         $user = $this->getUser();
         $conges = $congeRepository->findBy(['user' => $user], ['id' => 'DESC']);
+        
+        // Fetch comments for each conge
+        $comments = [];
+        foreach ($conges as $conge) {
+            $history = $historyRepo->findOneByConge($conge);
+            if ($history && $history->getComment()) {
+                $comments[$conge->getId()] = $history->getComment();
+            }
+        }
 
         return $this->render('employ/conge/index.html.twig', [
-            'conges' => $conges
+            'conges' => $conges,
+            'comments' => $comments
         ]);
     }
 
     #[Route('/conges/new', name: 'employ_conges_new', methods: ['GET', 'POST'])]
-    public function newConge(Request $request, EntityManagerInterface $entityManager): Response
+    public function newConge(Request $request, EntityManagerInterface $entityManager, NotificationService $notificationService): Response
     {
         if ($request->isMethod('POST')) {
             $user = $this->getUser();
@@ -154,6 +166,12 @@ class EmployeController extends AbstractController
 
             $entityManager->persist($conge);
             $entityManager->flush();
+
+            // Envoyer notifications
+            $notificationService->notifyEmployeeRequestSubmitted($conge);
+            if ($user->getUser()) {
+                $notificationService->notifyManagerNewRequest($conge, $user->getUser());
+            }
 
             $this->addFlash('success', 'Votre demande de congé a été soumise avec succès.');
             return $this->redirectToRoute('employ_conges');

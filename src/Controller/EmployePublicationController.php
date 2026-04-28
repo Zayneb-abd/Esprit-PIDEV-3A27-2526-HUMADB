@@ -6,6 +6,7 @@ use App\Entity\Publication;
 use App\Entity\Commentaire;
 use App\Repository\PublicationRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,9 +19,17 @@ use App\Service\CommentValidatorService;
 class EmployePublicationController extends AbstractController
 {
     #[Route('/', name: 'employ_publication_index', methods: ['GET'])]
-    public function index(PublicationRepository $publicationRepository): Response
+    public function index(Request $request, PublicationRepository $publicationRepository, PaginatorInterface $paginator): Response
     {
-        $publications = $publicationRepository->findBy([], ['date_publication' => 'DESC']);
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 6;
+
+        $publications = $paginator->paginate(
+            $publicationRepository->findBy([], ['date_publication' => 'DESC']),
+            $page,
+            $limit
+        );
+
         return $this->render('employ/publication/index.html.twig', [
             'publications' => $publications,
         ]);

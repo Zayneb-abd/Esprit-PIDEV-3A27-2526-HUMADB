@@ -42,6 +42,18 @@ class EditProfileType extends AbstractType
                     ]),
                 ],
             ])
+            ->add('cvFile', FileType::class, [
+                'label' => 'CV PDF',
+                'mapped' => true,
+                'required' => false,
+                'constraints' => [
+                    new File([
+                        'maxSize' => '5M',
+                        'mimeTypes' => ['application/pdf'],
+                        'mimeTypesMessage' => 'Veuillez uploader un CV au format PDF.',
+                    ]),
+                ],
+            ])
         ;
     }
 

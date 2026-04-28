@@ -35,7 +35,7 @@ class ReactionController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
         }
 
-        $type = $request->request->get('type');
+        $type = strtolower(trim((string) $request->request->get('type')));
         
         if (!in_array($type, [ReactionPublication::TYPE_LIKE, ReactionPublication::TYPE_DISLIKE])) {
             return new JsonResponse(['success' => false, 'error' => 'Type de réaction invalide'], 400);
@@ -87,21 +87,9 @@ class ReactionController extends AbstractController
         try {
             $counts = $this->reactionRepository->getReactionsCountForPublication($publicationId);
             
-            // Ajouter les emojis
-            $countsWithEmoji = [
-                'like' => [
-                    'count' => $counts['like'],
-                    'emoji' => 'like' ? ReactionPublication::getEmojiForType('like') : '0'
-                ],
-                'dislike' => [
-                    'count' => $counts['dislike'],
-                    'emoji' => 'dislike' ? ReactionPublication::getEmojiForType('dislike') : '0'
-                ]
-            ];
-
             return new JsonResponse([
                 'success' => true,
-                'counts' => $countsWithEmoji
+                'counts' => $counts
             ]);
 
         } catch (\Exception $e) {

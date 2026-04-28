@@ -12,8 +12,8 @@
                     {{ form_start(form, {'action': path('admin_publication_new'), 'attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}
                         {{ form_errors(form) }}
                         <div class="mb-3">
-                            {{ form_label(form.contenu, 'Contenu', {'label_attr': {'class': 'form-label'}}) }}
-                            {{ form_widget(form.contenu, {'attr': {'class': 'form-control', 'rows': 10}}) }}
+                        {{ form_label(form.contenu, 'Contenu', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.contenu, {'attr': {'class': 'form-control js-rich-editor', 'rows': 10}}) }}
                             {{ form_errors(form.contenu) }}
                         </div>
                         <div class="mb-3">
@@ -46,4 +46,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block js %}
+{{ parent() }}
+{% include 'components/rich_text_editor.html.twig' %}
 {% endblock %}

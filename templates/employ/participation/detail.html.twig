@@ -1,0 +1,227 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détail de la Participation{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Détail de la Participation</h1>
+                <a href="{{ path('employ_participation_index') }}" class="btn btn-outline-secondary">
+                    <i class="ti ti-arrow-left"></i> Retour à la liste
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Informations de la Participation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Employé</label>
+                                <p class="form-control-static">
+                                    {{ participation.user.nom ?? 'N/A' }} {{ participation.user.prenom ?? '' }}
+                                    <br>
+                                    <small class="text-muted">{{ participation.user.email ?? 'N/A' }}</small>
+                                </p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Formation</label>
+                                <p class="form-control-static fw-bold">{{ participation.formation.sujet ?? 'N/A' }}</p>
+                                <div class="mt-2">
+                                    <label class="form-label text-muted small">Description de la formation</label>
+                                    <div class="alert alert-info">
+                                        <small>
+                                            {% if aiDescription %}
+                                                {{ aiDescription|raw }}
+                                            {% else %}
+                                                Description en cours de génération...
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Date d'inscription</label>
+                                <p class="form-control-static">
+                                    {{ participation.dateInscription ? participation.dateInscription|date('d/m/Y H:i') : 'N/A' }}
+                                </p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Statut</label>
+                                <p class="form-control-static">
+                                    {% set statusClass = {
+                                        'en attente': 'warning',
+                                        'acceptée': 'success',
+                                        'refusée': 'danger',
+                                        'annulée': 'secondary'
+                                    } %}
+                                    {% set statusClass = statusClass[participation.statut] ?? 'secondary' %}
+                                    <span class="badge bg-{{ statusClass }}">
+                                        {{ participation.statut|default('N/A')|title }}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Type de formation</label>
+                                <p class="form-control-static">{{ participation.formation.type ?? 'N/A' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if participation.formation.localisation %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Localisation</label>
+                        <p class="form-control-static">{{ participation.formation.localisation }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if participation.formation.dateDebut and participation.formation.dateFin %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Période de formation</label>
+                        <p class="form-control-static">
+                            Du {{ participation.formation.dateDebut|date('d/m/Y H:i') }}
+                            <br>
+                            Au {{ participation.formation.dateFin|date('d/m/Y H:i') }}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">QR Code</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <img src="data:image/svg+xml;base64,{{ qrCode }}" 
+                             alt="QR Code de la participation" 
+                             class="img-fluid border rounded"
+                             style="max-width: 250px;">
+                    </div>
+                    <p class="text-muted small mb-3">
+                        Scannez ce QR code pour ajouter à votre calendrier
+                    </p>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Objectifs Pédagogiques</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Cochez les objectifs que vous avez atteints
+                    </p>
+                    <div class="objectives-list">
+                        {% for objective in objectives %}
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" value="{{ loop.index }}" id="objective{{ loop.index }}">
+                                <label class="form-check-label" for="objective{{ loop.index }}">
+                                    {{ objective }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar">0%</div>
+                        </div>
+                        <small class="text-muted">Progression: <span id="progressText">0</span>/{{ objectives|length }}</small>
+                    </div>
+                    
+                    <!-- Congratulations Message -->
+                    <div class="alert alert-success mt-3 d-none" id="congratulationsMessage">
+                        <h6 class="alert-heading">
+                            <i class="ti ti-trophy"></i> Félicitations !
+                        </h6>
+                        <p class="mb-0">
+                            Vous avez atteint tous les objectifs de cette formation ! Excellent travail !
+                        </p>
+                        <hr>
+                        <small class="mb-0">
+                            Continuez comme ça, vous êtes sur la bonne voie pour maîtriser cette compétence.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    .card {
+        border: 1px solid #000 !important;
+        page-break-inside: avoid;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.objectives-list input[type="checkbox"]');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const totalObjectives = checkboxes.length;
+
+    function updateProgress() {
+        const checked = document.querySelectorAll('.objectives-list input[type="checkbox"]:checked').length;
+        const percentage = totalObjectives > 0 ? Math.round((checked / totalObjectives) * 100) : 0;
+        
+        progressBar.style.width = percentage + '%';
+        progressBar.textContent = percentage + '%';
+        progressText.textContent = checked;
+        
+        // Show congratulations message when 100% complete
+        const congratulationsMessage = document.getElementById('congratulationsMessage');
+        if (percentage === 100 && totalObjectives > 0) {
+            congratulationsMessage.classList.remove('d-none');
+            progressBar.classList.add('bg-success');
+        } else {
+            congratulationsMessage.classList.add('d-none');
+            progressBar.classList.remove('bg-success');
+        }
+        
+        // Save progress to localStorage
+        localStorage.setItem('objectives_progress', JSON.stringify({
+            checked: Array.from(checkboxes).map(cb => cb.checked),
+            total: totalObjectives
+        }));
+    }
+
+    // Load saved progress
+    const savedProgress = localStorage.getItem('objectives_progress');
+    if (savedProgress) {
+        const progress = JSON.parse(savedProgress);
+        checkboxes.forEach((checkbox, index) => {
+            checkbox.checked = progress.checked[index] || false;
+        });
+        updateProgress();
+    }
+
+    // Add event listeners
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateProgress);
+    });
+
+    // Initialize progress
+    updateProgress();
+});
+</script>
+{% endblock %}

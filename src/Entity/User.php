@@ -6,12 +6,15 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 use App\Repository\UserRepository;
 
+#[Vich\Uploadable]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -101,6 +104,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     )]
     private ?string $role = null;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    private bool $is_active = true;
+
     public function getRoles(): array
     {
         $roles = ['ROLE_USER'];
@@ -139,6 +145,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setRole(?string $role): self
     {
         $this->role = $role;
+
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+
+    public function setIsActive(bool $is_active): self
+    {
+        $this->is_active = $is_active;
 
         return $this;
     }
@@ -186,6 +204,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->face_image = $face_image;
         return $this;
     }
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $cv_filename = null;
+
+    #[Vich\UploadableField(mapping: 'candidate_cv', fileNameProperty: 'cv_filename')]
+    private ?File $cvFile = null;
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $updated_at = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $reset_token = null;
@@ -356,6 +383,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Entretien::class, mappedBy: 'user')]
     private Collection $entretiens;
 
+    #[ORM\OneToMany(targetEntity: Entretien::class, mappedBy: 'manager')]
+    private Collection $entretiensManager;
+
     /**
      * @return Collection<int, Entretien>
      */
@@ -378,6 +408,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeEntretien(Entretien $entretien): self
     {
         $this->getEntretiens()->removeElement($entretien);
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Entretien>
+     */
+    public function getEntretiensManager(): Collection
+    {
+        if (!$this->entretiensManager instanceof Collection) {
+            $this->entretiensManager = new ArrayCollection();
+        }
+        return $this->entretiensManager;
+    }
+
+    public function addEntretienManager(Entretien $entretien): self
+    {
+        if (!$this->getEntretiensManager()->contains($entretien)) {
+            $this->getEntretiensManager()->add($entretien);
+        }
+        return $this;
+    }
+
+    public function removeEntretienManager(Entretien $entretien): self
+    {
+        $this->getEntretiensManager()->removeElement($entretien);
         return $this;
     }
 
@@ -573,6 +628,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->commentaires = new ArrayCollection();
         $this->conges = new ArrayCollection();
         $this->entretiens = new ArrayCollection();
+        $this->entretiensManager = new ArrayCollection();
         $this->feedbacks = new ArrayCollection();
         $this->formations = new ArrayCollection();
         $this->offreEmplois = new ArrayCollection();
@@ -580,7 +636,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->publications = new ArrayCollection();
         $this->resultatQuizs = new ArrayCollection();
         $this->users = new ArrayCollection();
+        $this->notifications = new ArrayCollection();
     }
+
+    #[ORM\OneToMany(targetEntity: Notification::class, mappedBy: 'user')]
+    private Collection $notifications;
 
     /**
      * @return Collection<int, User>
@@ -631,6 +691,44 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function setCvFile(?File $cvFile = null): void
+    {
+        $this->cvFile = $cvFile;
+
+        if ($cvFile !== null) {
+            $this->updated_at = new \DateTimeImmutable();
+        }
+    }
+
+    public function getCvFile(): ?File
+    {
+        return $this->cvFile;
+    }
+
+    public function getCvFilename(): ?string
+    {
+        return $this->cv_filename;
+    }
+
+    public function setCvFilename(?string $cv_filename): static
+    {
+        $this->cv_filename = $cv_filename;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updated_at;
+    }
+
+    public function setUpdatedAt(?\DateTimeInterface $updated_at): static
+    {
+        $this->updated_at = $updated_at;
+
+        return $this;
+    }
+
     public function getResetToken(): ?string
     {
         return $this->reset_token;
@@ -657,6 +755,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function eraseCredentials(): void
     {
+        $this->cvFile = null;
+    }
+
+    public function __serialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'email' => $this->email,
+            'mdp' => $this->mdp,
+            'role' => $this->role,
+        ];
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->id = $data['id'] ?? null;
+        $this->email = $data['email'] ?? null;
+        $this->mdp = $data['mdp'] ?? null;
+        $this->role = $data['role'] ?? null;
+        $this->cvFile = null;
     }
 
     public function getUserIdentifier(): string

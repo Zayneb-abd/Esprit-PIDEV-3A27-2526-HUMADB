@@ -40,9 +40,9 @@ class ReactionPublicationRepository extends ServiceEntityRepository
     public function getReactionsCountForPublication(int $publicationId): array
     {
         $qb = $this->createQueryBuilder('rp')
-            ->select('rp.type, COUNT(rp.id) as count')
+            ->select('LOWER(rp.type) AS reactionType, COUNT(rp.id) AS count')
             ->where('rp.publication = :publicationId')
-            ->groupBy('rp.type')
+            ->groupBy('reactionType')
             ->setParameter('publicationId', $publicationId);
 
         $results = $qb->getQuery()->getResult();
@@ -53,7 +53,10 @@ class ReactionPublicationRepository extends ServiceEntityRepository
         ];
         
         foreach ($results as $result) {
-            $counts[$result['type']] = (int)$result['count'];
+            $type = strtolower((string) ($result['reactionType'] ?? $result['type'] ?? ''));
+            if (isset($counts[$type])) {
+                $counts[$type] = (int) $result['count'];
+            }
         }
         
         return $counts;
@@ -78,6 +81,8 @@ class ReactionPublicationRepository extends ServiceEntityRepository
      */
     public function addOrUpdateReaction(int $publicationId, int $userId, string $type): ReactionPublication
     {
+        $type = strtolower(trim($type));
+
         // Vérifier si l'utilisateur a déjà réagi
         $existingReaction = $this->getUserReactionForPublication($publicationId, $userId);
         

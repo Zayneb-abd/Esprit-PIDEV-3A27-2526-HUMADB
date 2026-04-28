@@ -1,0 +1,100 @@
+{
+  "generated_at" : "2026-03-01T10:57:07.649067",
+  "offre_id" : 6,
+  "offre_titre" : "Développeur Java",
+  "offre_departement" : "IT",
+  "total_candidates" : 4,
+  "ranking" : [ {
+    "candidatureId" : 92,
+    "candidatId" : 46,
+    "candidatNom" : "Toumi Samir",
+    "candidatEmail" : "samir.toumi17@mail.com",
+    "offreId" : 6,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 77,
+    "candidatId" : 31,
+    "candidatNom" : "Benali Sara",
+    "candidatEmail" : "sara.benali2@mail.com",
+    "offreId" : 6,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 72,
+    "candidatId" : 26,
+    "candidatNom" : "Schmidt Laura",
+    "candidatEmail" : "laura.schmidt@huma.com",
+    "offreId" : 6,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 101,
+    "candidatId" : 55,
+    "candidatNom" : "Diallo Moussa",
+    "candidatEmail" : "moussa.diallo26@mail.com",
+    "offreId" : 6,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  } ]
+}

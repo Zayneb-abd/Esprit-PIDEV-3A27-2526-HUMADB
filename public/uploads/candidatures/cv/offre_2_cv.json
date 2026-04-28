@@ -1,0 +1,31 @@
+{
+  "generated_at" : "2026-03-03T13:28:45.183922",
+  "offre_id" : 2,
+  "offre_titre" : "dev python",
+  "offre_departement" : "python",
+  "total_candidates" : 1,
+  "ranking" : [ {
+    "candidatureId" : 69,
+    "candidatId" : 23,
+    "candidatNom" : "Khan Ali",
+    "candidatEmail" : "ali.khan@huma.com",
+    "offreId" : 2,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  } ]
+}

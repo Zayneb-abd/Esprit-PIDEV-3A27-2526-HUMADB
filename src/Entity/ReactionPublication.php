@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\ReactionPublicationRepository;
 
@@ -49,7 +50,7 @@ class ReactionPublication
         return $this;
     }
 
-    #[ORM\ManyToOne(targetEntity: Publication::class, inversedBy: 'reactionPublications')]
+    #[ORM\ManyToOne(targetEntity: Publication::class, inversedBy: 'reactionPublication')]
     #[ORM\JoinColumn(name: 'publication_id', referencedColumnName: 'id', nullable: false)]
     private ?Publication $publication = null;
 
@@ -85,51 +86,36 @@ class ReactionPublication
 
     public function getType(): ?string
     {
-        return $this->type;
+        return $this->type !== null ? strtolower($this->type) : null;
     }
 
     public function setType(string $type): self
     {
-        $this->type = $type;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $created_at = null;
-
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->created_at;
-    }
-
-    public function setCreatedAt(?\DateTimeInterface $created_at): self
-    {
-        $this->created_at = $created_at;
+        $this->type = strtolower(trim($type));
         return $this;
     }
 
     public function isLike(): bool
     {
-        return $this->type === self::TYPE_LIKE;
+        return $this->getType() === self::TYPE_LIKE;
     }
 
     public function isDislike(): bool
     {
-        return $this->type === self::TYPE_DISLIKE;
+        return $this->getType() === self::TYPE_DISLIKE;
     }
 
     public function getEmoji(): string
     {
-        return self::getEmojiForType($this->type ?? 'like');
+        return self::getEmojiForType($this->getType() ?? 'like');
     }
 
     public function __toString(): string
     {
-        return $this->getEmoji() . ' ' . ucfirst($this->type);
+        return $this->getEmoji() . ' ' . ucfirst($this->getType() ?? 'like');
     }
 
     public function __construct()
     {
-        $this->created_at = new \DateTime();
     }
 }

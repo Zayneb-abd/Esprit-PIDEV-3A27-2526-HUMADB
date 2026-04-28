@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\Entity\OffreEmploi;
+use App\Repository\OffreEmploiRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -73,5 +75,21 @@ class ClientController extends AbstractController
     public function quote(): Response
     {
         return $this->render('client/pages/quote.html.twig');
+    }
+
+    #[Route('/jobs', name: 'client_jobs')]
+    public function jobs(OffreEmploiRepository $offreEmploiRepository): Response
+    {
+        return $this->render('client/jobs/index.html.twig', [
+            'offres' => $offreEmploiRepository->findBy([], ['date_publication' => 'DESC', 'id' => 'DESC']),
+        ]);
+    }
+
+    #[Route('/jobs/{id}', name: 'client_job_show', requirements: ['id' => '\d+'])]
+    public function showJob(OffreEmploi $offreEmploi): Response
+    {
+        return $this->render('client/jobs/show.html.twig', [
+            'offre' => $offreEmploi,
+        ]);
     }
 }
