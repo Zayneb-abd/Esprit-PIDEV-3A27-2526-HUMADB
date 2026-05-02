@@ -202,9 +202,6 @@
                         <p>{{ publication.contenu|raw|nl2br }}</p>
                     </div>
 
-                    {% include 'components/publication_translation_widget.html.twig' with {'publication': publication} %}
-                    
-                    
                     {% if publication.publicationMedias|length > 0 %}
                         <div class="facebook-post-media">
                             {% for media in publication.publicationMedias %}
@@ -221,6 +218,8 @@
                             {% endfor %}
                         </div>
                     {% endif %}
+                    
+                    {% include 'components/publication_translation_widget.html.twig' with {'publication': publication} %}
                     
                     <!-- Boutons de réaction -->
                     {% set counts = get_reactions_count(publication.id) %}

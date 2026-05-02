@@ -3,15 +3,24 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\Publication;
+use App\Entity\Commentaire;
 use App\Repository\UserRepository;
 use App\Repository\AbsenceRepository;
 use App\Repository\CongeRepository;
+use App\Repository\PublicationRepository;
+use App\Repository\CommentaireRepository;
+use App\Form\PublicationType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Knp\Component\Pager\PaginatorInterface;
 
 #[Route('/manager')]
 #[IsGranted('ROLE_MANAGER')]
@@ -102,9 +111,114 @@ class ManagerController extends AbstractController
     }
 
     #[Route('/publications', name: 'manager_publication_index')]
-    public function publications(): Response
+    public function publications(PublicationRepository $publicationRepository, Request $request, PaginatorInterface $paginator): Response
     {
-        return $this->render('manager/publication/index.html.twig');
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 6;
+        
+        $publicationsQuery = $publicationRepository->findBy(
+            [],
+            ['date_publication' => 'DESC']
+        );
+        
+        $publications = $paginator->paginate(
+            $publicationsQuery,
+            $page,
+            $limit
+        );
+        
+        return $this->render('manager/publication/index.html.twig', [
+            'publications' => $publications,
+        ]);
+    }
+
+    
+    #[Route('/publications/{id}/comment', name: 'manager_publication_comment', methods: ['POST'])]
+    public function commentPublication(Publication $publication, Request $request, EntityManagerInterface $em): Response
+    {
+        $contenu = $request->request->get('contenu');
+        
+        if (!empty($contenu)) {
+            $commentaire = new Commentaire();
+            $commentaire->setContenu($contenu);
+            $commentaire->setDateCommentaire(new \DateTime());
+            $commentaire->setPublication($publication);
+            $commentaire->setUser($this->getUser());
+            
+            $em->persist($commentaire);
+            $em->flush();
+            
+            $this->addFlash('success', 'Commentaire ajouté avec succès.');
+        }
+        
+        return $this->redirectToRoute('manager_publication_index');
+    }
+
+    #[Route('/commentaires/{id}/delete', name: 'manager_comment_delete', methods: ['POST'])]
+    public function deleteComment(Commentaire $commentaire, Request $request, EntityManagerInterface $em): Response
+    {
+        if ($this->isCsrfTokenValid('delete_comment_' . $commentaire->getId(), (string) $request->request->get('_token'))) {
+            if ($commentaire->getUser() === $this->getUser()) {
+                $em->remove($commentaire);
+                $em->flush();
+                $this->addFlash('success', 'Commentaire supprimé avec succès.');
+            }
+        }
+        
+        return $this->redirectToRoute('manager_publication_index');
+    }
+
+    /**
+     * @param UploadedFile[] $uploadedFiles
+     */
+    private function handlePublicationMediaUploads(
+        Publication $publication,
+        array $uploadedFiles,
+        SluggerInterface $slugger,
+        EntityManagerInterface $em
+    ): void {
+        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/publications';
+
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0775, true);
+        }
+
+        foreach ($uploadedFiles as $uploadedFile) {
+            if (!$uploadedFile instanceof UploadedFile) {
+                continue;
+            }
+
+            $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = (string) $slugger->slug($originalFilename);
+            $extension = $uploadedFile->guessExtension() ?: pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+            $mimeType = $uploadedFile->getClientMimeType() ?: '';
+
+            try {
+                $guessedMimeType = $uploadedFile->getMimeType();
+                if (is_string($guessedMimeType) && $guessedMimeType !== '') {
+                    $mimeType = $guessedMimeType;
+                }
+            } catch (\Throwable) {
+                // If Symfony cannot inspect the temporary file, fall back to the client MIME type.
+            }
+
+            $mediaType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+
+            try {
+                $uploadedFile->move($uploadDir, $newFilename);
+            } catch (FileException) {
+                $this->addFlash('warning', 'Une image ou vidéo n\'a pas pu être téléversée.');
+                continue;
+            }
+
+            $media = new \App\Entity\PublicationMedia();
+            $media->setPublication($publication);
+            $media->setType($mediaType);
+            $media->setPath('/uploads/publications/' . $newFilename);
+
+            $em->persist($media);
+        }
     }
 
     // Personal Conges Routes (same as employee)
