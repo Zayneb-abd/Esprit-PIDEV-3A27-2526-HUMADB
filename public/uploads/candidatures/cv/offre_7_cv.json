@@ -1,0 +1,123 @@
+{
+  "generated_at" : "2026-03-01T10:57:16.564233",
+  "offre_id" : 7,
+  "offre_titre" : "python dev",
+  "offre_departement" : "python",
+  "total_candidates" : 5,
+  "ranking" : [ {
+    "candidatureId" : 102,
+    "candidatId" : 56,
+    "candidatNom" : "Moretti Giulia",
+    "candidatEmail" : "giulia.moretti27@mail.com",
+    "offreId" : 7,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 78,
+    "candidatId" : 32,
+    "candidatNom" : "Haddad Karim",
+    "candidatEmail" : "karim.haddad3@mail.com",
+    "offreId" : 7,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 93,
+    "candidatId" : 47,
+    "candidatNom" : "Petrova Elena",
+    "candidatEmail" : "elena.petrova18@mail.com",
+    "offreId" : 7,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 74,
+    "candidatId" : 28,
+    "candidatNom" : "Ben Salah Ines",
+    "candidatEmail" : "ines.bensalah@huma.com",
+    "offreId" : 7,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 70,
+    "candidatId" : 24,
+    "candidatNom" : "Rossi Giulia",
+    "candidatEmail" : "giulia.rossi@huma.com",
+    "offreId" : 7,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  } ]
+}

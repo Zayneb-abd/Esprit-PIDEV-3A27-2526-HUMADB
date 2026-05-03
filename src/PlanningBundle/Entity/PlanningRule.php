@@ -22,7 +22,7 @@ class PlanningRule
     private int $maxSimultaneousAbsences = 2;
     
     #[ORM\Column(type: 'decimal', precision: 5, scale: 2)]
-    private float $maxAbsencePercentage = 30.0;
+    private ?string $maxAbsencePercentage = '30.00';
     
     #[ORM\Column(type: 'boolean')]
     private bool $requireMinimumCoverage = true;
@@ -65,14 +65,14 @@ class PlanningRule
         return $this;
     }
     
-    public function getMaxAbsencePercentage(): float
+    public function getMaxAbsencePercentage(): string
     {
         return $this->maxAbsencePercentage;
     }
     
-    public function setMaxAbsencePercentage(float $percentage): self
+    public function setMaxAbsencePercentage(string|float|int $percentage): self
     {
-        $this->maxAbsencePercentage = $percentage;
+        $this->maxAbsencePercentage = (string) $percentage;
         return $this;
     }
     

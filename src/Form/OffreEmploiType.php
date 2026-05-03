@@ -19,17 +19,17 @@ class OffreEmploiType extends AbstractType
         $builder
             ->add('titre', TextType::class, [
                 'label' => 'Titre',
-                'required' => true,
-                'attr' => ['class' => 'form-control', 'minlength' => 3, 'maxlength' => 100],
+                'required' => false,
+                'attr' => ['class' => 'form-control'],
             ])
             ->add('departement', TextType::class, [
                 'label' => 'Departement',
-                'required' => true,
-                'attr' => ['class' => 'form-control', 'minlength' => 2, 'maxlength' => 100],
+                'required' => false,
+                'attr' => ['class' => 'form-control'],
             ])
             ->add('type_contrat', ChoiceType::class, [
                 'label' => 'Type de contrat',
-                'required' => true,
+                'required' => false,
                 'choices' => [
                     'CDI' => 'CDI',
                     'CDD' => 'CDD',
@@ -43,18 +43,18 @@ class OffreEmploiType extends AbstractType
             ->add('date_publication', DateType::class, [
                 'label' => 'Date de publication',
                 'widget' => 'single_text',
-                'required' => true,
+                'required' => false,
                 'attr' => ['class' => 'form-control'],
             ])
             ->add('nombre_postes', IntegerType::class, [
                 'label' => 'Nombre de postes',
-                'required' => true,
-                'attr' => ['class' => 'form-control', 'min' => 1, 'max' => 1000],
+                'required' => false,
+                'attr' => ['class' => 'form-control', 'min' => 1],
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description',
-                'required' => true,
-                'attr' => ['class' => 'form-control', 'rows' => 6, 'minlength' => 20, 'maxlength' => 5000],
+                'required' => false,
+                'attr' => ['class' => 'form-control', 'rows' => 6],
             ]);
     }
 

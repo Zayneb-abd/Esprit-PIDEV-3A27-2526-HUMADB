@@ -163,7 +163,6 @@
 </div>
 
 {% block javascripts %}
-{{ parent() }}
 <script>
     let currentParsedRequest = null;
 
@@ -315,12 +314,12 @@
     }
 
     function modifyRequest() {
-        addMessage('
+        addMessage(`
             <div class="suggestion-box">
-                <strong>📝 D\'accord, modifions votre demande.</strong><br>
+                <strong>📝 D'accord, modifions votre demande.</strong><br>
                 Décrivez vos nouvelles dates ou préférences :
             </div>
-        ', false);
+        `, false);
         document.getElementById('messageInput').focus();
     }
 

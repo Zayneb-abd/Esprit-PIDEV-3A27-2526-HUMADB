@@ -2,7 +2,7 @@
 
 namespace App\PlanningBundle\Service;
 
-use App\Entity\PlanningRule;
+use App\PlanningBundle\Entity\PlanningRule;
 use App\Repository\CongeRepository;
 use App\Repository\AbsenceRepository;
 

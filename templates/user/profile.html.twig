@@ -87,6 +87,18 @@
                         <label class="text-muted small d-block">Score de réputation</label>
                         <strong>{{ user.reputationScore }} points</strong>
                     </div>
+                    {% if is_granted('ROLE_CANDIDAT') or is_granted('ROLE_CONDIDAT') %}
+                        <div class="col-12">
+                            <label class="text-muted small d-block">CV candidat</label>
+                            {% if user.cvFilename %}
+                                <a href="{{ asset('uploads/cvs/' ~ user.cvFilename) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    Ouvrir mon CV PDF
+                                </a>
+                            {% else %}
+                                <span class="text-muted">Aucun CV n'a encore ete ajoute a votre profil.</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

@@ -6,6 +6,7 @@ use App\Entity\Formation;
 use App\Entity\User;
 use App\Form\FormationType;
 use App\Repository\FormationRepository;
+use App\Service\QRCodeService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,8 +23,12 @@ class EmployeFormationController extends AbstractController
         $sortField = $request->query->get('sort');
         $sortOrder = $request->query->get('order', 'ASC');
 
+        $formations = $formationRepository->searchAndSort($query, $sortField, $sortOrder);
+        
+        // QR code functionality removed as requested
+
         return $this->render('employ/formation/index.html.twig', [
-            'formations' => $formationRepository->searchAndSort($query, $sortField, $sortOrder),
+            'formations' => $formations,
             'query' => $query,
             'sort' => $sortField,
             'order' => $sortOrder,
@@ -35,10 +40,10 @@ class EmployeFormationController extends AbstractController
     {
         $formation = new Formation();
 
-        // Simuler un employé avec ID 1
-        $employe = $entityManager->getRepository(User::class)->find(1);
-        if ($employe) {
-            $formation->setUser($employe);
+        // Get the current logged-in user
+        $user = $this->getUser();
+        if ($user) {
+            $formation->setUser($user);
         }
 
         $form = $this->createForm(FormationType::class, $formation, [
@@ -47,9 +52,21 @@ class EmployeFormationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Simple validation for localisation requirement
+            $type = $form->get('type')->getData();
+            $localisation = $form->get('localisation')->getData();
+            
+            if (($type === 'Présentiel' || $type === 'Hybride') && empty($localisation)) {
+                $this->addFlash('error', 'La localisation est requise pour les formations de type Présentiel ou Hybride.');
+                return $this->render('employ/formation/new.html.twig', [
+                    'formation' => $formation,
+                    'form' => $form->createView(),
+                ]);
+            }
+            
             $entityManager->persist($formation);
             $entityManager->flush();
-
+            
             $this->addFlash('success', 'La formation a été créée avec succès.');
             return $this->redirectToRoute('employ_formation_index', [], Response::HTTP_SEE_OTHER);
         }
@@ -63,8 +80,28 @@ class EmployeFormationController extends AbstractController
     #[Route('/{id}', name: 'employ_formation_show', methods: ['GET'])]
     public function show(Formation $formation): Response
     {
+        // Extract coordinates from description (simple regex)
+        $coordinates = null;
+        $description = $formation->getDescription() ?? '';
+        if (preg_match('/(\-?\d+\.\d+),\s*(\-?\d+\.\d+)/', $description, $matches)) {
+            $coordinates = [
+                'latitude' => (float) $matches[1],
+                'longitude' => (float) $matches[2]
+            ];
+        }
+        
+        // Check if QR code exists
+        $qrCodePath = 'qrcodes/formation_' . $formation->getId() . '.png';
+        $fullQrPath = $this->getParameter('kernel.project_dir') . '/public/' . $qrCodePath;
+        
+        if (!file_exists($fullQrPath)) {
+            $qrCodePath = null;
+        }
+        
         return $this->render('employ/formation/show.html.twig', [
             'formation' => $formation,
+            'coordinates' => $coordinates,
+            'qrCodePath' => $qrCodePath,
         ]);
     }
 

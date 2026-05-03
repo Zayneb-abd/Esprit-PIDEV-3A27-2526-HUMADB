@@ -67,4 +67,22 @@ class AbsenceRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    /**
+     * Find absences by date range and user IDs
+     * @param array<int> $userIds
+     * @return array<Absence>
+     */
+    public function findByDateRangeAndUsers(\DateTime $start, \DateTime $end, array $userIds): array
+    {
+        return $this->createQueryBuilder('a')
+            ->where('a.user IN (:userIds)')
+            ->andWhere('a.date_debut <= :end')
+            ->andWhere('a.date_fin >= :start')
+            ->setParameter('userIds', $userIds)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->getQuery()
+            ->getResult();
+    }
 }

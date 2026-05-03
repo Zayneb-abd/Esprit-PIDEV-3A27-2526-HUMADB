@@ -43,7 +43,7 @@ class ParticipationRepository extends ServiceEntityRepository
         }
 
         if ($query) {
-            $qb->andWhere('u.nom LIKE :query OR u.prenom LIKE :query OR f.sujet LIKE :query OR p.resultat LIKE :query')
+            $qb->andWhere('u.nom LIKE :query OR u.prenom LIKE :query OR f.sujet LIKE :query OR p.statut LIKE :query OR p.resultat LIKE :query')
                 ->setParameter('query', '%' . $query . '%');
         }
 
@@ -53,7 +53,7 @@ class ParticipationRepository extends ServiceEntityRepository
             } elseif ($sortField === 'formation') {
                 $qb->orderBy('f.sujet', $sortOrder ?: 'ASC');
             } elseif ($sortField === 'statut') {
-                $qb->orderBy('p.resultat', $sortOrder ?: 'ASC');
+                $qb->orderBy('p.statut', $sortOrder ?: 'ASC');
             } else {
                 $qb->orderBy('p.' . $sortField, $sortOrder ?: 'ASC');
             }

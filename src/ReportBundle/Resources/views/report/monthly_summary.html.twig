@@ -79,17 +79,29 @@
         </div>
     </div>
 
-    {# Placeholder for future charts #}
+    {# Graphique de répartition #}
     <div class="card border-0 shadow-sm" style="border-radius: 15px;">
-        <div class="card-header bg-white border-bottom-0 py-3">
+        <div class="card-header bg-white border-bottom-0 py-3 d-flex justify-content-between align-items-center">
             <h5 class="mb-0 fw-bold">
-                <i class="ti ti-chart-pie me-2"></i>Répartition
+                <i class="ti ti-chart-bar me-2"></i>Répartition des demandes
             </h5>
+            <span class="text-muted small">Mois sélectionné</span>
         </div>
-        <div class="card-body text-center py-5">
-            <i class="ti ti-chart-bar fs-1 text-muted mb-3"></i>
-            <p class="text-muted">Les graphiques détaillés seront disponibles prochainement.</p>
+        <div class="card-body">
+            <div style="height: 320px;">
+                <canvas id="monthlySummaryChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block js %}
+{{ parent() }}
+{% include '@Report/report/_monthly_summary_chart.html.twig' %}
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+{% include '@Report/report/_monthly_summary_chart.html.twig' %}
 {% endblock %}

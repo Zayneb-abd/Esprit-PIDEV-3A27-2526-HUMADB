@@ -5,23 +5,50 @@
 {% block body %}
 <div class="container-fluid">
     <h1 class="fs-4 fw-bold mb-3">Nouvelle publication</h1>
-    <div class="card">
-        <div class="card-body p-4">
-            <form method="post">
-                <div class="mb-3">
-                    <label for="contenu" class="form-label">Contenu</label>
-                    <textarea name="contenu" id="contenu" class="form-control" rows="5" required></textarea>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body p-4">
+                    {{ form_start(form, {'action': path('admin_publication_new'), 'attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}
+                        {{ form_errors(form) }}
+                        <div class="mb-3">
+                        {{ form_label(form.contenu, 'Contenu', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.contenu, {'attr': {'class': 'form-control js-rich-editor', 'rows': 10}}) }}
+                            {{ form_errors(form.contenu) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(form.type, 'Type', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.type, {'attr': {'class': 'form-control', 'placeholder': 'Ex: General, Annonce, etc.'}}) }}
+                            {{ form_errors(form.type) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(form.mediaFiles, 'Images et Vidéos', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.mediaFiles, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_help(form.mediaFiles) }}
+                            {{ form_errors(form.mediaFiles) }}
+                            <small class="form-text text-muted">
+                                Formats acceptés: Images (JPG, PNG, GIF, WebP) et Vidéos (MP4, WebM, OGG)<br>
+                                Taille maximale recommandée: 10MB par fichier<br>
+                                Vous pouvez sélectionner plusieurs fichiers en même temps
+                            </small>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-primary" type="submit">Créer</button>
+                            <a class="btn btn-outline-secondary" href="{{ path('admin_publication') }}">Retour</a>
+                        </div>
+                    {{ form_end(form) }}
                 </div>
-                <div class="mb-3">
-                    <label for="type" class="form-label">Type</label>
-                    <input type="text" name="type" id="type" class="form-control" placeholder="Ex: General, Annonce, etc.">
-                </div>
-                <div class="mt-3">
-                    <button class="btn btn-primary">Creer</button>
-                    <a class="btn btn-outline-secondary" href="{{ path('admin_publication') }}">Retour</a>
-                </div>
-            </form>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            {% include 'components/chatbot_assistant.html.twig' %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block js %}
+{{ parent() }}
+{% include 'components/rich_text_editor.html.twig' %}
 {% endblock %}

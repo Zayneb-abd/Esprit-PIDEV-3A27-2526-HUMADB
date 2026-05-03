@@ -3,6 +3,7 @@
 namespace App\ReportBundle\Service;
 
 use App\Entity\User;
+use App\Entity\Conge;
 use App\Repository\CongeRepository;
 use App\Repository\AbsenceRepository;
 use App\Repository\UserRepository;
@@ -77,16 +78,26 @@ class ReportGenerator
             ->getQuery()
             ->getSingleScalarResult();
         
-        // Calculate total leave days
+        // Calculate monthly leave days and rejected requests
         $totalDays = 0;
+        $rejected = 0;
         foreach ($teamIds as $empId) {
             $employee = $this->userRepository->find($empId);
             $conges = $this->congeRepository->findBy(['user' => $employee]);
             foreach ($conges as $conge) {
                 $absence = $conge->getAbsence();
-                if ($absence && $absence->getStatut() === 'approuve') {
-                    $days = $absence->getDateDebut()->diff($absence->getDateFin())->days + 1;
-                    $totalDays += $days;
+                if (!$absence) {
+                    continue;
+                }
+
+                if (!$this->overlapsMonth($absence->getDateDebut(), $absence->getDateFin(), $startOfMonth, $endOfMonth)) {
+                    continue;
+                }
+
+                if ($absence->getStatut() === 'approuve') {
+                    $totalDays += $this->countDaysInMonth($absence->getDateDebut(), $absence->getDateFin(), $startOfMonth, $endOfMonth);
+                } elseif ($absence->getStatut() === 'refuse') {
+                    $rejected++;
                 }
             }
         }
@@ -95,7 +106,7 @@ class ReportGenerator
             'team_size' => count($team),
             'pending_requests' => $pending,
             'approved_this_month' => $approved,
-            'rejected_this_month' => 0, // TODO
+            'rejected_this_month' => $rejected,
             'total_leave_days_this_month' => $totalDays,
             'avg_absence_rate' => count($team) > 0 ? round($totalDays / count($team), 2) : 0,
         ];
@@ -201,15 +212,70 @@ class ReportGenerator
     {
         $startDate = new \DateTime("$year-$month-01");
         $endDate = new \DateTime($startDate->format('Y-m-t'));
+
+        $qb = $this->em->createQueryBuilder();
+        $conges = $qb->select('c', 'a', 'u')
+            ->from(Conge::class, 'c')
+            ->innerJoin('c.absence', 'a')
+            ->leftJoin('c.user', 'u')
+            ->andWhere('a.date_debut <= :endDate')
+            ->andWhere('a.date_fin >= :startDate')
+            ->setParameter('startDate', $startDate)
+            ->setParameter('endDate', $endDate)
+            ->getQuery()
+            ->getResult();
+
+        $totalRequests = 0;
+        $approved = 0;
+        $rejected = 0;
+        $pending = 0;
+
+        foreach ($conges as $conge) {
+            $absence = $conge->getAbsence();
+            if (!$absence) {
+                continue;
+            }
+
+            $totalRequests++;
+
+            switch ($absence->getStatut()) {
+                case 'approuve':
+                    $approved++;
+                    break;
+                case 'refuse':
+                    $rejected++;
+                    break;
+                default:
+                    $pending++;
+                    break;
+            }
+        }
         
         return [
             'year' => $year,
             'month' => $month,
-            'total_requests' => 0,
-            'approved' => 0,
-            'rejected' => 0,
-            'pending' => 0,
+            'total_requests' => $totalRequests,
+            'approved' => $approved,
+            'rejected' => $rejected,
+            'pending' => $pending,
         ];
+    }
+
+    private function overlapsMonth(\DateTimeInterface $start, \DateTimeInterface $end, \DateTimeInterface $monthStart, \DateTimeInterface $monthEnd): bool
+    {
+        return $start <= $monthEnd && $end >= $monthStart;
+    }
+
+    private function countDaysInMonth(\DateTimeInterface $start, \DateTimeInterface $end, \DateTimeInterface $monthStart, \DateTimeInterface $monthEnd): int
+    {
+        $effectiveStart = $start > $monthStart ? $start : $monthStart;
+        $effectiveEnd = $end < $monthEnd ? $end : $monthEnd;
+
+        if ($effectiveEnd < $effectiveStart) {
+            return 0;
+        }
+
+        return $effectiveStart->diff($effectiveEnd)->days + 1;
     }
     
     /**

@@ -6,14 +6,10 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="mb-4 d-flex justify-content-between align-items-center gap-3 flex-wrap">
+            <div class="mb-4 d-flex justify-content-between align-items-center">
                 <div>
                     <h1 class="fs-3 mb-1">Mes Participations</h1>
                     <p class="mb-0">Suivez l'état de vos demandes d'inscription aux formations</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <a href="{{ path('employ_formation_index') }}" class="btn btn-outline-primary">Formations</a>
-                    <a href="{{ path('employ_participation_formations') }}" class="btn btn-outline-secondary">Gestion des participations</a>
                 </div>
             </div>
 
@@ -62,6 +58,7 @@
                                     Statut {% if sort == 'statut' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
                                 </a>
                             </th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -77,10 +74,16 @@
                                     {{ participation.statut|capitalize }}
                                 </span>
                             </td>
+                            <td>
+                                <a href="{{ path('employ_participation_detail', {'id': participation.id}) }}" 
+                                   class="btn btn-sm btn-primary" title="Voir le détail et le QR code">
+                                    <i class="ti ti-qrcode"></i> Détail / QR
+                                </a>
+                            </td>
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="3" class="text-center py-4">Vous n'avez encore aucune demande d'inscription.</td>
+                            <td colspan="4" class="text-center py-4">Vous n'avez encore aucune demande d'inscription.</td>
                         </tr>
                     {% endfor %}
                     </tbody>

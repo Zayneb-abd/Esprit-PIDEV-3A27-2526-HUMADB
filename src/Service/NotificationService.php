@@ -2,138 +2,117 @@
 
 namespace App\Service;
 
-use App\Entity\Conge;
 use App\Entity\Absence;
+use App\Entity\Conge;
+use App\Entity\Notification;
 use App\Entity\User;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Address;
-use Psr\Log\LoggerInterface;
+use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
 
 class NotificationService
 {
-    private MailerInterface $mailer;
-    private LoggerInterface $logger;
-    private string $senderEmail;
-    private string $senderName;
-
     public function __construct(
-        MailerInterface $mailer,
-        LoggerInterface $logger,
-        string $senderEmail = 'noreply@huma.tn',
-        string $senderName = 'HUMA RH System'
-    ) {
-        $this->mailer = $mailer;
-        $this->logger = $logger;
-        $this->senderEmail = $senderEmail;
-        $this->senderName = $senderName;
+        private EntityManagerInterface $entityManager,
+        private UserRepository $userRepository
+    ) {}
+
+    public function sendToUser(User $user, string $title, string $message, ?string $link = null): void
+    {
+        $notification = new Notification();
+        $notification->setUser($user);
+        $notification->setTitle($title);
+        $notification->setMessage($message);
+        $notification->setReferenceLink($link);
+        // is_read and created_at are handled by the entity constructor
+
+        $this->entityManager->persist($notification);
+        $this->entityManager->flush();
+    }
+
+    public function sendToAdmins(string $title, string $message, ?string $link = null): void
+    {
+        // On récupère tous les utilisateurs ayant le rôle ADMIN_RH
+        // Le rôle dans la base de données est souvent stocké comme 'role' string
+        $admins = $this->userRepository->createQueryBuilder('u')
+            ->where("u.role = 'ADMIN_RH'")
+            ->orWhere("u.role LIKE '%ADMIN%'")
+            ->getQuery()
+            ->getResult();
+
+        foreach ($admins as $admin) {
+            $notification = new Notification();
+            $notification->setUser($admin);
+            $notification->setTitle($title);
+            $notification->setMessage($message);
+            $notification->setReferenceLink($link);
+            
+            $this->entityManager->persist($notification);
+        }
+
+        $this->entityManager->flush();
     }
 
     public function notifyEmployeeRequestSubmitted(Conge $conge): void
     {
-        $user = $conge->getUser();
-        if (!$user || !$user->getEmail()) {
+        $employee = $conge->getUser();
+        if (!$employee instanceof User) {
             return;
         }
 
-        try {
-            $email = (new TemplatedEmail())
-                ->from(new Address($this->senderEmail, $this->senderName))
-                ->to($user->getEmail())
-                ->subject('Votre demande de congé a été soumise')
-                ->htmlTemplate('emails/conge_submitted.html.twig')
-                ->context([
-                    'user' => $user,
-                    'conge' => $conge,
-                    'absence' => $conge->getAbsence(),
-                ]);
-
-            $this->mailer->send($email);
-            $this->logger->info('Email soumission envoyé à ' . $user->getEmail());
-        } catch (\Exception $e) {
-            $this->logger->error('Erreur email soumission: ' . $e->getMessage());
-        }
+        $this->sendToUser(
+            $employee,
+            'Demande de congé envoyée',
+            'Votre demande de congé a bien été soumise et est en attente de validation.',
+            null
+        );
     }
 
     public function notifyManagerNewRequest(Conge $conge, User $manager): void
     {
-        if (!$manager || !$manager->getEmail()) {
+        if (!$manager instanceof User) {
             return;
         }
 
-        $user = $conge->getUser();
+        $employee = $conge->getUser();
+        $employeeName = $employee instanceof User
+            ? trim($employee->getPrenom().' '.$employee->getNom())
+            : 'Un employé';
 
-        try {
-            $email = (new TemplatedEmail())
-                ->from(new Address($this->senderEmail, $this->senderName))
-                ->to($manager->getEmail())
-                ->subject('Nouvelle demande de congé de ' . $user->getPrenom() . ' ' . $user->getNom())
-                ->htmlTemplate('emails/manager_new_request.html.twig')
-                ->context([
-                    'manager' => $manager,
-                    'employee' => $user,
-                    'conge' => $conge,
-                    'absence' => $conge->getAbsence(),
-                ]);
-
-            $this->mailer->send($email);
-            $this->logger->info('Email manager envoyé à ' . $manager->getEmail());
-        } catch (\Exception $e) {
-            $this->logger->error('Erreur email manager: ' . $e->getMessage());
-        }
+        $this->sendToUser(
+            $manager,
+            'Nouvelle demande de congé',
+            sprintf('%s a soumis une nouvelle demande de congé.', $employeeName),
+            null
+        );
     }
 
-    public function notifyEmployeeRequestApproved(Conge $conge, ?string $comment = null): void
+    public function notifyEmployeeRequestApproved(Conge $conge, string $comment = ''): void
     {
-        $user = $conge->getUser();
-        if (!$user || !$user->getEmail()) {
+        $employee = $conge->getUser();
+        if (!$employee instanceof User) {
             return;
         }
 
-        try {
-            $email = (new TemplatedEmail())
-                ->from(new Address($this->senderEmail, $this->senderName))
-                ->to($user->getEmail())
-                ->subject('Votre demande de congé a été APPROUVÉE')
-                ->htmlTemplate('emails/conge_approved.html.twig')
-                ->context([
-                    'user' => $user,
-                    'conge' => $conge,
-                    'absence' => $conge->getAbsence(),
-                    'comment' => $comment,
-                ]);
-
-            $this->mailer->send($email);
-            $this->logger->info('Email approbation envoyé à ' . $user->getEmail());
-        } catch (\Exception $e) {
-            $this->logger->error('Erreur email approbation: ' . $e->getMessage());
+        $message = 'Votre demande de congé a été approuvée.';
+        if (trim($comment) !== '') {
+            $message .= ' Commentaire: '.$comment;
         }
+
+        $this->sendToUser($employee, 'Demande de congé approuvée', $message, null);
     }
 
-    public function notifyEmployeeRequestRejected(Conge $conge, string $reason): void
+    public function notifyEmployeeRequestRejected(Absence $absence, string $comment = ''): void
     {
-        $user = $conge->getUser();
-        if (!$user || !$user->getEmail()) {
+        $employee = $absence->getUser();
+        if (!$employee instanceof User) {
             return;
         }
 
-        try {
-            $email = (new TemplatedEmail())
-                ->from(new Address($this->senderEmail, $this->senderName))
-                ->to($user->getEmail())
-                ->subject('Votre demande de congé a été REFUSÉE')
-                ->htmlTemplate('emails/conge_rejected.html.twig')
-                ->context([
-                    'user' => $user,
-                    'conge' => $conge,
-                    'absence' => $conge->getAbsence(),
-                    'reason' => $reason,
-                ]);
-
-            $this->mailer->send($email);
-            $this->logger->info('Email refus envoyé à ' . $user->getEmail());
-        } catch (\Exception $e) {
-            $this->logger->error('Erreur email refus: ' . $e->getMessage());
+        $message = 'Votre demande de congé a été refusée.';
+        if (trim($comment) !== '') {
+            $message .= ' Commentaire: '.$comment;
         }
+
+        $this->sendToUser($employee, 'Demande de congé refusée', $message, null);
     }
 }
