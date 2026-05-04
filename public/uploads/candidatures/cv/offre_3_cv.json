@@ -1,0 +1,123 @@
+{
+  "generated_at" : "2026-03-02T11:59:14.985145",
+  "offre_id" : 3,
+  "offre_titre" : "Développeur Java",
+  "offre_departement" : "dev",
+  "total_candidates" : 5,
+  "ranking" : [ {
+    "candidatureId" : 99,
+    "candidatId" : 53,
+    "candidatNom" : "Brahimi Amine",
+    "candidatEmail" : "amine.brahimi24@mail.com",
+    "offreId" : 3,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 97,
+    "candidatId" : 51,
+    "candidatNom" : "Garcia Maria",
+    "candidatEmail" : "maria.garcia22@mail.com",
+    "offreId" : 3,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 100,
+    "candidatId" : 54,
+    "candidatNom" : "Khan Aisha",
+    "candidatEmail" : "aisha.khan25@mail.com",
+    "offreId" : 3,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 67,
+    "candidatId" : 21,
+    "candidatNom" : "Nguyen Thomas",
+    "candidatEmail" : "thomas.nguyen@huma.com",
+    "offreId" : 3,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 66,
+    "candidatId" : 20,
+    "candidatNom" : "Diallo Aminata",
+    "candidatEmail" : "aminata.diallo@huma.com",
+    "offreId" : 3,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  } ]
+}

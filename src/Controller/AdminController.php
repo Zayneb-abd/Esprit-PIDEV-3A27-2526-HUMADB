@@ -9,145 +9,415 @@ use App\Form\CandidatureType;
 use App\Form\OffreEmploiType;
 use App\Repository\CandidatureRepository;
 use App\Repository\OffreEmploiRepository;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
-use App\Repository\CongeRepository;
+use App\Repository\FeedbackRepository;
+use App\Repository\PublicationRepository;
 use App\Repository\UserRepository;
+use App\Repository\LogRepository;
+use App\Repository\CongeRepository;
 use App\Repository\AbsenceRepository;
 use App\Repository\FormationRepository;
+use App\Repository\CommentaireRepository;
+use App\Form\PublicationType;
 use App\Entity\Conge;
 use App\Entity\Absence;
 use App\Entity\Formation;
+use App\Entity\Log;
 use App\Entity\Publication;
-use App\Entity\Commentaire;
 use App\Entity\PublicationMedia;
-use App\Repository\PublicationRepository;
-use App\Repository\CommentaireRepository;
-use App\Form\PublicationType;
+use App\Entity\Commentaire;
+use App\Form\AdminUserType;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/admin')]
 class AdminController extends AbstractController
 {
     #[Route('/', name: 'admin_dashboard')]
-    public function dashboard(FormationRepository $formationRepository): Response
+    #[Route('/dashboard', name: 'admin_dashboard_alt')]
+    public function dashboard(
+        UserRepository $userRepository,
+        FeedbackRepository $feedbackRepository,
+        FormationRepository $formationRepository
+    ): Response
     {
-        // Get participation data for charts
+        $totalUsers = $userRepository->count([]);
+        $countByRole = $userRepository->countByRole();
+        $recentUsers = $userRepository->findRecentUsers(5);
+
         $formations = $formationRepository->findAll();
-        
-        // Prepare data for bar chart: participants per training
         $participantsPerTraining = [];
         $trainingLabels = [];
-        
-        foreach ($formations as $formation) {
-            $participantsCount = count($formation->getParticipations());
-            $participantsPerTraining[] = $participantsCount;
-            $trainingLabels[] = $formation->getSujet() ?? 'Formation ' . $formation->getId();
-        }
-        
-        // Prepare data for pie chart: results distribution
         $resultsDistribution = [
             'validé' => 0,
             'non validé' => 0,
-            'en cours' => 0
+            'en cours' => 0,
         ];
-        
+
         foreach ($formations as $formation) {
-            foreach ($formation->getParticipations() as $participation) {
+            $participations = $formation->getParticipations();
+            $participantsPerTraining[] = count($participations);
+            $trainingLabels[] = $formation->getSujet() ?? 'Formation ' . $formation->getId();
+
+            foreach ($participations as $participation) {
                 $resultat = $participation->getResultat() ?? 'en cours';
                 if (isset($resultsDistribution[$resultat])) {
                     $resultsDistribution[$resultat]++;
                 }
             }
         }
-        
-        return $this->render('admin/dashboard/index.html.twig', [
-            'participantsPerTraining' => $participantsPerTraining,
+
+        $feedbackByStatus = $feedbackRepository->countByStatus();
+        $feedbackTimeline = $feedbackRepository->countByDayLastDays(7);
+
+        return $this->render('admin/dashboard.html.twig', [
+            'total_users'  => $totalUsers,
+            'count_by_role' => $countByRole,
+            'recent_users' => $recentUsers,
             'trainingLabels' => $trainingLabels,
+            'participantsPerTraining' => $participantsPerTraining,
             'resultsDistribution' => $resultsDistribution,
+            'feedback_by_status' => $feedbackByStatus,
+            'feedback_timeline_labels' => $feedbackTimeline['labels'],
+            'feedback_timeline_data' => $feedbackTimeline['data'],
         ]);
     }
 
-    #[Route('/inventory', name: 'admin_inventory')]
-    public function inventory(Request $request, OffreEmploiRepository $offreEmploiRepository, CandidatureRepository $candidatureRepository): Response
+    // ─────────────── USER CRUD ───────────────
+
+    #[Route('/users', name: 'admin_users', methods: ['GET'])]
+    public function listUsers(Request $request, UserRepository $userRepository): Response
     {
-        $offres = $offreEmploiRepository->findBy([], ['date_publication' => 'DESC', 'id' => 'DESC']);
-        $candidatures = $candidatureRepository->findBy([], ['date_candidature' => 'DESC', 'id' => 'DESC']);
         $search = trim((string) $request->query->get('q', ''));
+        $role   = trim((string) $request->query->get('role', ''));
+        $page   = max(1, (int) $request->query->get('page', 1));
+        $limit  = 10;
 
-        if ($search !== '') {
-            $searchLower = mb_strtolower($search);
+        $users = $userRepository->searchPaginated($search, $role, $page, $limit);
+        $total = $userRepository->countSearch($search, $role);
+        $pages = (int) ceil($total / $limit);
 
-            $offres = array_values(array_filter(
-                $offres,
-                static function (OffreEmploi $offre) use ($searchLower): bool {
-                    $haystacks = [
-                        $offre->getTitre(),
-                        $offre->getDepartement(),
-                        $offre->getTypeContrat(),
-                        $offre->getDescription(),
-                    ];
+        return $this->render('admin/users.html.twig', [
+            'users'  => $users,
+            'search' => $search,
+            'role'   => $role,
+            'page'   => $page,
+            'pages'  => $pages,
+            'total'  => $total,
+        ]);
+    }
 
-                    foreach ($haystacks as $value) {
-                        if ($value !== null && str_contains(mb_strtolower($value), $searchLower)) {
-                            return true;
-                        }
-                    }
+    #[Route('/users/add', name: 'admin_user_add', methods: ['GET', 'POST'])]
+    public function addUser(
+        Request $request,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $passwordHasher,
+        SluggerInterface $slugger,
+    ): Response {
+        $user = new User();
+        $form = $this->createForm(AdminUserType::class, $user, ['is_edit' => false]);
+        $form->handleRequest($request);
 
-                    return false;
+        if ($form->isSubmitted() && $form->isValid()) {
+            $existing = $em->getRepository(User::class)->findOneBy(['email' => $user->getEmail()]);
+            if ($existing) {
+                $this->addFlash('danger', 'Cet email est déjà utilisé.');
+                return $this->render('admin/add_user.html.twig', ['form' => $form->createView()]);
+            }
+
+            $plainPassword = $form->get('plainPassword')->getData();
+            if ($plainPassword) {
+                $user->setMdp($passwordHasher->hashPassword($user, $plainPassword));
+            }
+
+            $faceImageFile = $form->get('faceImageFile')->getData();
+            if ($faceImageFile) {
+                $safeFilename = (string) $slugger->slug(pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_FILENAME));
+                $extension = $faceImageFile->guessExtension() ?: pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/faces';
+
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0775, true);
                 }
-            ));
 
-            $candidatures = array_values(array_filter(
-                $candidatures,
-                static function (Candidature $candidature) use ($searchLower): bool {
-                    $user = $candidature->getUser();
-                    $offre = $candidature->getOffreEmploi();
-                    $haystacks = [
-                        $candidature->getStatut(),
-                        $candidature->getCv(),
-                        $user?->getNom(),
-                        $user?->getPrenom(),
-                        $user?->getEmail(),
-                        $offre?->getTitre(),
-                    ];
-
-                    foreach ($haystacks as $value) {
-                        if ($value !== null && str_contains(mb_strtolower($value), $searchLower)) {
-                            return true;
-                        }
-                    }
-
-                    return false;
+                try {
+                    $faceImageFile->move($uploadDir, $newFilename);
+                    $user->setFaceImage($newFilename);
+                } catch (FileException) {
+                    $this->addFlash('warning', 'Erreur lors du téléchargement de l\'image.');
                 }
-            ));
+            }
+
+            $user->setReputationScore(0);
+            $em->persist($user);
+            $em->flush();
+
+            $log = new Log();
+            $log->setUser($this->getUser() instanceof User ? $this->getUser() : null);
+            $log->setAction('user_created (admin: ' . $user->getEmail() . ')');
+            $em->persist($log);
+            $em->flush();
+
+            $this->addFlash('success', 'Utilisateur créé avec succès.');
+            return $this->redirectToRoute('admin_users');
         }
 
-        $totalPostes = array_reduce(
-            $offres,
-            static fn (int $carry, OffreEmploi $offre): int => $carry + ($offre->getNombrePostes() ?? 0),
-            0
-        );
-
-        $candidaturesEnAttente = count(array_filter(
-            $candidatures,
-            static fn (Candidature $candidature): bool => $candidature->getStatut() === 'En attente'
-        ));
-
-        return $this->render('admin/inventory/index.html.twig', [
-            'offres' => $offres,
-            'candidatures' => $candidatures,
-            'search' => $search,
-            'stats' => [
-                'offres' => count($offres),
-                'candidatures' => count($candidatures),
-                'postes' => $totalPostes,
-                'candidatures_en_attente' => $candidaturesEnAttente,
-            ],
+        return $this->render('admin/add_user.html.twig', [
+            'form' => $form->createView(),
         ]);
+    }
+
+    #[Route('/users/{id}/edit', name: 'admin_user_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    public function editUser(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $passwordHasher,
+        SluggerInterface $slugger,
+    ): Response {
+        $user = $userRepository->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        $form = $this->createForm(AdminUserType::class, $user, ['is_edit' => true]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $plainPassword = $form->get('plainPassword')->getData();
+            if ($plainPassword) {
+                $user->setMdp($passwordHasher->hashPassword($user, $plainPassword));
+            }
+
+            $faceImageFile = $form->get('faceImageFile')->getData();
+            if ($faceImageFile) {
+                $safeFilename = (string) $slugger->slug(pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_FILENAME));
+                $extension = $faceImageFile->guessExtension() ?: pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/faces';
+
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0775, true);
+                }
+
+                try {
+                    $faceImageFile->move($uploadDir, $newFilename);
+                    $user->setFaceImage($newFilename);
+                } catch (FileException) {
+                    $this->addFlash('warning', 'Erreur lors du téléchargement de l\'image.');
+                }
+            }
+
+            $em->flush();
+
+            $log = new Log();
+            $log->setUser($this->getUser() instanceof User ? $this->getUser() : null);
+            $log->setAction('user_updated (admin edited: ' . $user->getEmail() . ')');
+            $em->persist($log);
+            $em->flush();
+
+            $this->addFlash('success', 'Utilisateur mis à jour.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        return $this->render('admin/edit_user.html.twig', [
+            'form' => $form->createView(),
+            'user' => $user,
+        ]);
+    }
+
+    #[Route('/users/{id}/delete', name: 'admin_user_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function deleteUser(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+    ): Response {
+        $user = $userRepository->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        if ($this->isCsrfTokenValid('delete_user_' . $id, (string) $request->request->get('_token'))) {
+            $email = $user->getEmail();
+            $em->remove($user);
+            $em->flush();
+
+            $log = new Log();
+            $log->setUser(null);
+            $log->setAction('user_deleted (admin deleted: ' . $email . ')');
+            $em->persist($log);
+            $em->flush();
+
+            $this->addFlash('success', 'Utilisateur supprimé.');
+        }
+
+        return $this->redirectToRoute('admin_users');
+    }
+
+    #[Route('/users/{id}/toggle-status', name: 'admin_user_toggle_status', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function toggleUserStatus(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+    ): Response {
+        $user = $userRepository->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        if ($this->isCsrfTokenValid('toggle_status_user_' . $id, (string) $request->request->get('_token'))) {
+            $user->setIsActive(!$user->isActive());
+            $em->flush();
+
+            $this->addFlash('success', $user->isActive()
+                ? 'Compte utilisateur active.'
+                : 'Compte utilisateur desactive.');
+        }
+
+        return $this->redirectToRoute('admin_users', [
+            'q' => (string) $request->query->get('q', ''),
+            'role' => (string) $request->query->get('role', ''),
+            'page' => (int) $request->query->get('page', 1),
+        ]);
+    }
+
+    #[Route('/users/export', name: 'admin_users_export', methods: ['GET'])]
+    public function exportUsers(Request $request, UserRepository $userRepository): StreamedResponse
+    {
+        $search = trim((string) $request->query->get('q', ''));
+        $role = trim((string) $request->query->get('role', ''));
+        $users = $userRepository->findForExport($search, $role);
+
+        $response = new StreamedResponse(function () use ($users): void {
+            $handle = fopen('php://output', 'w');
+            if (!$handle) {
+                return;
+            }
+
+            fputcsv($handle, ['id', 'nom', 'prenom', 'email', 'role', 'is_active', 'reputation_score', 'date_naissance']);
+            foreach ($users as $user) {
+                fputcsv($handle, [
+                    $user->getId(),
+                    $user->getNom(),
+                    $user->getPrenom(),
+                    $user->getEmail(),
+                    $user->getRole(),
+                    $user->isActive() ? '1' : '0',
+                    $user->getReputationScore(),
+                    $user->getDateNaissance() ? $user->getDateNaissance()->format('Y-m-d') : '',
+                ]);
+            }
+            fclose($handle);
+        });
+
+        $filename = 'users_export_' . (new \DateTime())->format('Ymd_His') . '.csv';
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+        return $response;
+    }
+
+    // ─────────────── LOGS ───────────────
+
+    #[Route('/logs', name: 'admin_logs', methods: ['GET'])]
+    public function logs(Request $request, LogRepository $logRepository): Response
+    {
+        $page  = max(1, (int) $request->query->get('page', 1));
+        $limit = 20;
+        $logs  = $logRepository->findAllOrderedByDate($limit, ($page - 1) * $limit);
+
+        return $this->render('admin/logs.html.twig', [
+            'logs' => $logs,
+            'page' => $page,
+        ]);
+    }
+
+    // ─────────────── EXISTING ROUTES (preserved) ───────────────
+
+
+    #[Route('/inventory-legacy', name: 'admin_inventory_legacy')]
+    public function inventory(Request $request): Response
+    {
+        return $this->redirectToRoute('admin_inventory', [
+            'q' => (string) $request->query->get('q', ''),
+            'page' => (int) $request->query->get('page', 1),
+        ]);
+    }
+
+    /**
+     * @template T of object
+     * @param array<int, T> $items
+     * @param callable(T): ?\DateTimeInterface $dateAccessor
+     * @return array{labels: array<int, string>, series: array<int, int>}
+     */
+    private function buildMonthlySeries(array $items, callable $dateAccessor, int $months = 6): array
+    {
+        $labels = [];
+        $series = [];
+        $counts = [];
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $month = (new \DateTimeImmutable('first day of this month'))->modify(sprintf('-%d months', $i));
+            $key = $month->format('Y-m');
+            $labels[] = $month->format('M Y');
+            $counts[$key] = 0;
+        }
+
+        foreach ($items as $item) {
+            $date = $dateAccessor($item);
+            if (!$date instanceof \DateTimeInterface) {
+                continue;
+            }
+
+            $key = $date->format('Y-m');
+            if (array_key_exists($key, $counts)) {
+                $counts[$key]++;
+            }
+        }
+
+        foreach ($counts as $count) {
+            $series[] = $count;
+        }
+
+        return ['labels' => $labels, 'series' => $series];
+    }
+
+    /**
+     * @template T of object
+     * @param array<int, T> $items
+     * @param callable(T): string $categoryAccessor
+     * @return array{labels: array<int, string>, series: array<int, int>}
+     */
+    private function buildCategorySeries(array $items, callable $categoryAccessor): array
+    {
+        $counts = [];
+
+        foreach ($items as $item) {
+            $label = trim($categoryAccessor($item));
+            if ($label === '') {
+                $label = 'Non défini';
+            }
+
+            $counts[$label] = ($counts[$label] ?? 0) + 1;
+        }
+
+        return [
+            'labels' => array_keys($counts),
+            'series' => array_values($counts),
+        ];
     }
 
     #[Route('/offres/new', name: 'admin_offre_new')]
@@ -704,7 +974,13 @@ class AdminController extends AbstractController
     }
 
     #[Route('/conge/{id}/edit', name: 'admin_conge_edit', methods: ['GET', 'POST'])]
-    public function editConge(Conge $conge, Request $request, EntityManagerInterface $em, UserRepository $userRepository): Response
+    public function editConge(
+        Conge $conge,
+        Request $request,
+        EntityManagerInterface $em,
+        UserRepository $userRepository,
+        MailerInterface $mailer
+    ): Response
     {
         $users = $userRepository->findAll();
         $errors = [];
@@ -776,6 +1052,7 @@ class AdminController extends AbstractController
             // Si pas d'erreurs, mettre à jour
             if (empty($errors)) {
                 $absence = $conge->getAbsence();
+                $previousStatus = $absence ? $absence->getStatut() : null;
                 $absence->setDateDebut(new \DateTime($dateDebutStr));
                 $absence->setDateFin(new \DateTime($dateFinStr));
                 $absence->setTypeAbsence($typeAbsence);
@@ -794,6 +1071,27 @@ class AdminController extends AbstractController
                     }
 
                     $em->flush();
+
+                    if ($absence->getUser() && $previousStatus !== $statut && in_array($statut, ['approuve', 'refuse'], true)) {
+                        try {
+                            $email = (new TemplatedEmail())
+                                ->from('noreply@huma.tn')
+                                ->to($absence->getUser()->getEmail())
+                                ->subject($statut === 'approuve' ? 'Votre demande de congé a été approuvée' : 'Votre demande de congé a été refusée')
+                                ->htmlTemplate($statut === 'approuve' ? 'emails/conge_approved.html.twig' : 'emails/conge_rejected.html.twig')
+                                ->context([
+                                    'user' => $absence->getUser(),
+                                    'conge' => $conge,
+                                    'absence' => $absence,
+                                    'comment' => $conge->getCommentaireValidation(),
+                                    'reason' => $conge->getCommentaireValidation(),
+                                ]);
+
+                            $mailer->send($email);
+                        } catch (\Throwable) {
+                            $this->addFlash('warning', 'Le congé a été enregistré, mais l\'email n\'a pas pu être envoyé.');
+                        }
+                    }
 
                     $this->addFlash('success', 'Demande de congé modifiée avec succès.');
                     return $this->redirectToRoute('admin_conge');
@@ -970,7 +1268,7 @@ class AdminController extends AbstractController
     }
 
     #[Route('/publication/new', name: 'admin_publication_new', methods: ['GET', 'POST'])]
-    public function newPublication(Request $request, EntityManagerInterface $em): Response
+    public function newPublication(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
     {
         $publication = new Publication();
         $form = $this->createForm(PublicationType::class, $publication);
@@ -980,59 +1278,13 @@ class AdminController extends AbstractController
             $publication->setDate_publication(new \DateTime());
             $publication->setUser($this->getUser());
 
-            // Gestion des fichiers uploadés
-            $mediaFiles = $form->get('mediaFiles')->getData();
-            
-            // Message de débogage pour vérifier le nombre de fichiers
-            if ($mediaFiles) {
-                $this->addFlash('info', 'Nombre de fichiers reçus: ' . count($mediaFiles));
-                foreach ($mediaFiles as $file) {
-                    // Générer un nom de fichier unique
-                    $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                    $safeFilename = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalFilename);
-                    $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
-
-                    // Déplacer le fichier dans le répertoire uploads/publications
-                    try {
-                        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/publications';
-                        $tempDir = $this->getParameter('kernel.project_dir') . '/temp';
-                        
-                        // Vérifier si les répertoires existent, sinon les créer
-                        if (!is_dir($uploadDir)) {
-                            mkdir($uploadDir, 0777, true);
-                        }
-                        if (!is_dir($tempDir)) {
-                            mkdir($tempDir, 0777, true);
-                        }
-                        
-                        // Utiliser copy() au lieu de move() pour éviter les problèmes de permissions
-                        $tempPath = $tempDir . '/' . $newFilename;
-                        copy($file->getPathname(), $tempPath);
-                        rename($tempPath, $uploadDir . '/' . $newFilename);
-
-                        // Créer l'entité PublicationMedia
-                        $media = new PublicationMedia();
-                        $media->setPublication($publication);
-                        $media->setPath('uploads/publications/' . $newFilename);
-                        
-                        // Déterminer le type de média
-                        $mimeType = $file->getMimeType();
-                        if (str_starts_with($mimeType, 'image/')) {
-                            $media->setType('image');
-                        } elseif (str_starts_with($mimeType, 'video/')) {
-                            $media->setType('video');
-                        } else {
-                            $media->setType('file');
-                        }
-
-                        $em->persist($media);
-                    } catch (\Exception $e) {
-                        $this->addFlash('error', 'Erreur lors de l\'upload du fichier: ' . $e->getMessage());
-                    }
-                }
-            }
-
             $em->persist($publication);
+            $this->handlePublicationMediaUploads(
+                $publication,
+                $form->get('mediaFiles')->getData() ?? [],
+                $slugger,
+                $em
+            );
             $em->flush();
 
             $this->addFlash('success', 'Publication créée avec succès.');
@@ -1059,6 +1311,59 @@ class AdminController extends AbstractController
         return $this->render('admin/publication/edit.html.twig', [
             'publication' => $publication,
         ]);
+    }
+
+    /**
+     * @param UploadedFile[] $uploadedFiles
+     */
+    private function handlePublicationMediaUploads(
+        Publication $publication,
+        array $uploadedFiles,
+        SluggerInterface $slugger,
+        EntityManagerInterface $em
+    ): void {
+        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/publications';
+
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0775, true);
+        }
+
+        foreach ($uploadedFiles as $uploadedFile) {
+            if (!$uploadedFile instanceof UploadedFile) {
+                continue;
+            }
+
+            $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = (string) $slugger->slug($originalFilename);
+            $extension = $uploadedFile->guessExtension() ?: pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+            $mimeType = $uploadedFile->getClientMimeType() ?: '';
+
+            try {
+                $guessedMimeType = $uploadedFile->getMimeType();
+                if (is_string($guessedMimeType) && $guessedMimeType !== '') {
+                    $mimeType = $guessedMimeType;
+                }
+            } catch (\Throwable) {
+                // If Symfony cannot inspect the temporary file, fall back to the client MIME type.
+            }
+
+            $mediaType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+
+            try {
+                $uploadedFile->move($uploadDir, $newFilename);
+            } catch (FileException) {
+                $this->addFlash('warning', 'Une image ou vidéo n\'a pas pu être téléversée.');
+                continue;
+            }
+
+            $media = new PublicationMedia();
+            $media->setPublication($publication);
+            $media->setType($mediaType);
+            $media->setPath('/uploads/publications/' . $newFilename);
+
+            $em->persist($media);
+        }
     }
 
     #[Route('/publication/{id}/delete', name: 'admin_publication_delete', methods: ['POST'])]

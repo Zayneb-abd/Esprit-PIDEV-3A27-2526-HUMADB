@@ -8,9 +8,14 @@
         <h4 class="mb-0 fw-bold">Utilisateurs</h4>
         <small class="text-muted">{{ total }} utilisateur(s) trouvé(s)</small>
     </div>
-    <a href="{{ path('admin_user_add') }}" class="btn btn-sm btn-primary">
-        <i class="ti ti-plus me-1"></i> Ajouter
-    </a>
+    <div class="d-flex gap-2">
+        <a href="{{ path('admin_users_export', { q: search, role: role }) }}" class="btn btn-sm btn-outline-success">
+            <i class="ti ti-download me-1"></i> Export CSV
+        </a>
+        <a href="{{ path('admin_user_add') }}" class="btn btn-sm btn-primary">
+            <i class="ti ti-plus me-1"></i> Ajouter
+        </a>
+    </div>
 </div>
 
 {# ── SEARCH ── #}
@@ -44,6 +49,7 @@
                         <th>Utilisateur</th>
                         <th>Email</th>
                         <th>Rôle</th>
+                        <th>Statut</th>
                         <th>Réputation</th>
                         <th>Naissance</th>
                         <th class="text-end pe-4">Actions</th>
@@ -72,6 +78,11 @@
                             </span>
                         </td>
                         <td>
+                            <span class="badge {{ user.isActive ? 'bg-success' : 'bg-secondary' }}">
+                                {{ user.isActive ? 'Actif' : 'Inactif' }}
+                            </span>
+                        </td>
+                        <td>
                             {% set badge = user.reputationBadge %}
                             <span class="badge {% if badge == 'Gold' %}bg-warning text-dark{% elseif badge == 'Silver' %}bg-secondary{% else %}bg-danger{% endif %}">
                                 {{ badge }} · {{ user.reputationScore }}
@@ -81,6 +92,12 @@
                             {{ user.dateNaissance ? user.dateNaissance|date('d/m/Y') : '—' }}
                         </td>
                         <td class="text-end pe-4">
+                            <form method="post" action="{{ path('admin_user_toggle_status', {id: user.id, q: search, role: role, page: page}) }}" class="d-inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('toggle_status_user_' ~ user.id) }}">
+                                <button type="submit" class="btn btn-sm {{ user.isActive ? 'btn-outline-warning' : 'btn-outline-success' }} me-1" title="{{ user.isActive ? 'Désactiver' : 'Activer' }}">
+                                    <i class="ti {{ user.isActive ? 'ti-user-off' : 'ti-user-check' }}"></i>
+                                </button>
+                            </form>
                             <a href="{{ path('admin_user_edit', {id: user.id}) }}" class="btn btn-sm btn-outline-secondary me-1" title="Modifier">
                                 <i class="ti ti-edit"></i>
                             </a>
@@ -116,7 +133,7 @@
 
                     {% else %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-5">Aucun utilisateur trouvé.</td>
+                        <td colspan="8" class="text-center text-muted py-5">Aucun utilisateur trouvé.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

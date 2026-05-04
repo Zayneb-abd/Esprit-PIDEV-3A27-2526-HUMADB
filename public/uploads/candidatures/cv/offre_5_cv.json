@@ -1,0 +1,123 @@
+{
+  "generated_at" : "2026-03-01T11:39:15.108930",
+  "offre_id" : 5,
+  "offre_titre" : "Data Analyst",
+  "offre_departement" : "DATA",
+  "total_candidates" : 5,
+  "ranking" : [ {
+    "candidatureId" : 89,
+    "candidatId" : 43,
+    "candidatNom" : "Schmidt Clara",
+    "candidatEmail" : "clara.schmidt14@mail.com",
+    "offreId" : 5,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 91,
+    "candidatId" : 45,
+    "candidatNom" : "Moreau Julie",
+    "candidatEmail" : "julie.moreau16@mail.com",
+    "offreId" : 5,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 81,
+    "candidatId" : 35,
+    "candidatNom" : "Dubois Emma",
+    "candidatEmail" : "emma.dubois6@mail.com",
+    "offreId" : 5,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 94,
+    "candidatId" : 48,
+    "candidatNom" : "Saidi Mehdi",
+    "candidatEmail" : "mehdi.saidi19@mail.com",
+    "offreId" : 5,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 82,
+    "candidatId" : 36,
+    "candidatNom" : "Rahmani Youssef",
+    "candidatEmail" : "youssef.rahmani7@mail.com",
+    "offreId" : 5,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  } ]
+}

@@ -1,0 +1,110 @@
+{% extends 'candidat/base_candidat.html.twig' %}
+
+{% block title %}Quiz de recrutement{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h1 class="fs-3 mb-1">{{ quiz.titre ?: 'Quiz de recrutement' }}</h1>
+            <p class="mb-0 text-secondary">
+                Offre: {{ candidature.offreEmploi ? candidature.offreEmploi.titre : '-' }}
+                {% if quiz.dureeMinutes %} · Duree: {{ quiz.dureeMinutes }} min{% endif %}
+                {% if quiz.seuilPourcentage %} · Seuil: {{ quiz.seuilPourcentage }}%{% endif %}
+            </p>
+        </div>
+        <a href="{{ path('candidat_offer_show', {id: candidature.offreEmploi.id}) }}" class="btn btn-outline-primary">Retour a l'offre</a>
+    </div>
+
+    {% if existing_result %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h5 class="mb-3">Quiz deja passe</h5>
+                <p class="mb-2"><strong>Score:</strong> {{ existing_result.scorePourcentage }}%</p>
+                <p class="mb-2"><strong>Statut:</strong> {{ existing_result.statut ?: '-' }}</p>
+                <p class="mb-0"><strong>Temps utilise:</strong> {{ existing_result.tempsUtilise ?: 0 }} secondes</p>
+            </div>
+        </div>
+    {% else %}
+        <form method="post" class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="alert alert-warning d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                    <div>
+                        Etape 2: repondez au quiz avant la fin du temps. Le formulaire sera soumis automatiquement quand le temps sera ecoule.
+                    </div>
+                    <div class="fw-semibold" id="quiz-timer" data-ends-at="{{ quiz_ends_at }}">Temps restant: --:--</div>
+                </div>
+
+                {% for question in quiz.questions %}
+                    <div class="mb-4 pb-4 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                            <div>
+                                <h5 class="mb-1">Question {{ loop.index }}</h5>
+                                <p class="mb-0">{{ question.questionText ?: question.question_text }}</p>
+                            </div>
+                            <span class="badge text-bg-light border">{{ question.points ?? 1 }} pts</span>
+                        </div>
+
+                        {% if question.type == 'QCM' %}
+                            {% for reponse in question.reponseQcms %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="answers[{{ question.id }}]" id="q{{ question.id }}_{{ reponse.id }}" value="{{ reponse.id }}">
+                                    <label class="form-check-label" for="q{{ question.id }}_{{ reponse.id }}">
+                                        {{ reponse.texte }}
+                                    </label>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">Aucune proposition n'est configuree pour cette question.</p>
+                            {% endfor %}
+                        {% else %}
+                            <textarea class="form-control" rows="4" disabled placeholder="Les questions ouvertes ne sont pas encore evaluables automatiquement dans cette version."></textarea>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">Ce quiz ne contient encore aucune question.</p>
+                {% endfor %}
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary" {% if quiz.questions|length == 0 %}disabled{% endif %}>Soumettre le quiz</button>
+                    <a href="{{ path('candidat_reports') }}" class="btn btn-outline-secondary">Mes candidatures</a>
+                </div>
+            </div>
+        </form>
+
+        <script>
+            (() => {
+                const timer = document.getElementById('quiz-timer');
+                const form = document.querySelector('form[method="post"]');
+
+                if (!timer || !form) {
+                    return;
+                }
+
+                const endsAt = Number(timer.dataset.endsAt || 0) * 1000;
+                let submitted = false;
+
+                const formatRemaining = (ms) => {
+                    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+                    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                    const seconds = String(totalSeconds % 60).padStart(2, '0');
+
+                    return `${minutes}:${seconds}`;
+                };
+
+                const tick = () => {
+                    const remaining = endsAt - Date.now();
+                    timer.textContent = `Temps restant: ${formatRemaining(remaining)}`;
+
+                    if (remaining <= 0 && !submitted) {
+                        submitted = true;
+                        form.submit();
+                    }
+                };
+
+                tick();
+                window.setInterval(tick, 1000);
+            })();
+        </script>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,591 @@
+<div class="facebook-reactions" data-publication-id="{{ publication.id }}">
+    <!-- Main Like Button -->
+    <div class="reaction-main">
+        <button type="button" class="facebook-like-btn" onclick="toggleReactionSelector(this)">
+            <div class="reaction-icon">
+                {% if userReaction and userReaction.type == 'like' %}
+                    <i class="fas fa-thumbs-up"></i>
+                {% else %}
+                    <i class="far fa-thumbs-up"></i>
+                {% endif %}
+            </div>
+            <span class="reaction-label">J'aime</span>
+        </button>
+    </div>
+    
+    <!-- Reaction Selector Popup -->
+    <div class="reaction-selector" style="display: none;">
+        <div class="reaction-popup">
+            <div class="reaction-emoji-list">
+                <button type="button" class="reaction-emoji-btn" data-type="like" title="J'aime">
+                    <span class="emoji">👍</span>
+                    <span class="emoji-label">J'aime</span>
+                </button>
+                <button type="button" class="reaction-emoji-btn" data-type="love" title="J'adore">
+                    <span class="emoji">❤️</span>
+                    <span class="emoji-label">J'adore</span>
+                </button>
+                <button type="button" class="reaction-emoji-btn" data-type="haha" title="Haha">
+                    <span class="emoji">😂</span>
+                    <span class="emoji-label">Haha</span>
+                </button>
+                <button type="button" class="reaction-emoji-btn" data-type="wow" title="Wow">
+                    <span class="emoji">😮</span>
+                    <span class="emoji-label">Wow</span>
+                </button>
+                <button type="button" class="reaction-emoji-btn" data-type="sad" title="Triste">
+                    <span class="emoji">😢</span>
+                    <span class="emoji-label">Triste</span>
+                </button>
+                <button type="button" class="reaction-emoji-btn" data-type="angry" title="Fâché">
+                    <span class="emoji">😡</span>
+                    <span class="emoji-label">Fâché</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reactions Summary -->
+    {% if totalReactions > 0 %}
+    <div class="reactions-summary">
+        <div class="reactions-avatars">
+            {% for reactionType, reactionData in reactionSummary %}
+                {% if reactionData.count > 0 %}
+                <div class="reaction-avatar" data-type="{{ reactionType }}" title="{{ reactionData.count }} {{ reactionType }}">
+                    <span class="reaction-emoji-small">{{ reactionData.emoji }}</span>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <span class="reactions-count">{{ totalReactions }}</span>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Facebook-style Reactions */
+.facebook-reactions {
+    position: relative;
+    display: inline-block;
+    margin: 10px 0;
+}
+
+.reaction-main {
+    display: inline-block;
+}
+
+.facebook-like-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: none;
+    background: #f0f2f5;
+    border-radius: 6px;
+    color: #65676b;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.facebook-like-btn:hover {
+    background: #e4e6eb;
+    color: #050505;
+}
+
+.facebook-like-btn.active {
+    background: #e7f3ff;
+    color: #1877f2;
+}
+
+.facebook-like-btn .reaction-icon {
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+}
+
+.reaction-selector {
+    position: absolute;
+    top: -60px;
+    left: 0;
+    z-index: 1000;
+    transform-origin: bottom center;
+}
+
+.reaction-popup {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    position: relative;
+    animation: popupAppear 0.3s ease;
+}
+
+.reaction-popup::before {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid white;
+}
+
+.reaction-emoji-list {
+    display: flex;
+    gap: 4px;
+}
+
+.reaction-emoji-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 48px;
+    height: 48px;
+    position: relative;
+}
+
+.reaction-emoji-btn:hover {
+    background: #f0f2f5;
+    transform: scale(1.3);
+}
+
+.reaction-emoji-btn .emoji {
+    font-size: 24px;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.reaction-emoji-btn .emoji-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #65676b;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.reaction-emoji-btn:hover .emoji-label {
+    opacity: 1;
+}
+
+.reaction-emoji-btn:hover .emoji {
+    transform: translateY(-4px);
+}
+
+/* Reactions Summary */
+.reactions-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.reactions-avatars {
+    display: flex;
+    margin-right: 4px;
+}
+
+.reaction-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #f0f2f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: -8px;
+    border: 2px solid white;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.reaction-avatar:hover {
+    transform: scale(1.2);
+    z-index: 10;
+}
+
+.reaction-emoji-small {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.reactions-count {
+    color: #65676b;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* Animations */
+@keyframes popupAppear {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes emojiBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.5); }
+}
+
+.reaction-emoji-btn:active .emoji {
+    animation: emojiBounce 0.3s ease;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .reaction-popup {
+        padding: 6px;
+    }
+    
+    .reaction-emoji-btn {
+        min-width: 40px;
+        height: 40px;
+        padding: 6px;
+    }
+    
+    .reaction-emoji-btn .emoji {
+        font-size: 20px;
+    }
+    
+    .reaction-emoji-btn .emoji-label {
+        font-size: 10px;
+    }
+    
+    .facebook-like-btn {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+    
+    .reaction-selector {
+        top: -50px;
+    }
+}
+</style>
+
+<script>
+// Facebook-style Reactions JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    initializeFacebookReactions();
+});
+
+function initializeFacebookReactions() {
+    // Close reaction selector when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.facebook-reactions')) {
+            closeAllReactionSelectors();
+        }
+    });
+}
+
+function toggleReactionSelector(button) {
+    const container = button.closest('.facebook-reactions');
+    const selector = container.querySelector('.reaction-selector');
+    const isVisible = selector.style.display !== 'none';
+    
+    // Close all other selectors
+    closeAllReactionSelectors();
+    
+    // Toggle current selector
+    if (!isVisible) {
+        selector.style.display = 'block';
+        
+        // Position selector correctly
+        const buttonRect = button.getBoundingClientRect();
+        selector.style.left = '0px';
+        selector.style.top = -(selector.offsetHeight + 10) + 'px';
+        
+        // Add hover effects
+        addHoverEffects(container);
+    }
+}
+
+function closeAllReactionSelectors() {
+    document.querySelectorAll('.reaction-selector').forEach(selector => {
+        selector.style.display = 'none';
+    });
+}
+
+function addHoverEffects(container) {
+    const emojiButtons = container.querySelectorAll('.reaction-emoji-btn');
+    
+    emojiButtons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.3)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+        
+        button.addEventListener('click', function() {
+            const type = this.dataset.type;
+            const publicationId = container.dataset.publicationId;
+            submitFacebookReaction(publicationId, type, container);
+        });
+    });
+}
+
+async function submitFacebookReaction(publicationId, reactionType, container) {
+    const likeBtn = container.querySelector('.facebook-like-btn');
+    const selector = container.querySelector('.reaction-selector');
+    
+    // Show loading state
+    likeBtn.style.opacity = '0.6';
+    likeBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`/reaction/add/${publicationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({
+                'type': reactionType
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update the like button
+            updateFacebookLikeButton(likeBtn, reactionType, data.userReaction);
+            
+            // Update reactions summary
+            updateFacebookReactionsSummary(container, data.counts);
+            
+            // Close selector
+            selector.style.display = 'none';
+            
+            // Show success animation
+            showReactionSuccess(likeBtn, reactionType);
+        } else {
+            throw new Error(data.error || 'Erreur inconnue');
+        }
+        
+    } catch (error) {
+        console.error('Facebook reaction error:', error);
+        showNotification('Erreur: ' + error.message, 'error');
+    } finally {
+        // Restore button state
+        likeBtn.style.opacity = '1';
+        likeBtn.disabled = false;
+    }
+}
+
+function updateFacebookLikeButton(button, reactionType, userReaction) {
+    const icon = button.querySelector('.reaction-icon i');
+    const label = button.querySelector('.reaction-label');
+    
+    // Update icon based on reaction type
+    const reactionIcons = {
+        'like': 'fas fa-thumbs-up',
+        'love': 'fas fa-heart',
+        'haha': 'fas fa-laugh',
+        'wow': 'fas fa-surprise',
+        'sad': 'fas fa-sad-tear',
+        'angry': 'fas fa-angry'
+    };
+    
+    const reactionLabels = {
+        'like': 'J\'aime',
+        'love': 'J\'adore',
+        'haha': 'Haha',
+        'wow': 'Wow',
+        'sad': 'Triste',
+        'angry': 'Fâché'
+    };
+    
+    if (userReaction && userReaction.type) {
+        icon.className = reactionIcons[userReaction.type] || reactionIcons['like'];
+        label.textContent = reactionLabels[userReaction.type] || 'J\'aime';
+        button.classList.add('active');
+    } else {
+        icon.className = 'far fa-thumbs-up';
+        label.textContent = 'J\'aime';
+        button.classList.remove('active');
+    }
+}
+
+function updateFacebookReactionsSummary(container, counts) {
+    const existingSummary = container.querySelector('.reactions-summary');
+    
+    // Calculate total reactions
+    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    
+    if (total === 0) {
+        // Remove summary if no reactions
+        if (existingSummary) {
+            existingSummary.remove();
+        }
+        return;
+    }
+    
+    // Create or update summary
+    const reactionEmojis = {
+        'like': '👍',
+        'love': '❤️',
+        'haha': '😂',
+        'wow': '😮',
+        'sad': '😢',
+        'angry': '😡'
+    };
+    
+    let summaryHTML = '<div class="reactions-summary">';
+    summaryHTML += '<div class="reactions-avatars">';
+    
+    // Show up to 3 most popular reactions
+    const sortedReactions = Object.entries(counts)
+        .filter(([type, count]) => count > 0)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 3);
+    
+    sortedReactions.forEach(([type, count]) => {
+        summaryHTML += `
+            <div class="reaction-avatar" data-type="${type}" title="${count} ${type}">
+                <span class="reaction-emoji-small">${reactionEmojis[type]}</span>
+            </div>
+        `;
+    });
+    
+    summaryHTML += '</div>';
+    summaryHTML += `<span class="reactions-count">${total}</span>`;
+    summaryHTML += '</div>';
+    
+    if (existingSummary) {
+        existingSummary.outerHTML = summaryHTML;
+    } else {
+        container.insertAdjacentHTML('beforeend', summaryHTML);
+    }
+}
+
+function showReactionSuccess(button, reactionType) {
+    // Add success animation
+    button.style.transform = 'scale(1.1)';
+    button.style.background = '#e7f3ff';
+    
+    setTimeout(() => {
+        button.style.transform = 'scale(1)';
+        button.style.background = '';
+    }, 300);
+    
+    // Show floating emoji
+    const emoji = document.createElement('div');
+    emoji.className = 'floating-emoji';
+    emoji.textContent = getEmojiForType(reactionType);
+    emoji.style.cssText = `
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 24px;
+        animation: floatUp 1s ease-out forwards;
+        pointer-events: none;
+        z-index: 1001;
+    `;
+    
+    button.appendChild(emoji);
+    
+    setTimeout(() => {
+        emoji.remove();
+    }, 1000);
+}
+
+function getEmojiForType(type) {
+    const emojis = {
+        'like': '👍',
+        'love': '❤️',
+        'haha': '😂',
+        'wow': '😮',
+        'sad': '😢',
+        'angry': '😡'
+    };
+    return emojis[type] || '👍';
+}
+
+function showNotification(message, type) {
+    // Simple notification
+    const notification = document.createElement('div');
+    notification.className = `facebook-notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'error' ? '#fa383e' : '#1877f2'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Add floating animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes floatUp {
+        0% {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-30px);
+        }
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>

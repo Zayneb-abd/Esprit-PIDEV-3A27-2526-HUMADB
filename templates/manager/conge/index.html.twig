@@ -1,0 +1,108 @@
+{% extends 'manager/base_manager.html.twig' %}
+
+{% block title %}Congés Équipe{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="fs-3 mb-1">Congés de l'équipe</h1>
+                    <p class="mb-0 text-muted">Gérez les demandes de congés de vos employés</p>
+                </div>
+                <a href="{{ path('manager_equipe') }}" class="btn btn-outline-secondary">
+                    <i class="ti ti-arrow-left"></i> Retour à l'équipe
+                </a>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    {% if conges is empty %}
+                        <div class="text-center py-5">
+                            <i class="ti ti-calendar-off fs-1 text-muted mb-3"></i>
+                            <p class="text-muted">Aucune demande de congé pour le moment.</p>
+                        </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Employé</th>
+                                        <th>Type</th>
+                                        <th>Date début</th>
+                                        <th>Date fin</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for conge in conges %}
+                                        <tr>
+                                            <td>{{ conge.user.prenom }} {{ conge.user.nom }}</td>
+                                            <td>{{ conge.absence.typeAbsence }}</td>
+                                            <td>{{ conge.absence.dateDebut|date('d/m/Y') }}</td>
+                                            <td>{{ conge.absence.dateFin|date('d/m/Y') }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ conge.absence.statut == 'approuve' ? 'success' : (conge.absence.statut == 'refuse' ? 'danger' : 'warning') }}">
+                                                    {{ conge.absence.statut }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <!-- DEBUG: Statut = "{{ conge.absence.statut }}" -->
+                                                <div class="d-flex gap-1">
+                                                    <a href="{{ path('manager_employe_profile', {id: conge.user.id}) }}#conges" class="btn btn-sm btn-outline-primary" title="Voir détails">
+                                                        <i class="ti ti-eye"></i>
+                                                    </a>
+                                                    
+                                                    {% if conge.absence.statut|lower|trim == 'en_attente' or conge.absence.statut|lower|trim == 'en attente' %}
+                                                        <form method="post" action="{{ path('workflow_conge_approve', {id: conge.id}) }}" class="d-inline">
+                                                            <button type="submit" class="btn btn-sm btn-success" title="Approuver">
+                                                                <i class="ti ti-check"></i>
+                                                            </button>
+                                                        </form>
+                                                        
+                                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ conge.id }}" title="Refuser">
+                                                            <i class="ti ti-x"></i>
+                                                        </button>
+                                                        
+                                                        <!-- Modal pour refuser -->
+                                                        <div class="modal fade" id="rejectModal{{ conge.id }}" tabindex="-1">
+                                                            <div class="modal-dialog">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header">
+                                                                        <h5 class="modal-title">Refuser la demande</h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                    </div>
+                                                                    <form method="post" action="{{ path('workflow_conge_reject', {id: conge.id}) }}">
+                                                                        <div class="modal-body">
+                                                                            <p><strong>Employé:</strong> {{ conge.user.prenom }} {{ conge.user.nom }}</p>
+                                                                            <p><strong>Période:</strong> {{ conge.absence.dateDebut|date('d/m/Y') }} - {{ conge.absence.dateFin|date('d/m/Y') }}</p>
+                                                                            <div class="mb-3">
+                                                                                <label for="comment{{ conge.id }}" class="form-label">Motif du refus (obligatoire)</label>
+                                                                                <textarea class="form-control" id="comment{{ conge.id }}" name="comment" rows="3" required></textarea>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="modal-footer">
+                                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                                            <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+                                                                        </div>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

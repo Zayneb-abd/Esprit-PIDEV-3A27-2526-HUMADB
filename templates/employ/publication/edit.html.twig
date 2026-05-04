@@ -5,10 +5,14 @@
 {% block body %}
 <div class="container-fluid">
     <h1 class="fs-4 fw-bold mb-3">Modifier publication #{{ publication.id }}</h1>
-    <div class="card">
-        <div class="card-body p-4">
-            {{ form_start(form) }}
-            {{ form_row(form.contenu) }}
+        <div class="card">
+            <div class="card-body p-4">
+                {{ form_start(form) }}
+            <div class="mb-3">
+                {{ form_label(form.contenu) }}
+                {{ form_widget(form.contenu, {'attr': {'class': 'form-control js-rich-editor', 'rows': 10}}) }}
+                {{ form_errors(form.contenu) }}
+            </div>
             {{ form_row(form.type) }}
             <div class="mt-3">
                 <button class="btn btn-primary">Mettre a jour</button>
@@ -18,4 +22,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+{% include 'components/rich_text_editor.html.twig' %}
 {% endblock %}

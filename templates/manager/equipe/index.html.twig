@@ -1,0 +1,140 @@
+{% extends 'manager/base_manager.html.twig' %}
+
+{% block title %}Mon Équipe{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="fs-3 mb-1">Mon Équipe</h1>
+                    <p class="mb-0 text-muted">Gérez vos {{ equipe|length }} employés</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ path('manager_conges') }}" class="btn btn-outline-primary">
+                        <i class="ti ti-calendar"></i> Congés équipe
+                    </a>
+                    <a href="{{ path('manager_absences') }}" class="btn btn-outline-primary">
+                        <i class="ti ti-calendar-x"></i> Absences équipe
+                    </a>
+                </div>
+            </div>
+
+            {% if equipe is empty %}
+                <div class="alert alert-info">
+                    <i class="ti ti-info-circle me-2"></i>
+                    Vous n'avez pas encore d'employés dans votre équipe.
+                </div>
+            {% else %}
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+                    {% for employe in equipe %}
+                        <div class="col">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        {% if employe.faceImage %}
+                                            <img src="{{ asset('uploads/faces/' ~ employe.faceImage) }}" 
+                                                 alt="{{ employe.prenom }} {{ employe.nom }}" 
+                                                 class="avatar me-3" style="width: 60px; height: 60px;">
+                                        {% else %}
+                                            <div class="avatar me-3 bg-primary text-white d-flex align-items-center justify-content-center" 
+                                                 style="width: 60px; height: 60px; font-size: 24px;">
+                                                {{ employe.prenom|first|upper }}{{ employe.nom|first|upper }}
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <h5 class="mb-0 fw-semibold">{{ employe.prenom }} {{ employe.nom }}</h5>
+                                            <p class="mb-0 text-muted small">{{ employe.email }}</p>
+                                            <span class="badge bg-info">Employé</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="border-top pt-3">
+                                        <div class="row text-center g-2">
+                                            <div class="col-4">
+                                                <a href="{{ path('manager_employe_profile', {id: employe.id}) }}#conges" class="text-decoration-none">
+                                                    <div class="p-2 rounded bg-light">
+                                                        <i class="ti ti-calendar text-primary fs-5"></i>
+                                                        <p class="mb-0 small text-muted">Congés</p>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                            <div class="col-4">
+                                                <a href="{{ path('manager_employe_profile', {id: employe.id}) }}#absences" class="text-decoration-none">
+                                                    <div class="p-2 rounded bg-light">
+                                                        <i class="ti ti-calendar-x text-warning fs-5"></i>
+                                                        <p class="mb-0 small text-muted">Absences</p>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="p-2 rounded bg-light">
+                                                    <i class="ti ti-star text-success fs-5"></i>
+                                                    <p class="mb-0 small text-muted">Score</p>
+                                                    <small class="fw-bold">{{ employe.reputationScore|default(0) }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <a href="{{ path('manager_employe_profile', {id: employe.id}) }}" class="btn btn-sm btn-outline-primary w-100">
+                                            <i class="ti ti-eye me-1"></i> Voir profil
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                {# Summary Stats #}
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">
+                                    <i class="ti ti-chart-bar me-2"></i>Résumé de l'équipe
+                                </h5>
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <div class="p-3">
+                                            <h3 class="text-primary mb-1">{{ equipe|length }}</h3>
+                                            <p class="mb-0 text-muted">Employés</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3">
+                                            <h3 class="text-success mb-1">
+                                                {{ equipe|filter(e => e.reputationBadge == 'Gold')|length }}
+                                            </h3>
+                                            <p class="mb-0 text-muted">Gold</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3">
+                                            <h3 class="text-info mb-1">
+                                                {{ equipe|filter(e => e.reputationBadge == 'Silver')|length }}
+                                            </h3>
+                                            <p class="mb-0 text-muted">Silver</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3">
+                                            <h3 class="text-warning mb-1">
+                                                {{ equipe|filter(e => e.reputationBadge == 'Bronze')|length }}
+                                            </h3>
+                                            <p class="mb-0 text-muted">Bronze</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

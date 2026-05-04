@@ -139,6 +139,7 @@ class UserController extends AbstractController
             }
 
             $em->flush();
+            $user->setCvFile(null);
 
             // Log
             $log = new Log();
@@ -206,7 +207,7 @@ class UserController extends AbstractController
         UrlGeneratorInterface $urlGenerator,
     ): Response {
         if ($request->isMethod('POST')) {
-            $email = $request->request->get('email', '');
+            $email = mb_strtolower(trim((string) $request->request->get('email', '')));
             $user = $userRepository->findOneByEmail($email);
 
             if ($user) {
@@ -215,7 +216,7 @@ class UserController extends AbstractController
                 $user->setToken_expiry(new \DateTime('+1 hour'));
                 $em->flush();
 
-                $resetUrl = $urlGenerator->generate('app_reset_password', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
+                $resetUrl = $urlGenerator->generate('app_reset_password_entry', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
 
                 $emailMessage = (new Email())
                     ->from('noreply@humadb.com')
@@ -230,8 +231,11 @@ class UserController extends AbstractController
 
                 try {
                     $mailer->send($emailMessage);
-                } catch (\Exception $e) {
-                    // Silently fail – don't reveal email existence
+                } catch (\Throwable) {
+                    // In dev, help diagnose mail setup while keeping flow functional.
+                    if ($_ENV['APP_ENV'] ?? 'dev' === 'dev') {
+                        $this->addFlash('warning', 'Email non envoyé (MAILER_DSN). Utilisez ce lien de test: ' . $resetUrl);
+                    }
                 }
             }
 
@@ -243,14 +247,25 @@ class UserController extends AbstractController
         return $this->render('user/forgot_password.html.twig');
     }
 
+    #[Route('/reset-password', name: 'app_reset_password_entry', methods: ['GET', 'POST'])]
     #[Route('/reset-password/{token}', name: 'app_reset_password', methods: ['GET', 'POST'])]
+    #[Route('/user/reset-password', name: 'app_user_reset_password_entry_legacy', methods: ['GET', 'POST'])]
+    #[Route('/user/reset-password/{token}', name: 'app_user_reset_password_legacy', methods: ['GET', 'POST'])]
     public function resetPassword(
-        string $token,
+        ?string $token,
         Request $request,
         UserRepository $userRepository,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
     ): Response {
+        $token = trim((string) ($token ?: $request->query->get('token', '')));
+        $token = mb_strtolower($token);
+
+        if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
+            $this->addFlash('danger', 'Ce lien de réinitialisation est invalide.');
+            return $this->redirectToRoute('app_forgot_password');
+        }
+
         $user = $userRepository->findOneByResetToken($token);
 
         if (!$user || !$user->getToken_expiry() || $user->getToken_expiry() < new \DateTime()) {

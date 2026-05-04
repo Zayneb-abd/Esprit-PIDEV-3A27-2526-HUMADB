@@ -18,7 +18,12 @@ class PublicationType extends AbstractType
         $builder
             ->add('contenu', TextareaType::class, [
                 'label' => 'Contenu',
-                'attr' => ['rows' => 5],
+                'attr' => ['rows' => 5, 'required' => false],
+                'constraints' => [
+                    new \Symfony\Component\Validator\Constraints\NotBlank([
+                        'message' => 'Veuillez remplir le champ contenu.'
+                    ])
+                ]
             ])
             ->add('type', TextType::class, [
                 'label' => 'Type',
@@ -31,8 +36,7 @@ class PublicationType extends AbstractType
                 'mapped' => false,
                 'attr' => [
                     'accept' => 'image/*,video/*',
-                    'class' => 'form-control',
-                    'onchange' => 'updateFileCount(this)'
+                    'class' => 'form-control'
                 ],
                 'help' => 'Vous pouvez sélectionner plusieurs fichiers (images et vidéos)'
             ]);

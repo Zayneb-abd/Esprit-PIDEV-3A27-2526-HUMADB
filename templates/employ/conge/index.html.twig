@@ -74,14 +74,14 @@
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                {% set statut = conge.absence and conge.absence.statut ? conge.absence.statut : 'EN_ATTENTE' %}
+                                                {% set statut = conge.absence.statut|default('') %}
                                                 {% set badgeClass = {
                                                     'EN_ATTENTE': 'bg-warning',
                                                     'APPROUVE': 'bg-success',
                                                     'REFUSE': 'bg-danger',
                                                     'ANNULE': 'bg-secondary'
-                                                }[statut] ?? 'bg-secondary' %}
-                                                <span class="badge {{ badgeClass }}">
+                                                  } %}
+                                                  <span class="badge {{ badgeClass[statut] ?? 'bg-secondary' }}">
                                                     {% set statutLabels = {
                                                         'EN_ATTENTE': 'En attente',
                                                         'APPROUVE': 'Approuvé',
@@ -90,6 +90,10 @@
                                                     } %}
                                                     {{ statutLabels[statut] ?? statut }}
                                                 </span>
+                                                {% set congeId = conge.getId() %}
+                                                {% if comments[congeId] is defined and comments[congeId] %}
+                                                    <br><small class="text-muted">{{ comments[congeId] }}</small>
+                                                {% endif %}
                                             </td>
                                             <td>
                                                 <a href="{{ path('employ_conges_edit', {'id': conge.id}) }}" class="btn btn-warning btn-sm" title="Modifier">

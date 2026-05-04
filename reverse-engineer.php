@@ -6,7 +6,7 @@ require_once 'vendor/autoload.php';
 $dbHost = 'localhost';
 $dbName = 'humadb';
 $dbUser = 'root';
-$dbPass = '';
+$dbPass = ' ';
 $dbPort = 3306;
 
 // Entity namespace and output directory

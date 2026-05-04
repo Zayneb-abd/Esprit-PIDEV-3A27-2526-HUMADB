@@ -1,0 +1,71 @@
+{% extends 'manager/base_manager.html.twig' %}
+
+{% block title %}Mes Absences{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4">
+                <h1 class="fs-3 mb-1">Mes Absences</h1>
+                <p class="mb-0 text-muted">Consultez vos absences enregistrées</p>
+            </div>
+
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    {% if absences is empty %}
+                        <div class="text-center py-5">
+                            <i class="ti ti-calendar-x fs-1 text-muted mb-3"></i>
+                            <p class="text-muted">Aucune absence enregistrée pour le moment.</p>
+                        </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Date début</th>
+                                        <th>Date fin</th>
+                                        <th>Motif</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for absence in absences %}
+                                        <tr>
+                                            <td>{{ absence.typeAbsence }}</td>
+                                            <td>{{ absence.dateDebut|date('d/m/Y') }}</td>
+                                            <td>{{ absence.dateFin|date('d/m/Y') }}</td>
+                                            <td>{{ absence.motif|default('-') }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ absence.statut == 'approuve' ? 'success' : (absence.statut == 'refuse' ? 'danger' : 'warning') }}">
+                                                    {{ absence.statut == 'en_attente' ? 'En attente' : (absence.statut == 'approuve' ? 'Approuvé' : 'Refusé') }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary">
+                                                    <i class="ti ti-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

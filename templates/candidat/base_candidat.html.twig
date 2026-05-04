@@ -184,7 +184,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if app.request.attributes.get('_route') in ['candidat_inventory', 'candidat_offer_show', 'candidat_offer_apply'] %}active{% endif %}" href="{{ path('candidat_inventory') }}">
+                        <a class="nav-link {% if app.request.attributes.get('_route') in ['candidat_inventory', 'candidat_offer_show', 'candidat_offer_apply', 'candidat_candidature_quiz'] %}active{% endif %}" href="{{ path('candidat_inventory') }}">
                             <i class="ti ti-box-seam me-1"></i>Offres disponibles
                         </a>
                     </li>
@@ -194,7 +194,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if app.request.attributes.get('_route') == 'candidat_reports' %}active{% endif %}" href="{{ path('candidat_reports') }}">
+                        <a class="nav-link {% if app.request.attributes.get('_route') in ['candidat_reports', 'candidat_candidature_quiz'] %}active{% endif %}" href="{{ path('candidat_reports') }}">
                             <i class="ti ti-receipt me-1"></i>Mes candidatures
                         </a>
                     </li>

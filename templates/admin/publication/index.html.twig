@@ -229,14 +229,16 @@
                             <a href="{{ path('admin_publication_edit', { id: publication.id }) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
                             <form method="post" action="{{ path('admin_publication_delete', { id: publication.id }) }}" style="display: inline;">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete_publication_' ~ publication.id) }}">
-                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette publication ?');">Supprimer</button>
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button>
                             </form>
                         </div>
                     </div>
                     
                     <div class="facebook-post-content">
-                        {{ publication.contenu|nl2br }}
+                        {{ publication.contenu|raw }}
                     </div>
+
+                    {% include 'components/publication_translation_widget.html.twig' with {'publication': publication} %}
 
                     {% if publication.publicationMedias|length > 0 %}
                         <div class="facebook-post-media">
@@ -285,7 +287,7 @@
                                             <a href="{{ path('admin_commentaire_edit', { id: commentaire.id }) }}" class="facebook-comment-action">Modifier</a>
                                             <form method="post" action="{{ path('admin_commentaire_delete', { id: commentaire.id }) }}" style="display: inline;">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ commentaire.id) }}">
-                                                <button class="facebook-comment-action" onclick="return confirm('Supprimer ce commentaire ?');">Supprimer</button>
+                                                <button class="facebook-comment-action" type="submit">Supprimer</button>
                                             </form>
                                         </div>
                                     </div>

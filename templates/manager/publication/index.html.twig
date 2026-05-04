@@ -1,0 +1,307 @@
+{% extends 'manager/base_manager.html.twig' %}
+
+{% block title %}Publications{% endblock %}
+
+{% block body %}
+<style>
+.facebook-post {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.facebook-post-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e9ebee;
+}
+.facebook-post-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    margin-right: 12px;
+}
+.facebook-post-info {
+    flex: 1;
+}
+.facebook-post-author {
+    font-weight: 600;
+    color: #1c1e21;
+    margin: 0;
+    font-size: 15px;
+}
+.facebook-post-meta {
+    color: #65676b;
+    font-size: 13px;
+    margin: 0;
+}
+.facebook-post-content {
+    padding: 15px;
+    color: #1c1e21;
+    font-size: 15px;
+    line-height: 1.5;
+}
+.facebook-post-media {
+    padding: 0 15px;
+}
+.facebook-post-media img {
+    max-width: 100%;
+    max-height: 300px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.facebook-post-media video {
+    max-width: 100%;
+    max-height: 300px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.facebook-post-footer {
+    padding: 12px 15px;
+    border-top: 1px solid #e9ebee;
+}
+.facebook-post-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #65676b;
+}
+.facebook-post-buttons {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 8px;
+    border-top: 1px solid #e9ebee;
+}
+.facebook-post-button {
+    background: none;
+    border: none;
+    color: #65676b;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s;
+}
+.facebook-post-button:hover {
+    background-color: #f0f2f5;
+}
+.facebook-comments {
+    padding: 0 15px 15px;
+}
+.facebook-comment {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px;
+    background: #f0f2f5;
+    border-radius: 8px;
+}
+.facebook-comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+.facebook-comment-content {
+    flex: 1;
+}
+.facebook-comment-author {
+    font-weight: 600;
+    color: #1c1e21;
+    font-size:13px;
+    margin-bottom: 2px;
+}
+.facebook-comment-text {
+    color: #1c1e21;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+.facebook-comment-meta {
+    color: #65676b;
+    font-size: 12px;
+}
+.facebook-comment-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+.facebook-comment-action {
+    background: none;
+    border: none;
+    color: #65676b;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0;
+}
+.facebook-comment-action:hover {
+    text-decoration: underline;
+}
+
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fs-4 fw-bold mb-1">Publications</h1>
+            <p class="text-muted mb-0">Consultez les publications de l'équipe.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for publication in publications %}
+            <div class="col-12">
+                <div class="facebook-post">
+                    <div class="facebook-post-header">
+                        <div class="facebook-post-avatar">
+                            {{ publication.user ? publication.user.prenom|first ~ publication.user.nom|first : 'U' }}
+                        </div>
+                        <div class="facebook-post-info">
+                            <div class="facebook-post-author">
+                                {{ publication.user ? publication.user.prenom ~ ' ' ~ publication.user.nom : 'Utilisateur inconnu' }}
+                            </div>
+                            <div class="facebook-post-meta">
+                                {{ publication.datePublication ? publication.datePublication|date('d M Y à H:i') : '-' }}
+                                {% if publication.type %}
+                                    <span class="badge text-bg-primary ms-2">{{ publication.type }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="facebook-post-content">
+                        <p>{{ publication.contenu|raw|nl2br }}</p>
+                    </div>
+
+                    {% if publication.publicationMedias|length > 0 %}
+                        <div class="facebook-post-media">
+                            {% for media in publication.publicationMedias %}
+                                {% if media.type == 'image' %}
+                                    <img src="{{ asset(media.path) }}" alt="Image de la publication" class="img-fluid rounded">
+                                {% elseif media.type == 'video' %}
+                                    <video controls class="img-fluid rounded">
+                                        <source src="{{ asset(media.path) }}" type="video/mp4">
+                                        <source src="{{ asset(media.path) }}" type="video/webm">
+                                        <source src="{{ asset(media.path) }}" type="video/ogg">
+                                        Votre navigateur ne supporte pas les vidéos.
+                                    </video>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    {% include 'components/publication_translation_widget.html.twig' with {'publication': publication} %}
+                    
+                    <!-- Boutons de réaction -->
+                    {% set counts = get_reactions_count(publication.id) %}
+                    {% set userReaction = get_user_reaction(publication.id, app.user ? app.user.id : null) %}
+                    {% include 'components/reaction_buttons.html.twig' with {'publication': publication, 'counts': counts, 'userReaction': userReaction} %}
+                    
+                    <div class="facebook-post-stats">
+                        <div>
+                            {% if publication.commentaires|length > 0 %}
+                                <span>{{ publication.commentaires|length }} commentaire{{ publication.commentaires|length > 1 ? 's' : '' }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ publication.datePublication|date('d M Y H:i') }}
+                        </div>
+                    </div>
+
+                    {% if publication.commentaires|length > 0 %}
+                        <div class="facebook-comments">
+                            {% for commentaire in publication.commentaires %}
+                                <div class="facebook-comment">
+                                    <div class="facebook-comment-avatar">
+                                        {{ commentaire.user ? commentaire.user.prenom|first ~ commentaire.user.nom|first : 'U' }}
+                                    </div>
+                                    <div class="facebook-comment-content">
+                                        <div class="facebook-comment-author">
+                                            {{ commentaire.user ? commentaire.user.prenom ~ ' ' ~ commentaire.user.nom : 'Utilisateur inconnu' }}
+                                        </div>
+                                        <div class="facebook-comment-text">
+                                            {{ commentaire.contenu|raw }}
+                                        </div>
+                                        <div class="facebook-comment-meta">
+                                            {{ commentaire.dateCommentaire ? commentaire.dateCommentaire|date('d M Y à H:i') : '-' }}
+                                        </div>
+                                        <div class="facebook-comment-actions">
+                                            <button class="facebook-comment-action">Like</button>
+                                            <button class="facebook-comment-action">Répondre</button>
+                                            {% if commentaire.user == app.user %}
+                                                <form method="post" action="{{ path('manager_comment_delete', { id: commentaire.id }) }}" style="display: inline;">
+                                                    <button type="submit" class="facebook-comment-action text-danger">Supprimer</button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="facebook-comments">
+                        <form method="post" action="{{ path('manager_publication_comment', { id: publication.id }) }}" class="mt-3">
+                            <div class="input-group">
+                                <input type="text" name="contenu" class="form-control" placeholder="Ajouter un commentaire...">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="ti ti-send me-1"></i>Envoyer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="ti ti-message-circle fs-1 text-muted mb-3"></i>
+                        <p class="text-muted">Aucune publication pour le moment.</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if publications is not empty and publications.getPageCount > 1 %}
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4 mb-2">
+            <small class="text-muted">
+                Page {{ publications.getCurrentPageNumber }} / {{ publications.getPageCount }}
+            </small>
+            <div>
+                {{ knp_pagination_render(publications) }}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

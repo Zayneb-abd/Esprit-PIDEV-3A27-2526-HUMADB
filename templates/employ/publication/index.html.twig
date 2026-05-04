@@ -1,4 +1,4 @@
-{% extends 'employ/base_employ.html.twig' %}
+{% extends 'employ/base_employe.html.twig' %}
 
 {% block title %}Publications{% endblock %}
 
@@ -166,6 +166,7 @@
 .facebook-comment-action:hover {
     text-decoration: underline;
 }
+
 </style>
 
 <div class="container-fluid">
@@ -198,16 +199,16 @@
                     </div>
                     
                     <div class="facebook-post-content">
-                        {{ publication.contenu|nl2br }}
+                        <p>{{ publication.contenu|raw|nl2br }}</p>
                     </div>
 
                     {% if publication.publicationMedias|length > 0 %}
                         <div class="facebook-post-media">
                             {% for media in publication.publicationMedias %}
                                 {% if media.type == 'image' %}
-                                    <img src="{{ asset(media.path) }}" alt="Image de la publication">
+                                    <img src="{{ asset(media.path) }}" alt="Image de la publication" class="img-fluid rounded">
                                 {% elseif media.type == 'video' %}
-                                    <video controls>
+                                    <video controls class="img-fluid rounded">
                                         <source src="{{ asset(media.path) }}" type="video/mp4">
                                         <source src="{{ asset(media.path) }}" type="video/webm">
                                         <source src="{{ asset(media.path) }}" type="video/ogg">
@@ -217,11 +218,22 @@
                             {% endfor %}
                         </div>
                     {% endif %}
-
-                    <div class="facebook-post-footer">
-                        <div class="facebook-post-stats">
-                            <span>{{ publication.commentaires|length }} commentaire{% if publication.commentaires|length > 1 %}s{% endif %}</span>
-                            <span>{{ publication.publicationMedias|length }} média{% if publication.publicationMedias|length > 1 %}s{% endif %}</span>
+                    
+                    {% include 'components/publication_translation_widget.html.twig' with {'publication': publication} %}
+                    
+                    <!-- Boutons de réaction -->
+                    {% set counts = get_reactions_count(publication.id) %}
+                    {% set userReaction = get_user_reaction(publication.id, app.user ? app.user.id : null) %}
+                    {% include 'components/reaction_buttons.html.twig' with {'publication': publication, 'counts': counts, 'userReaction': userReaction} %}
+                    
+                    <div class="facebook-post-stats">
+                        <div>
+                            {% if publication.commentaires|length > 0 %}
+                                <span>{{ publication.commentaires|length }} commentaire{{ publication.commentaires|length > 1 ? 's' : '' }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ publication.datePublication|date('d M Y H:i') }}
                         </div>
                     </div>
 
@@ -237,7 +249,7 @@
                                             {{ commentaire.user ? commentaire.user.prenom ~ ' ' ~ publication.user.nom : 'Utilisateur inconnu' }}
                                         </div>
                                         <div class="facebook-comment-text">
-                                            {{ commentaire.contenu }}
+                                            {{ commentaire.contenu|raw }}
                                         </div>
                                         <div class="facebook-comment-meta">
                                             {{ commentaire.dateCommentaire ? commentaire.dateCommentaire|date('d M Y à H:i') : '-' }}
@@ -245,32 +257,42 @@
                                         <div class="facebook-comment-actions">
                                             <button class="facebook-comment-action">Like</button>
                                             <button class="facebook-comment-action">Répondre</button>
+                                            {% if commentaire.user == app.user %}
+                                                <form method="post" action="{{ path('employ_comment_delete', { id: commentaire.id }) }}" style="display: inline;">
+                                                    <button type="submit" class="facebook-comment-action text-danger">Supprimer</button>
+                                                </form>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
                             {% endfor %}
-                            {# Add comment form #}
-                            <form method="post" action="{{ path('employ_publication_comment', { id: publication.id }) }}" class="mt-3">
-                                <div class="input-group">
-                                    <input type="text" name="contenu" class="form-control" placeholder="Ajouter un commentaire..." required>
-                                    <button class="btn btn-primary" type="submit">
-                                        <i class="ti ti-send me-1"></i>Envoyer
-                                    </button>
-                                </div>
-                            </form>
                         </div>
-                    </div>
-                </div>
-            </div>
-        {% else %}
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body text-center py-5 text-muted">
-                        Aucune publication.
+                    {% endif %}
+
+                    <div class="facebook-comments">
+                        <form method="post" action="{{ path('employ_publication_comment', { id: publication.id }) }}" class="mt-3">
+                            <div class="input-group">
+                                <input type="text" name="contenu" class="form-control" placeholder="Ajouter un commentaire...">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="ti ti-send me-1"></i>Envoyer
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         {% endfor %}
     </div>
+
+    {% if publications is not empty and publications.getPageCount > 1 %}
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4 mb-2">
+            <small class="text-muted">
+                Page {{ publications.getCurrentPageNumber }} / {{ publications.getPageCount }}
+            </small>
+            <div>
+                {{ knp_pagination_render(publications) }}
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

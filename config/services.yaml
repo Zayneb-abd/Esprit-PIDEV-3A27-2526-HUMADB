@@ -20,15 +20,51 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # QrCodeService configuration
-    App\Service\QrCodeService:
+    App\Service\FeedbackAutoResponseGenerator:
+        arguments:
+            $openAiApiKey: '%env(OPENAI_API_KEY)%'
+            $openAiModel: '%env(OPENAI_MODEL)%'
 
-    # AIService configuration
+    App\Service\FeedbackPriorityAnalyzer:
+        arguments:
+            $openAiApiKey: '%env(OPENAI_API_KEY)%'
+            $openAiModel: '%env(OPENAI_MODEL)%'
+
     App\Service\AIService:
         arguments:
-            $groqApiKey: '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'
+            $groqApiKey: '%env(GROQ_API_KEY)%'
+
+    App\Service\ChatbotService:
+        arguments:
+            $groqApiKey: '%env(GROQ_API_KEY)%'
+
+    App\Service\CandidateCvManager:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Smalot\PdfParser\Parser: ~
+
+    App\Service\PdfCvPreviewService:
+        arguments:
+            $parser: '@Smalot\PdfParser\Parser'
+
+    App\Service\ExternalAiRecruitmentAnalyzer:
+        arguments:
+            $apiUrl: '%env(EXTERNAL_AI_API_URL)%'
+            $apiKey: '%env(EXTERNAL_AI_API_KEY)%'
+            $model: '%env(EXTERNAL_AI_MODEL)%'
+
+    App\Service\MeaningCloudSentimentService:
+        arguments:
+            $apiKey: '%env(MEANINGCLOUD_API_KEY)%'
+            $apiUrl: '%env(MEANINGCLOUD_API_URL)%'
+
+    App\Service\FacebookJobPublisher:
+        arguments:
+            $pageId: '%env(FACEBOOK_PAGE_ID)%'
+            $pageAccessToken: '%env(FACEBOOK_PAGE_ACCESS_TOKEN)%'
+            $graphApiVersion: '%env(resolve:FACEBOOK_GRAPH_API_VERSION)%'
+            $publicBaseUrl: '%env(resolve:APP_PUBLIC_BASE_URL)%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    
-    
