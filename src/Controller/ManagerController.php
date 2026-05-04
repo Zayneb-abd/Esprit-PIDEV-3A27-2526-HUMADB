@@ -12,11 +12,35 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Service\MLPredictionService;
 
 #[Route('/manager')]
 #[IsGranted('ROLE_MANAGER')]
 class ManagerController extends AbstractController
 {
+    private MLPredictionService $mlService;
+    
+    public function __construct(MLPredictionService $mlService)
+    {
+        $this->mlService = $mlService;
+    }
+
+    #[Route('/dashboard', name: 'manager_dashboard')]
+    public function dashboard(): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+        
+        // Appels ML pour le dashboard manager
+        $prediction = $this->mlService->predictCongeProbability($user->getId());
+        $suggestion = $this->mlService->suggestBestPeriod($user->getId(), 5);
+        
+        return $this->render('manager/dashboard.html.twig', [
+            'prediction' => $prediction,
+            'suggestion' => $suggestion,
+            'manager' => $user
+        ]);
+    }
     #[Route('/equipe', name: 'manager_equipe')]
     public function equipe(UserRepository $userRepository): Response
     {

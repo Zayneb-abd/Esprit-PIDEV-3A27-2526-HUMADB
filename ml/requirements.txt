@@ -1,0 +1,13 @@
+# Dépendances Python pour Machine Learning
+# Installation: pip install -r requirements.txt
+
+# Base
+numpy>=1.21.0
+mysql-connector-python>=8.0.0
+
+# Machine Learning
+scikit-learn>=1.0.0
+
+# Optionnel - pour modèles avancés
+# pandas>=1.3.0
+# matplotlib>=3.4.0
