@@ -58,6 +58,8 @@ class PlanningController extends AbstractController
         foreach ($joursFeries as $jour) {
             $events[] = [
                 'id' => 'holiday_' . $jour->getId(),
+                'count_key' => 'holiday_' . $jour->getId(),
+                'countable' => false,
                 'title' => '🎉 ' . $jour->getNom(),
                 'start' => $jour->getDate()->format('Y-m-d'),
                 'end' => $jour->getDate()->format('Y-m-d'),
@@ -116,6 +118,8 @@ class PlanningController extends AbstractController
             $absence = $conge->getAbsence();
             $events[] = [
                 'id' => 'conge_' . $conge->getId(),
+                'count_key' => 'absence_' . ($absence?->getId() ?? $conge->getId()),
+                'countable' => true,
                 'title' => $conge->getUser()->getPrenom() . ' ' . $conge->getUser()->getNom(),
                 'start' => $absence->getDateDebut()->format('Y-m-d'),
                 'end' => $absence->getDateFin()->format('Y-m-d'),
@@ -129,6 +133,8 @@ class PlanningController extends AbstractController
         foreach ($absences as $absence) {
             $events[] = [
                 'id' => 'absence_' . $absence->getId(),
+                'count_key' => 'absence_' . $absence->getId(),
+                'countable' => true,
                 'title' => $absence->getUser()->getPrenom() . ' ' . $absence->getUser()->getNom(),
                 'start' => $absence->getDateDebut()->format('Y-m-d'),
                 'end' => $absence->getDateFin()->format('Y-m-d'),
@@ -171,15 +177,20 @@ class PlanningController extends AbstractController
         // Group events by date
         $eventsByDate = [];
         foreach ($events as $event) {
+            if (($event['countable'] ?? true) === false) {
+                continue;
+            }
+
             $start = new \DateTime($event['start']);
             $end = new \DateTime($event['end']);
+            $countKey = (string) ($event['count_key'] ?? $event['id']);
             
             while ($start <= $end) {
                 $dateKey = $start->format('Y-m-d');
                 if (!isset($eventsByDate[$dateKey])) {
                     $eventsByDate[$dateKey] = [];
                 }
-                $eventsByDate[$dateKey][] = $event;
+                $eventsByDate[$dateKey][$countKey] = $event;
                 $start->modify('+1 day');
             }
         }
