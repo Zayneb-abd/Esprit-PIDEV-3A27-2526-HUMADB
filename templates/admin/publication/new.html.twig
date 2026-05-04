@@ -3,24 +3,109 @@
 {% block title %}Nouvelle publication{% endblock %}
 
 {% block body %}
+<script>
+// Stocker tous les fichiers sélectionnés
+let allFiles = [];
+
+function addFiles() {
+    const input = document.getElementById('publication_mediaFiles');
+    const files = input.files;
+    
+    // Ajouter les nouveaux fichiers à la liste
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        // Vérifier si le fichier n'est pas déjà ajouté
+        if (!allFiles.some(f => f.name === file.name && f.size === file.size)) {
+            allFiles.push(file);
+        }
+    }
+    
+    // Vider l'input pour permettre de nouveaux sélections
+    input.value = '';
+    
+    // Mettre à jour l'affichage
+    updateFileList();
+}
+
+function updateFileList() {
+    const countDiv = document.getElementById('file-count-info');
+    if (!countDiv) {
+        const input = document.getElementById('publication_mediaFiles');
+        countDiv = document.createElement('div');
+        countDiv.id = 'file-count-info';
+        countDiv.className = 'alert alert-info mt-2';
+        input.parentNode.appendChild(countDiv);
+    }
+    
+    if (allFiles.length > 0) {
+        let fileList = '<ul class="mb-0">';
+        allFiles.forEach((file, index) => {
+            fileList += `<li><strong>${file.name}</strong> 
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removeFile(${index})">Retirer</button></li>`;
+        });
+        fileList += '</ul>';
+        
+        countDiv.innerHTML = `
+            <strong>${allFiles.length} fichier(s) sélectionné(s):</strong>
+            ${fileList}
+            <small class="text-muted">Sélectionnez un fichier et cliquez sur "Ajouter" pour l'ajouter à la liste</small>
+        `;
+    } else {
+        countDiv.innerHTML = '';
+    }
+}
+
+function removeFile(index) {
+    allFiles.splice(index, 1);
+    updateFileList();
+}
+
+// Avant la soumission du formulaire, ajouter tous les fichiers à l'input
+function prepareFormSubmission() {
+    const input = document.getElementById('publication_mediaFiles');
+    
+    // Créer un nouveau FileList avec tous les fichiers
+    const dt = new DataTransfer();
+    allFiles.forEach(file => {
+        dt.items.add(file);
+    });
+    input.files = dt.files;
+}
+</script>
 <div class="container-fluid">
     <h1 class="fs-4 fw-bold mb-3">Nouvelle publication</h1>
     <div class="card">
         <div class="card-body p-4">
-            <form method="post">
+            {{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}}) }}
                 <div class="mb-3">
-                    <label for="contenu" class="form-label">Contenu</label>
-                    <textarea name="contenu" id="contenu" class="form-control" rows="5" required></textarea>
+                    {{ form_label(form.contenu, 'Contenu', {'label_attr': {'class': 'form-label'}}) }}
+                    {{ form_widget(form.contenu, {'attr': {'class': 'form-control', 'rows': 5}}) }}
+                    {{ form_errors(form.contenu) }}
                 </div>
                 <div class="mb-3">
-                    <label for="type" class="form-label">Type</label>
-                    <input type="text" name="type" id="type" class="form-control" placeholder="Ex: General, Annonce, etc.">
+                    {{ form_label(form.type, 'Type', {'label_attr': {'class': 'form-label'}}) }}
+                    {{ form_widget(form.type, {'attr': {'class': 'form-control', 'placeholder': 'Ex: General, Annonce, etc.'}}) }}
+                    {{ form_errors(form.type) }}
+                </div>
+                <div class="mb-3">
+                    {{ form_label(form.mediaFiles, 'Images et Vidéos', {'label_attr': {'class': 'form-label'}}) }}
+                    <div class="input-group">
+                        {{ form_widget(form.mediaFiles, {'attr': {'class': 'form-control', 'multiple': 'multiple', 'id': 'publication_mediaFiles'}}) }}
+                        <button type="button" class="btn btn-outline-primary" onclick="addFiles()">Ajouter</button>
+                    </div>
+                    {{ form_help(form.mediaFiles) }}
+                    {{ form_errors(form.mediaFiles) }}
+                    <small class="form-text text-muted">
+                        Formats acceptés: Images (JPG, PNG, GIF, WebP) et Vidéos (MP4, WebM, OGG)<br>
+                        Taille maximale recommandée: 10MB par fichier<br>
+                        <strong>Utilisation:</strong> Sélectionnez un ou plusieurs fichiers, puis cliquez sur "Ajouter"
+                    </small>
                 </div>
                 <div class="mt-3">
-                    <button class="btn btn-primary">Creer</button>
+                    <button class="btn btn-primary" onclick="prepareFormSubmission(); this.form.submit(); return false;">Créer</button>
                     <a class="btn btn-outline-secondary" href="{{ path('admin_publication') }}">Retour</a>
                 </div>
-            </form>
+            {{ form_end(form) }}
         </div>
     </div>
 </div>

@@ -24,8 +24,10 @@ use App\Entity\Absence;
 use App\Entity\Formation;
 use App\Entity\Publication;
 use App\Entity\Commentaire;
+use App\Entity\PublicationMedia;
 use App\Repository\PublicationRepository;
 use App\Repository\CommentaireRepository;
+use App\Form\PublicationType;
 
 #[Route('/admin')]
 class AdminController extends AbstractController
@@ -970,15 +972,65 @@ class AdminController extends AbstractController
     #[Route('/publication/new', name: 'admin_publication_new', methods: ['GET', 'POST'])]
     public function newPublication(Request $request, EntityManagerInterface $em): Response
     {
-        if ($request->isMethod('POST')) {
-            $contenu = $request->request->get('contenu');
-            $type = $request->request->get('type');
+        $publication = new Publication();
+        $form = $this->createForm(PublicationType::class, $publication);
+        $form->handleRequest($request);
 
-            $publication = new Publication();
-            $publication->setContenu($contenu);
-            $publication->setType($type);
+        if ($form->isSubmitted() && $form->isValid()) {
             $publication->setDate_publication(new \DateTime());
             $publication->setUser($this->getUser());
+
+            // Gestion des fichiers uploadés
+            $mediaFiles = $form->get('mediaFiles')->getData();
+            
+            // Message de débogage pour vérifier le nombre de fichiers
+            if ($mediaFiles) {
+                $this->addFlash('info', 'Nombre de fichiers reçus: ' . count($mediaFiles));
+                foreach ($mediaFiles as $file) {
+                    // Générer un nom de fichier unique
+                    $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                    $safeFilename = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalFilename);
+                    $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
+
+                    // Déplacer le fichier dans le répertoire uploads/publications
+                    try {
+                        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/publications';
+                        $tempDir = $this->getParameter('kernel.project_dir') . '/temp';
+                        
+                        // Vérifier si les répertoires existent, sinon les créer
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0777, true);
+                        }
+                        if (!is_dir($tempDir)) {
+                            mkdir($tempDir, 0777, true);
+                        }
+                        
+                        // Utiliser copy() au lieu de move() pour éviter les problèmes de permissions
+                        $tempPath = $tempDir . '/' . $newFilename;
+                        copy($file->getPathname(), $tempPath);
+                        rename($tempPath, $uploadDir . '/' . $newFilename);
+
+                        // Créer l'entité PublicationMedia
+                        $media = new PublicationMedia();
+                        $media->setPublication($publication);
+                        $media->setPath('uploads/publications/' . $newFilename);
+                        
+                        // Déterminer le type de média
+                        $mimeType = $file->getMimeType();
+                        if (str_starts_with($mimeType, 'image/')) {
+                            $media->setType('image');
+                        } elseif (str_starts_with($mimeType, 'video/')) {
+                            $media->setType('video');
+                        } else {
+                            $media->setType('file');
+                        }
+
+                        $em->persist($media);
+                    } catch (\Exception $e) {
+                        $this->addFlash('error', 'Erreur lors de l\'upload du fichier: ' . $e->getMessage());
+                    }
+                }
+            }
 
             $em->persist($publication);
             $em->flush();
@@ -987,7 +1039,9 @@ class AdminController extends AbstractController
             return $this->redirectToRoute('admin_publication');
         }
 
-        return $this->render('admin/publication/new.html.twig');
+        return $this->render('admin/publication/new.html.twig', [
+            'form' => $form->createView(),
+        ]);
     }
 
     #[Route('/publication/{id}/edit', name: 'admin_publication_edit', methods: ['GET', 'POST'])]

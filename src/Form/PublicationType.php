@@ -6,6 +6,8 @@ use App\Entity\Publication;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -21,6 +23,18 @@ class PublicationType extends AbstractType
             ->add('type', TextType::class, [
                 'label' => 'Type',
                 'required' => false,
+            ])
+            ->add('mediaFiles', FileType::class, [
+                'label' => 'Images et Vidéos',
+                'multiple' => true,
+                'required' => false,
+                'mapped' => false,
+                'attr' => [
+                    'accept' => 'image/*,video/*',
+                    'class' => 'form-control',
+                    'onchange' => 'updateFileCount(this)'
+                ],
+                'help' => 'Vous pouvez sélectionner plusieurs fichiers (images et vidéos)'
             ]);
     }
 
