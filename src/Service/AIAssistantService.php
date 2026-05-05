@@ -13,18 +13,15 @@ class AIAssistantService
 {
     private CongeRepository $congeRepository;
     private UserRepository $userRepository;
-    private JourFerieService $jourFerieService;
     private EntityManagerInterface $em;
 
     public function __construct(
         CongeRepository $congeRepository,
         UserRepository $userRepository,
-        JourFerieService $jourFerieService,
         EntityManagerInterface $em
     ) {
         $this->congeRepository = $congeRepository;
         $this->userRepository = $userRepository;
-        $this->jourFerieService = $jourFerieService;
         $this->em = $em;
     }
 
@@ -393,8 +390,8 @@ class AIAssistantService
         // Créer l'absence associée
         $absence = new \App\Entity\Absence();
         $absence->setUser($user);
-        $absence->setDateDebut($dateDebut);
-        $absence->setDateFin($dateFin);
+        $absence->setDateDebut(\DateTime::createFromInterface($dateDebut));
+        $absence->setDateFin(\DateTime::createFromInterface($dateFin));
         $absence->setStatut('en_attente');
         $absence->setTypeAbsence($this->mapAssistantTypeToAbsenceType((string) ($parsedRequest['type_conge'] ?? 'conge_annuel')));
         

@@ -97,7 +97,7 @@ class Reputation
         return $this;
     }
 
-    public function getLastUpdated(): ?\DateTime
+    public function getLastUpdated(): ?\DateTimeInterface
     {
         return $this->last_updated;
     }

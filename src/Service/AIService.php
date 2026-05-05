@@ -68,14 +68,22 @@ class AIService
         // Parse JSON response
         $objectives = json_decode($response, true);
         
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($objectives) || empty($objectives)) {
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($objectives)) {
             // If AI fails, try again with simpler prompt
             return $this->generateObjectivesWithRetry($formationTitle, $formationDescription);
         }
 
-        return array_filter($objectives, function($obj) {
+        // Filter out empty values
+        $objectives = array_filter($objectives, function($obj) {
             return is_string($obj) && strlen(trim($obj)) > 0;
         });
+        
+        // If after filtering we have no objectives, use fallback
+        if (empty($objectives)) {
+            return $this->generateObjectivesWithRetry($formationTitle, $formationDescription);
+        }
+
+        return array_values($objectives);
     }
     
     private function generateObjectivesWithRetry(string $formationTitle, ?string $formationDescription = null): array
@@ -93,10 +101,14 @@ class AIService
         
         $objectives = json_decode($response, true);
         
-        if (json_last_error() === JSON_ERROR_NONE && is_array($objectives) && !empty($objectives)) {
-            return array_filter($objectives, function($obj) {
+        if (json_last_error() === JSON_ERROR_NONE && is_array($objectives)) {
+            $objectives = array_filter($objectives, function($obj) {
                 return is_string($obj) && strlen(trim($obj)) > 0;
             });
+            
+            if (!empty($objectives)) {
+                return array_values($objectives);
+            }
         }
         
         // Last resort: generate unique objectives based on title

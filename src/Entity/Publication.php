@@ -96,6 +96,7 @@ class Publication
         return $this;
     }
 
+    /** @var Collection<int, Commentaire> */
     #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'publication')]
     private Collection $commentaires;
 
@@ -104,9 +105,6 @@ class Publication
      */
     public function getCommentaires(): Collection
     {
-        if (!$this->commentaires instanceof Collection) {
-            $this->commentaires = new ArrayCollection();
-        }
         return $this->commentaires;
     }
 
@@ -124,6 +122,7 @@ class Publication
         return $this;
     }
 
+    /** @var Collection<int, PublicationMedia> */
     #[ORM\OneToMany(targetEntity: PublicationMedia::class, mappedBy: 'publication')]
     private Collection $publicationMedias;
 
@@ -132,9 +131,6 @@ class Publication
      */
     public function getPublicationMedias(): Collection
     {
-        if (!$this->publicationMedias instanceof Collection) {
-            $this->publicationMedias = new ArrayCollection();
-        }
         return $this->publicationMedias;
     }
 
@@ -152,27 +148,44 @@ class Publication
         return $this;
     }
 
-    #[ORM\OneToOne(targetEntity: ReactionPublication::class, mappedBy: 'publication', fetch: 'LAZY')]
-    private ?ReactionPublication $reactionPublication = null;
+    #[ORM\OneToMany(targetEntity: ReactionPublication::class, mappedBy: 'publication', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $reactionPublications;
 
     public function __construct()
     {
         $this->commentaires = new ArrayCollection();
         $this->publicationMedias = new ArrayCollection();
+        $this->reactionPublications = new ArrayCollection();
     }
 
-    public function getReactionPublication(): ?ReactionPublication
+    /**
+     * @return Collection<int, ReactionPublication>
+     */
+    public function getReactionPublications(): Collection
     {
-        return $this->reactionPublication;
+        return $this->reactionPublications;
     }
 
-    public function setReactionPublication(?ReactionPublication $reactionPublication): self
+    public function addReactionPublication(ReactionPublication $reactionPublication): self
     {
-        $this->reactionPublication = $reactionPublication;
+        if (!$this->reactionPublications->contains($reactionPublication)) {
+            $this->reactionPublications->add($reactionPublication);
+            $reactionPublication->setPublication($this);
+        }
         return $this;
     }
 
-    public function getDatePublication(): ?\DateTime
+    public function removeReactionPublication(ReactionPublication $reactionPublication): self
+    {
+        if ($this->reactionPublications->removeElement($reactionPublication)) {
+            if ($reactionPublication->getPublication() === $this) {
+                $reactionPublication->setPublication(null);
+            }
+        }
+        return $this;
+    }
+
+    public function getDatePublication(): ?\DateTimeInterface
     {
         return $this->date_publication;
     }

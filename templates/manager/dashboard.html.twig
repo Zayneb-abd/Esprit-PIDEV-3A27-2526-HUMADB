@@ -1,0 +1,134 @@
+{% extends 'manager/base_manager.html.twig' %}
+
+{% block title %}Dashboard Manager - ML{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4">
+                <h1 class="fs-3 mb-1"><i class="fas fa-chart-line"></i> Dashboard Manager</h1>
+                <p class="mb-0">Prédictions ML et suggestions pour {{ manager.nom }} {{ manager.prenom }}</p>
+            </div>
+        </div>
+    </div>
+    
+    {# 🤖 CARTES MACHINE LEARNING #}
+    <div class="row mt-4">
+        {# Carte 1: Prédiction Prochain Congé #}
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-brain"></i> 🤖 Prédiction ML - Prochain Congé</h5>
+                </div>
+                <div class="card-body">
+                    {% if prediction.success %}
+                        <div class="text-center">
+                            <div class="display-4 text-primary">
+                                {{ (prediction.data.probability_conge * 100)|round }}%
+                            </div>
+                            <p class="text-muted">Probabilité ce mois</p>
+                        </div>
+                        
+                        {% if prediction.data.confidence > 0.3 %}
+                            <div class="alert alert-info mt-3">
+                                <strong><i class="fas fa-lightbulb"></i> Suggestion IA:</strong><br>
+                                Période recommandée: <strong>{{ prediction.data.recommended_period }}</strong><br>
+                                Durée suggérée: <strong>{{ prediction.data.suggested_duration }} jours</strong>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="progress mt-3" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: {{ prediction.data.confidence * 100 }}%"
+                                 aria-valuenow="{{ prediction.data.confidence * 100 }}" aria-valuemin="0" aria-valuemax="100">
+                                Confiance: {{ (prediction.data.confidence * 100)|round }}%
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ prediction.error|default('Prédiction ML indisponible') }}
+                        </div>
+                        {% if prediction.fallback is defined %}
+                            <hr>
+                            <small class="text-muted">Estimation basique (fallback):</small>
+                            <div class="mt-2 text-center">
+                                <h4>{{ (prediction.fallback.probability_conge * 100)|round }}%</h4>
+                                <span class="badge bg-secondary">{{ prediction.fallback.method }}</span>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {# Carte 2: Meilleure Période #}
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check"></i> 📅 Meilleure Période (Optimisation)</h5>
+                </div>
+                <div class="card-body">
+                    {% if suggestion.best_period %}
+                        <div class="text-center mb-3">
+                            <h4 class="text-success">
+                                <i class="fas fa-star"></i>
+                                {{ suggestion.best_period.month_name }}
+                            </h4>
+                            <p class="text-muted">{{ suggestion.best_period.reason }}</p>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h6>Autres suggestions:</h6>
+                        <ul class="list-unstyled">
+                            {% for sug in suggestion.suggestions|slice(1, 2) %}
+                                <li class="mb-1">
+                                    <span class="badge bg-secondary">{{ sug.month_name }}</span>
+                                    <small class="text-muted">(Score: {{ sug.score }})</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        
+                        <div class="alert alert-warning mt-3">
+                            <small><i class="fas fa-ban"></i> 
+                                <strong>Éviter:</strong> {{ suggestion.avoid_periods }}
+                            </small>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                Durée demandée: {{ suggestion.requested_duration }} jours
+                            </small>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle fa-2x mb-2"></i><br>
+                            Pas de suggestion disponible actuellement
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {# Navigation rapide #}
+    <div class="row mt-4">
+        <div class="col-12">
+            <h5>Accès rapide</h5>
+            <div class="btn-group">
+                <a href="{{ path('manager_equipe') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-users"></i> Mon Équipe
+                </a>
+                <a href="{{ path('manager_conges') }}" class="btn btn-outline-success">
+                    <i class="fas fa-calendar-alt"></i> Congés Équipe
+                </a>
+                <a href="{{ path('manager_mes_conges') }}" class="btn btn-outline-info">
+                    <i class="fas fa-umbrella-beach"></i> Mes Congés
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
