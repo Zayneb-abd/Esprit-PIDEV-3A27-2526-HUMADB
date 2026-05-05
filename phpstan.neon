@@ -3,7 +3,8 @@ parameters:
     paths:
         - src/PlanningBundle/Service
         - src/Service
+        - src/Controller/MLPredictionController.php
+        - src/Controller/DebugJoursFeriesController.php
     excludePaths:
         - src/Repository
         - src/Entity
-        - src/Controller
