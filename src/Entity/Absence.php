@@ -235,18 +235,4 @@ class Absence
         }
     }
 
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $motif = null;
-
-    public function getMotif(): ?string
-    {
-        return $this->motif;
-    }
-
-    public function setMotif(?string $motif): self
-    {
-        $this->motif = $motif;
-        return $this;
-    }
-
 }
