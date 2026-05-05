@@ -48,6 +48,11 @@ services:
         arguments:
             $parser: '@Smalot\PdfParser\Parser'
 
+    App\Service\PythonCvRankingService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $pythonBinary: 'python3'
+
     App\Service\ExternalAiRecruitmentAnalyzer:
         arguments:
             $apiUrl: '%env(EXTERNAL_AI_API_URL)%'

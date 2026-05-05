@@ -5,5 +5,5 @@ parameters:
         - src/Entity/Candidature.php
         - src/Service/OfferDeletionService.php
     parallel:
-        maximumNumberOfProcesses: 1
+        maximumNumberOfProcesses: 0
     reportUnmatchedIgnoredErrors: false
