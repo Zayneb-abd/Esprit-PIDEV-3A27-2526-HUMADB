@@ -13,7 +13,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_ADMIN')]
 class ChatbotController extends AbstractController
 {
-    private $chatbotService;
+    private ChatbotService $chatbotService;
 
     public function __construct(ChatbotService $chatbotService)
     {

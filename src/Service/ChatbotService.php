@@ -6,8 +6,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ChatbotService
 {
-    private $httpClient;
-    private $groqApiKey;
+    private HttpClientInterface $httpClient;
+    private string $groqApiKey;
 
     public function __construct(HttpClientInterface $httpClient, string $groqApiKey)
     {
@@ -17,6 +17,7 @@ class ChatbotService
 
     /**
      * Génère une suggestion de publication basée sur le sujet
+     * @return array<string, mixed>
      */
     public function generatePublicationSuggestion(string $subject, string $context = ''): array
     {
@@ -63,6 +64,7 @@ class ChatbotService
 
     /**
      * Appelle l'API Groq
+     * @return array<string, mixed>
      */
     private function callGroqAPI(string $prompt): array
     {

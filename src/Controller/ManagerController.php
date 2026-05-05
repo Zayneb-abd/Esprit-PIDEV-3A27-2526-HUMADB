@@ -136,14 +136,17 @@ class ManagerController extends AbstractController
     #[Route('/publications/{id}/comment', name: 'manager_publication_comment', methods: ['POST'])]
     public function commentPublication(Publication $publication, Request $request, EntityManagerInterface $em): Response
     {
-        $contenu = $request->request->get('contenu');
+        /** @var string $contenu */
+        $contenu = (string) $request->request->get('contenu');
         
         if (!empty($contenu)) {
             $commentaire = new Commentaire();
             $commentaire->setContenu($contenu);
             $commentaire->setDateCommentaire(new \DateTime());
             $commentaire->setPublication($publication);
-            $commentaire->setUser($this->getUser());
+            /** @var User|null $user */
+            $user = $this->getUser();
+            $commentaire->setUser($user);
             
             $em->persist($commentaire);
             $em->flush();
@@ -169,7 +172,8 @@ class ManagerController extends AbstractController
     }
 
     /**
-     * @param UploadedFile[] $uploadedFiles
+     * @param array<mixed> $uploadedFiles
+     * @phpstan-ignore-next-line Method is kept for future media upload functionality
      */
     private function handlePublicationMediaUploads(
         Publication $publication,
@@ -177,7 +181,9 @@ class ManagerController extends AbstractController
         SluggerInterface $slugger,
         EntityManagerInterface $em
     ): void {
-        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/publications';
+        /** @var string $projectDir */
+        $projectDir = $this->getParameter('kernel.project_dir');
+        $uploadDir = $projectDir . '/public/uploads/publications';
 
         if (!is_dir($uploadDir)) {
             @mkdir($uploadDir, 0775, true);

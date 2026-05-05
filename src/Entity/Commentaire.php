@@ -97,12 +97,12 @@ class Commentaire
         return $this;
     }
 
-    public function getDateCommentaire(): ?\DateTime
+    public function getDateCommentaire(): ?\DateTimeInterface
     {
         return $this->date_commentaire;
     }
 
-    public function setDateCommentaire(?\DateTime $date_commentaire): static
+    public function setDateCommentaire(?\DateTimeInterface $date_commentaire): static
     {
         $this->date_commentaire = $date_commentaire;
 
