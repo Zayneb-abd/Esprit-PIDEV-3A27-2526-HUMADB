@@ -13,8 +13,9 @@
         "doctrine/orm": "^3.6",
         "endroid/qr-code": "^5.1",
         "fabpot/goutte": "^4.0",
+        "friendsofsymfony/ckeditor-bundle": "^2.3",
         "jms/metadata": "^2.9",
-        "knplabs/knp-paginator-bundle": "^6.10",
+        "knplabs/knp-paginator-bundle": "*",
         "phpdocumentor/reflection-docblock": "^5.2",
         "phpstan/phpdoc-parser": "^2.3",
         "smalot/pdfparser": "^2.12",
@@ -49,8 +50,7 @@
         "symfony/yaml": "6.4.*",
         "twig/extra-bundle": "^2.12|^3.0",
         "twig/twig": "^2.12|^3.0",
-        "vich/uploader-bundle": "^2.9",
-        "friendsofsymfony/ckeditor-bundle": "^2.3"
+        "vich/uploader-bundle": "^2.9"
     },
     "config": {
         "allow-plugins": {
@@ -102,6 +102,8 @@
         }
     },
     "require-dev": {
+        "ahmed-bhs/doctrine-doctor": "^1.1",
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^9.5",
         "symfony/browser-kit": "6.4.*",
         "symfony/css-selector": "6.4.*",

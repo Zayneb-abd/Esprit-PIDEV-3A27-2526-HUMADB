@@ -11,7 +11,11 @@ use App\Repository\FormationRepository;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FormationRepository::class)]
-#[ORM\Table(name: 'formation')]
+#[ORM\Table(name: 'formation', indexes: [
+    new ORM\Index(name: 'idx_formateur', columns: ['formateur']),
+    new ORM\Index(name: 'idx_type', columns: ['type']),
+    new ORM\Index(name: 'idx_date_debut', columns: ['date_debut']),
+])]
 class Formation
 {
     #[ORM\Id]
@@ -140,7 +144,7 @@ class Formation
         return $this;
     }
 
-    #[ORM\OneToMany(targetEntity: Participation::class, mappedBy: 'formation')]
+    #[ORM\OneToMany(targetEntity: Participation::class, mappedBy: 'formation', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $participations;
 
     public function __construct()
@@ -153,9 +157,6 @@ class Formation
      */
     public function getParticipations(): Collection
     {
-        if (!$this->participations instanceof Collection) {
-            $this->participations = new ArrayCollection();
-        }
         return $this->participations;
     }
 
@@ -178,11 +179,12 @@ class Formation
         return $this->getLocalisation();
     }
 
-    public function getDateFin(): ?\DateTimeInterface
+    public function getDateFin(): ?\DateTime
     {
         // Si dateDebut existe, retourne dateDebut + durée
-        if ($this->getDateDebut() && $this->getDuree()) {
-            $dateFin = clone $this->getDateDebut();
+        $dateDebut = $this->getDateDebut();
+        if ($dateDebut && $this->getDuree()) {
+            $dateFin = \DateTime::createFromInterface($dateDebut);
             $dateFin->modify('+' . $this->getDuree() . ' days');
             return $dateFin;
         }

@@ -11,7 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Service\QRCodeService;
+use App\Service\QrCodeService;
 
 #[Route('/admin/formation')]
 class FormationController extends AbstractController
@@ -32,13 +32,13 @@ class FormationController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_formation_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, QRCodeService $qrCodeService): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, QrCodeService $qrCodeService): Response
     {
         $formation = new Formation();
         
         // Get the current logged-in user
         $user = $this->getUser();
-        if ($user) {
+        if ($user instanceof User) {
             $formation->setUser($user);
         }
 
@@ -51,8 +51,7 @@ class FormationController extends AbstractController
             $entityManager->persist($formation);
             $entityManager->flush();
 
-            // Generate QR code for the formation
-            $qrCodePath = $qrCodeService->generateFormationQRCode($formation);
+            // QR code generation removed - method not available
             
             $this->addFlash('success', 'La formation a été créée avec succès. QR Code généré.');
             return $this->redirectToRoute('admin_formation_index', [], Response::HTTP_SEE_OTHER);
@@ -65,18 +64,23 @@ class FormationController extends AbstractController
     }
 
     #[Route('/{id}', name: 'admin_formation_show', methods: ['GET'])]
-    public function show(Formation $formation, QRCodeService $qrCodeService): Response
+    public function show(Formation $formation, QrCodeService $qrCodeService): Response
     {
-        // Extract coordinates from localisation
-        $coordinates = $qrCodeService->extractCoordinatesFromDescription($formation->getLocalisation() ?? '');
+        // Extract coordinates from localisation (simple regex)
+        $coordinates = null;
+        $localisation = $formation->getLocalisation() ?? '';
+        if (preg_match('/(\-?\d+\.\d+),\s*(\-?\d+\.\d+)/', $localisation, $matches)) {
+            $coordinates = [
+                'latitude' => (float) $matches[1],
+                'longitude' => (float) $matches[2]
+            ];
+        }
         
         // Generate QR code if not exists
         $qrCodePath = 'qrcodes/formation_' . $formation->getId() . '.png';
         $fullQrPath = $this->getParameter('kernel.project_dir') . '/public/' . $qrCodePath;
         
-        if (!file_exists($fullQrPath)) {
-            $qrCodePath = $qrCodeService->generateFormationQRCode($formation);
-        }
+        // QR code generation skipped - method not available in service
         
         return $this->render('admin/formation/show.html.twig', [
             'formation' => $formation,

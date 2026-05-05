@@ -50,7 +50,7 @@ class ReactionPublication
         return $this;
     }
 
-    #[ORM\ManyToOne(targetEntity: Publication::class, inversedBy: 'reactionPublication')]
+    #[ORM\ManyToOne(targetEntity: Publication::class, inversedBy: 'reactionPublications')]
     #[ORM\JoinColumn(name: 'publication_id', referencedColumnName: 'id', nullable: false)]
     private ?Publication $publication = null;
 
