@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Entity\Publication;
 use App\Entity\Commentaire;
 use App\Repository\PublicationRepository;
@@ -38,7 +39,8 @@ class EmployePublicationController extends AbstractController
     #[Route('/{id}/comment', name: 'employ_publication_comment', methods: ['POST'])]
     public function addComment(Publication $publication, Request $request, EntityManagerInterface $em, CommentValidatorService $commentValidator): Response
     {
-        $contenu = $request->request->get('contenu');
+        /** @var string $contenu */
+        $contenu = (string) $request->request->get('contenu');
         
         if (empty($contenu)) {
             $this->addFlash('error', 'Le commentaire ne peut pas être vide.');
@@ -60,7 +62,9 @@ class EmployePublicationController extends AbstractController
         $commentaire->setContenu($contenu);
         $commentaire->setDate_commentaire(new \DateTime());
         $commentaire->setPublication($publication);
-        $commentaire->setUser($this->getUser());
+        /** @var User|null $user */
+        $user = $this->getUser();
+        $commentaire->setUser($user);
 
         $em->persist($commentaire);
         $em->flush();

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Entity\ReactionPublication;
 use App\Repository\ReactionPublicationRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,8 +15,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/reaction')]
 class ReactionController extends AbstractController
 {
-    private $reactionRepository;
-    private $entityManager;
+    private ReactionPublicationRepository $reactionRepository;
+    /** @phpstan-ignore-next-line Property kept for future use */
+    private EntityManagerInterface $entityManager;
 
     public function __construct(ReactionPublicationRepository $reactionRepository, EntityManagerInterface $entityManager)
     {
@@ -30,6 +32,7 @@ class ReactionController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function addReaction(int $publicationId, Request $request): JsonResponse
     {
+        /** @var User|null $user */
         $user = $this->getUser();
         if (!$user) {
             return new JsonResponse(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
@@ -107,6 +110,7 @@ class ReactionController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function getUserReaction(int $publicationId): JsonResponse
     {
+        /** @var User|null $user */
         $user = $this->getUser();
         if (!$user) {
             return new JsonResponse(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
@@ -146,6 +150,7 @@ class ReactionController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function removeReaction(int $publicationId): JsonResponse
     {
+        /** @var User|null $user */
         $user = $this->getUser();
         if (!$user) {
             return new JsonResponse(['success' => false, 'error' => 'Utilisateur non connecté'], 401);

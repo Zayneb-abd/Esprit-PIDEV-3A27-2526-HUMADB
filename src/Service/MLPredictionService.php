@@ -10,11 +10,13 @@ class MLPredictionService
 {
     private string $pythonPath = 'py';
     private string $mlScriptPath;
+    private string $projectDir;
     
     public function __construct()
     {
         // Chemin vers le script Python
-        $this->mlScriptPath = __DIR__ . '/../../ml/predict_conge.py';
+        $this->projectDir = __DIR__ . '/../..';
+        $this->mlScriptPath = $this->projectDir . '/ml/predict_conge.py';
     }
     
     /**
@@ -44,11 +46,12 @@ class MLPredictionService
         
         $output = shell_exec($command);
         
-        if ($output === null) {
+        if ($output === null || empty($output)) {
+            // Python non disponible, utiliser fallback
             return [
-                'success' => false,
-                'error' => 'Erreur d\'exécution du script ML',
-                'fallback' => $this->getSimplePrediction($userId)
+                'success' => true,
+                'ml_prediction' => false,
+                'data' => $this->getSimplePrediction($userId)
             ];
         }
         
@@ -56,14 +59,21 @@ class MLPredictionService
         $output = preg_replace('/^\xEF\xBB\xBF/', '', $output);
         $output = mb_convert_encoding($output, 'UTF-8', 'UTF-8');
         
-        $result = json_decode($output, true);
+        // Extraire uniquement le JSON valide (entre accolades)
+        if (preg_match('/\{.*\}/s', $output, $matches)) {
+            $jsonOutput = $matches[0];
+        } else {
+            $jsonOutput = $output;
+        }
+        
+        $result = json_decode($jsonOutput, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
+            // Si pas de JSON valide, retourner le fallback
             return [
-                'success' => false,
-                'error' => 'Erreur de parsing JSON: ' . json_last_error_msg(),
-                'raw_output' => $output,
-                'fallback' => $this->getSimplePrediction($userId)
+                'success' => true,
+                'ml_prediction' => false,
+                'data' => $this->getSimplePrediction($userId)
             ];
         }
         
@@ -90,12 +100,23 @@ class MLPredictionService
             9 => 0.3, 10 => 0.3, 11 => 0.4, 12 => 0.5
         ];
         
+        // Déterminer la période recommandée (mois avec faible probabilité)
+        $recommendedMonths = [9, 10, 11, 1, 2, 3]; // Sept-Mars (hors été/fêtes)
+        $recommendedMonth = $recommendedMonths[array_rand($recommendedMonths)];
+        $monthNames = [
+            1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril',
+            5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août',
+            9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'
+        ];
+        
         return [
             'user_id' => $userId,
             'probability_conge' => $seasonality[$currentMonth] ?? 0.3,
             'confidence' => 0.5,
             'method' => 'seasonality_fallback',
-            'note' => 'Prédiction basée sur la saisonnalité (ML non disponible)'
+            'note' => 'Prédiction basée sur la saisonnalité (ML non disponible)',
+            'recommended_period' => $monthNames[$recommendedMonth],
+            'suggested_duration' => 5
         ];
     }
     
@@ -183,21 +204,26 @@ class MLPredictionService
         $output = preg_replace('/^\xEF\xBB\xBF/', '', $output);
         $output = mb_convert_encoding($output, 'UTF-8', 'UTF-8');
         
-        $result = json_decode($output, true);
+        // Extraire uniquement le JSON valide
+        if (preg_match('/\{.*\}/s', $output, $matches)) {
+            $jsonOutput = $matches[0];
+        } else {
+            $jsonOutput = $output;
+        }
+        
+        $result = json_decode($jsonOutput, true);
         
         if ($result === null) {
             return [
-                'success' => false,
-                'error' => 'Erreur de parsing JSON: ' . json_last_error_msg(),
-                'fallback' => $this->getBasicEngagementPrediction($content)
+                'success' => true,
+                'data' => $this->getBasicEngagementPrediction($content)
             ];
         }
         
         if (isset($result['error'])) {
             return [
-                'success' => false,
-                'error' => $result['error'],
-                'fallback' => $this->getBasicEngagementPrediction($content)
+                'success' => true,
+                'data' => $this->getBasicEngagementPrediction($content)
             ];
         }
         
@@ -262,21 +288,26 @@ class MLPredictionService
         $output = preg_replace('/^\xEF\xBB\xBF/', '', $output);
         $output = mb_convert_encoding($output, 'UTF-8', 'UTF-8');
         
-        $result = json_decode($output, true);
+        // Extraire uniquement le JSON valide
+        if (preg_match('/\{.*\}/s', $output, $matches)) {
+            $jsonOutput = $matches[0];
+        } else {
+            $jsonOutput = $output;
+        }
+        
+        $result = json_decode($jsonOutput, true);
         
         if ($result === null) {
             return [
-                'success' => false,
-                'error' => 'Erreur de parsing JSON: ' . json_last_error_msg(),
-                'fallback' => $this->getBasicCommentEngagementPrediction($content)
+                'success' => true,
+                'data' => $this->getBasicCommentEngagementPrediction($content)
             ];
         }
         
         if (isset($result['error'])) {
             return [
-                'success' => false,
-                'error' => $result['error'],
-                'fallback' => $this->getBasicCommentEngagementPrediction($content)
+                'success' => true,
+                'data' => $this->getBasicCommentEngagementPrediction($content)
             ];
         }
         

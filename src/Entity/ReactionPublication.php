@@ -17,6 +17,9 @@ class ReactionPublication
     const TYPE_LIKE = 'like';
     const TYPE_DISLIKE = 'dislike';
     
+    /**
+     * @return array<string, string>
+     */
     public static function getAvailableTypes(): array
     {
         return [
