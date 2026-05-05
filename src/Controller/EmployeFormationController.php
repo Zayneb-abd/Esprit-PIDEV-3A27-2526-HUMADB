@@ -6,7 +6,7 @@ use App\Entity\Formation;
 use App\Entity\User;
 use App\Form\FormationType;
 use App\Repository\FormationRepository;
-use App\Service\QRCodeService;
+use App\Service\QrCodeService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,7 +42,7 @@ class EmployeFormationController extends AbstractController
 
         // Get the current logged-in user
         $user = $this->getUser();
-        if ($user) {
+        if ($user instanceof User) {
             $formation->setUser($user);
         }
 
@@ -80,10 +80,10 @@ class EmployeFormationController extends AbstractController
     #[Route('/{id}', name: 'employ_formation_show', methods: ['GET'])]
     public function show(Formation $formation): Response
     {
-        // Extract coordinates from description (simple regex)
+        // Extract coordinates from localisation (simple regex)
         $coordinates = null;
-        $description = $formation->getDescription() ?? '';
-        if (preg_match('/(\-?\d+\.\d+),\s*(\-?\d+\.\d+)/', $description, $matches)) {
+        $localisation = $formation->getLocalisation() ?? '';
+        if (preg_match('/(\-?\d+\.\d+),\s*(\-?\d+\.\d+)/', $localisation, $matches)) {
             $coordinates = [
                 'latitude' => (float) $matches[1],
                 'longitude' => (float) $matches[2]

@@ -57,7 +57,9 @@ class ParticipationController extends AbstractController
             $this->addFlash('warning', 'Vous êtes déjà inscrit à cette formation (Statut : ' . $existingParticipation->getStatut() . ').');
         } else {
             $participation = new Participation();
-            $participation->setUser($user);
+            if ($user instanceof User) {
+                $participation->setUser($user);
+            }
             $participation->setFormation($formation);
             $participation->setDateInscription(new \DateTime());
             $participation->setStatut('en attente');
@@ -86,8 +88,9 @@ class ParticipationController extends AbstractController
         $sortField = $request->query->get('sort');
         $sortOrder = $request->query->get('order', 'ASC');
 
+        $userId = $user instanceof User ? $user->getId() : null;
         return $this->render('employ/participation/index.html.twig', [
-            'participations' => $participationRepository->searchAndSort($query, $sortField, $sortOrder, $user->getId()),
+            'participations' => $participationRepository->searchAndSort($query, $sortField, $sortOrder, $userId),
             'query' => $query,
             'sort' => $sortField,
             'order' => $sortOrder,

@@ -10,13 +10,23 @@ use Doctrine\Common\Collections\Collection;
 use App\Repository\ParticipationRepository;
 
 #[ORM\Entity(repositoryClass: ParticipationRepository::class)]
-#[ORM\Table(name: 'participation')]
+#[ORM\Table(name: 'participation', indexes: [
+    new ORM\Index(name: 'idx_formation_id', columns: ['formation_id']),
+    new ORM\Index(name: 'idx_employe_id', columns: ['employe_id']),
+    new ORM\Index(name: 'idx_statut', columns: ['statut']),
+    new ORM\Index(name: 'idx_date_inscription', columns: ['date_inscription']),
+])]
 class Participation
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
+
+    public function __construct()
+    {
+        $this->dateInscription = new \DateTime();
+    }
 
     public function getId(): ?int
     {
@@ -29,15 +39,15 @@ class Participation
         return $this;
     }
 
-    #[ORM\Column(name: 'date_inscription', type: 'date', nullable: true)]
-    private ?\DateTimeInterface $dateInscription = null;
+    #[ORM\Column(name: 'date_inscription', type: 'date', nullable: false)]
+    private \DateTimeInterface $dateInscription;
 
-    public function getDateInscription(): ?\DateTimeInterface
+    public function getDateInscription(): \DateTimeInterface
     {
         return $this->dateInscription;
     }
 
-    public function setDateInscription(?\DateTimeInterface $dateInscription): self
+    public function setDateInscription(\DateTimeInterface $dateInscription): self
     {
         $this->dateInscription = $dateInscription;
         return $this;
@@ -46,10 +56,10 @@ class Participation
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $resultat = null;
 
-    #[ORM\Column(type: 'string', length: 20, nullable: true)]
-    private ?string $statut = 'en attente';
+    #[ORM\Column(type: 'string', length: 20)]
+    private string $statut = 'en attente';
 
-    public function getStatut(): ?string
+    public function getStatut(): string
     {
         return $this->statut;
     }
@@ -87,15 +97,15 @@ class Participation
     }
 
     #[ORM\ManyToOne(targetEntity: Formation::class, inversedBy: 'participations')]
-    #[ORM\JoinColumn(name: 'formation_id', referencedColumnName: 'id')]
-    private ?Formation $formation = null;
+    #[ORM\JoinColumn(name: 'formation_id', referencedColumnName: 'id', nullable: false)]
+    private Formation $formation;
 
-    public function getFormation(): ?Formation
+    public function getFormation(): Formation
     {
         return $this->formation;
     }
 
-    public function setFormation(?Formation $formation): self
+    public function setFormation(Formation $formation): self
     {
         $this->formation = $formation;
         return $this;

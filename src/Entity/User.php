@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\Collection;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
@@ -215,6 +216,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeInterface $updated_at = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Ignore]
     private ?string $reset_token = null;
 
     public function getReset_token(): ?string
@@ -520,7 +522,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    #[ORM\OneToMany(targetEntity: Participation::class, mappedBy: 'user')]
+    #[ORM\OneToMany(targetEntity: Participation::class, mappedBy: 'user', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $participations;
 
     /**
@@ -528,9 +530,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getParticipations(): Collection
     {
-        if (!$this->participations instanceof Collection) {
-            $this->participations = new ArrayCollection();
-        }
         return $this->participations;
     }
 
