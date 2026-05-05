@@ -13,14 +13,31 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Service\MLPredictionService;
 
 #[Route('/employ')]
 class EmployeController extends AbstractController
 {
+    private MLPredictionService $mlService;
+    
+    public function __construct(MLPredictionService $mlService)
+    {
+        $this->mlService = $mlService;
+    }
+
     #[Route('/', name: 'employ_dashboard')]
     public function dashboard(): Response
     {
-        return $this->render('employ/dashboard/index.html.twig');
+        $user = $this->getUser();
+        
+        // Appels ML pour le dashboard
+        $prediction = $this->mlService->predictCongeProbability($user->getId());
+        $suggestion = $this->mlService->suggestBestPeriod($user->getId(), 5);
+        
+        return $this->render('employ/dashboard/index.html.twig', [
+            'prediction' => $prediction,
+            'suggestion' => $suggestion
+        ]);
     }
 
     #[Route('/inventory', name: 'employ_inventory')]

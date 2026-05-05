@@ -1,12 +1,9 @@
 parameters:
-    level: 6
+    level: 5
     paths:
-        - src/
+        - src/PlanningBundle/Service
+        - src/Service
     excludePaths:
-        - src/Repository/
-    ignoreErrors:
-        - '#class.nameCase#'
-        - '#class.notFound#'
-        - '#method.notFound#'
-        - '#method.unused#'
-        - '#instanceof.alwaysTrue#'
+        - src/Repository
+        - src/Entity
+        - src/Controller

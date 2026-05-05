@@ -1,0 +1,304 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}🤖 ML - Prédiction d'Engagement{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="fas fa-robot"></i> 🤖 ML - Prédiction d'Engagement</h1>
+            <p class="text-muted">Analysez la popularité de votre publication avant de la publier</p>
+            <hr>
+        </div>
+    </div>
+
+    <div class="row">
+        {# Formulaire de prédiction #}
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-edit"></i> Votre Publication</h5>
+                </div>
+                <div class="card-body">
+                    <form id="predictionForm">
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Contenu de la publication</label>
+                            <textarea class="form-control" id="content" rows="6" 
+                                placeholder="Ex: Bonjour à tous ! Nous organisons une session de formation sur la sécurité au travail ce vendredi. Qui est intéressé ?"></textarea>
+                            <div class="form-text">
+                                <span id="charCount">0</span> caractères | 
+                                Optimal: 100-500 caractères
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Type de publication</label>
+                            <select class="form-select" id="type">
+                                <option value="">-- Sélectionnez --</option>
+                                <option value="annonce">📢 Annonce</option>
+                                <option value="question">❓ Question</option>
+                                <option value="information">ℹ️ Information</option>
+                                <option value="evenement">🎉 Événement</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-magic"></i> 🤖 Prédire l'engagement
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {# Conseils ML #}
+            <div class="card mt-3 border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb"></i> 💡 Conseils pour maximiser l'engagement</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><i class="fas fa-check text-success"></i> Posez une question (+20% d'engagement)</li>
+                        <li><i class="fas fa-check text-success"></i> Ajoutez une image ou vidéo (+40%)</li>
+                        <li><i class="fas fa-check text-success"></i> Utilisez 100-500 caractères (+15%)</li>
+                        <li><i class="fas fa-check text-success"></i> Mots comme "Important", "Urgent" (+10%)</li>
+                        <li><i class="fas fa-check text-success"></i> Publiez Mardi-Jeudi 14h-16h</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        {# Résultats de prédiction #}
+        <div class="col-md-6">
+            <div id="resultCard" class="card shadow h-100" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> 📊 Prédiction ML</h5>
+                </div>
+                <div class="card-body">
+                    {# Score principal #}
+                    <div class="text-center mb-4">
+                        <div class="display-1 text-primary" id="engagementScore">-</div>
+                        <p class="text-muted">Score d'engagement /10</p>
+                        
+                        <div id="scoreBadge" class="badge bg-secondary fs-6">
+                            Analyse en cours...
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {# Estimations #}
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 id="estimatedLikes" class="text-success">-</h4>
+                            <p class="text-muted"><i class="fas fa-thumbs-up"></i> Likes estimés</p>
+                        </div>
+                        <div class="col-6">
+                            <h4 id="estimatedComments" class="text-info">-</h4>
+                            <p class="text-muted"><i class="fas fa-comments"></i> Commentaires estimés</p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {# Détails #}
+                    <div class="mb-3">
+                        <strong><i class="fas fa-clock"></i> Meilleur moment de publication:</strong>
+                        <span id="bestTime" class="badge bg-warning text-dark">-</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong><i class="fas fa-shield-alt"></i> Confiance ML:</strong>
+                        <div class="progress" style="height: 20px;">
+                            <div id="confidenceBar" class="progress-bar bg-success" role="progressbar" style="width: 0%">
+                                -
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {# Recommandations #}
+                    <div id="recommendations" style="display: none;">
+                        <h6><i class="fas fa-lightbulb"></i> Recommandations IA:</h6>
+                        <ul class="list-group list-group-flush" id="recommendationsList">
+                        </ul>
+                    </div>
+
+                    {# Analyse du contenu #}
+                    <div class="mt-3">
+                        <h6><i class="fas fa-search"></i> Analyse du contenu:</h6>
+                        <div id="contentAnalysis">
+                            <span class="badge bg-secondary me-1">Longueur: -</span>
+                            <span class="badge bg-secondary me-1">Question: -</span>
+                            <span class="badge bg-secondary me-1">Média: -</span>
+                        </div>
+                    </div>
+
+                    {# Méthode utilisée #}
+                    <div class="mt-3 text-muted small">
+                        <i class="fas fa-cog"></i> Méthode: <span id="method">-</span>
+                    </div>
+                </div>
+            </div>
+
+            {# Message d'attente #}
+            <div id="waitingMessage" class="alert alert-info text-center" style="display: none;">
+                <i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>
+                L'IA analyse votre publication...
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('predictionForm');
+    const contentInput = document.getElementById('content');
+    const charCount = document.getElementById('charCount');
+    
+    // Compteur de caractères
+    contentInput.addEventListener('input', function() {
+        charCount.textContent = this.value.length;
+        if (this.value.length >= 100 && this.value.length <= 500) {
+            charCount.classList.add('text-success');
+            charCount.classList.remove('text-warning', 'text-danger');
+        } else if (this.value.length > 500) {
+            charCount.classList.add('text-warning');
+            charCount.classList.remove('text-success', 'text-danger');
+        } else {
+            charCount.classList.add('text-danger');
+            charCount.classList.remove('text-success', 'text-warning');
+        }
+    });
+    
+    // Soumission du formulaire
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const content = contentInput.value;
+        const type = document.getElementById('type').value;
+        
+        if (!content.trim()) {
+            alert('Veuillez entrer du contenu pour la prédiction');
+            return;
+        }
+        
+        // Afficher le message d'attente
+        document.getElementById('waitingMessage').style.display = 'block';
+        document.getElementById('resultCard').style.display = 'none';
+        
+        try {
+            const response = await fetch('{{ path("publication_predict_engagement") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ content, type })
+            });
+            
+            const data = await response.json();
+            
+            document.getElementById('waitingMessage').style.display = 'none';
+            document.getElementById('resultCard').style.display = 'block';
+            
+            if (data.success) {
+                displayResults(data.data);
+            } else {
+                displayFallback(data.fallback);
+            }
+            
+        } catch (error) {
+            document.getElementById('waitingMessage').style.display = 'none';
+            alert('Erreur lors de la prédiction: ' + error.message);
+        }
+    });
+    
+    function displayResults(data) {
+        // Score
+        document.getElementById('engagementScore').textContent = data.engagement_score;
+        
+        // Badge de qualité
+        const score = parseFloat(data.engagement_score);
+        const badge = document.getElementById('scoreBadge');
+        if (score >= 8) {
+            badge.className = 'badge bg-success fs-6';
+            badge.innerHTML = '<i class="fas fa-fire"></i> 🔥 Excellente !';
+        } else if (score >= 6) {
+            badge.className = 'badge bg-info fs-6';
+            badge.innerHTML = '<i class="fas fa-thumbs-up"></i> 👍 Bonne';
+        } else if (score >= 4) {
+            badge.className = 'badge bg-warning text-dark fs-6';
+            badge.innerHTML = '<i class="fas fa-meh"></i> ⚠️ Moyenne';
+        } else {
+            badge.className = 'badge bg-danger fs-6';
+            badge.innerHTML = '<i class="fas fa-arrow-down"></i> ❌ À améliorer';
+        }
+        
+        // Estimations
+        document.getElementById('estimatedLikes').textContent = data.estimated_likes;
+        document.getElementById('estimatedComments').textContent = data.estimated_comments;
+        
+        // Meilleur moment
+        document.getElementById('bestTime').textContent = data.best_publish_time;
+        
+        // Confiance
+        const confidence = Math.round((data.confidence || 0.5) * 100);
+        document.getElementById('confidenceBar').style.width = confidence + '%';
+        document.getElementById('confidenceBar').textContent = confidence + '%';
+        
+        // Recommandations
+        if (data.recommendations && data.recommendations.length > 0) {
+            document.getElementById('recommendations').style.display = 'block';
+            const list = document.getElementById('recommendationsList');
+            list.innerHTML = '';
+            data.recommendations.forEach(rec => {
+                list.innerHTML += `<li class="list-group-item"><i class="fas fa-lightbulb text-warning"></i> ${rec}</li>`;
+            });
+        } else {
+            document.getElementById('recommendations').style.display = 'none';
+        }
+        
+        // Analyse du contenu
+        if (data.content_analysis) {
+            const analysis = data.content_analysis;
+            document.getElementById('contentAnalysis').innerHTML = `
+                <span class="badge ${analysis.length >= 100 && analysis.length <= 500 ? 'bg-success' : 'bg-warning'} me-1">
+                    <i class="fas fa-ruler"></i> Longueur: ${analysis.length}
+                </span>
+                <span class="badge ${analysis.has_question ? 'bg-success' : 'bg-secondary'} me-1">
+                    <i class="fas fa-question-circle"></i> Question: ${analysis.has_question ? 'Oui' : 'Non'}
+                </span>
+                <span class="badge ${analysis.has_media ? 'bg-success' : 'bg-secondary'} me-1">
+                    <i class="fas fa-image"></i> Média: ${analysis.has_media ? 'Oui' : 'Non'}
+                </span>
+            `;
+        }
+        
+        // Méthode
+        document.getElementById('method').textContent = data.method || 'rule_based';
+    }
+    
+    function displayFallback(fallback) {
+        if (!fallback) {
+            document.getElementById('resultCard').innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Prédiction indisponible. Veuillez réessayer.
+                </div>
+            `;
+            return;
+        }
+        
+        document.getElementById('engagementScore').textContent = fallback.engagement_score;
+        document.getElementById('scoreBadge').className = 'badge bg-secondary fs-6';
+        document.getElementById('scoreBadge').innerHTML = '<i class="fas fa-cog"></i> Estimation basique';
+        document.getElementById('estimatedLikes').textContent = fallback.estimated_likes;
+        document.getElementById('estimatedComments').textContent = fallback.estimated_comments;
+        document.getElementById('bestTime').textContent = 'Non disponible';
+        document.getElementById('confidenceBar').style.width = '30%';
+        document.getElementById('confidenceBar').textContent = '30%';
+        document.getElementById('method').textContent = fallback.method;
+    }
+});
+</script>
+{% endblock %}

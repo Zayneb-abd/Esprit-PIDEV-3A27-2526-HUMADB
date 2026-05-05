@@ -69,4 +69,22 @@ class CongeRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    /**
+     * Find conges by date range and user IDs
+     * @param array<int> $userIds
+     * @return array<Conge>
+     */
+    public function findByDateRangeAndUsers(\DateTime $start, \DateTime $end, array $userIds): array
+    {
+        return $this->createQueryBuilder('c')
+            ->where('c.user IN (:userIds)')
+            ->andWhere('c.date_debut <= :end')
+            ->andWhere('c.date_fin >= :start')
+            ->setParameter('userIds', $userIds)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->getQuery()
+            ->getResult();
+    }
 }

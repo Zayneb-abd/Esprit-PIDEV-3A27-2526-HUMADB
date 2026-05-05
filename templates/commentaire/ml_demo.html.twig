@@ -1,0 +1,308 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}🤖 ML - Engagement Commentaire{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="fas fa-robot"></i> 🤖 ML - Engagement de votre Commentaire</h1>
+            <p class="text-muted">Optimisez vos commentaires pour plus d'interactions avec vos collègues</p>
+            <hr>
+        </div>
+    </div>
+
+    <div class="row">
+        {# Formulaire #}
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-comment-dots"></i> Votre Commentaire</h5>
+                </div>
+                <div class="card-body">
+                    <form id="predictionForm">
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Contenu du commentaire</label>
+                            <textarea class="form-control" id="content" rows="4" 
+                                placeholder="Ex: Super initiative ! Je participe avec enthousiasme ? Quelle est la date exacte ?"></textarea>
+                            <div class="form-text">
+                                <span id="charCount">0</span> caractères | 
+                                Optimal: 20-200 caractères
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-info w-100 text-white">
+                            <i class="fas fa-magic"></i> 🤖 Analyser mon commentaire
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {# Conseils #}
+            <div class="card mt-3 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb"></i> 💡 Astuces pour un commentaire percutant</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><i class="fas fa-check text-success"></i> Posez une question (+30% d'engagement)</li>
+                        <li><i class="fas fa-check text-success"></i> Utilisez des mots positifs: super, merci, bravo, génial</li>
+                        <li><i class="fas fa-check text-success"></i> Longueur idéale: 20-200 caractères</li>
+                        <li><i class="fas fa-check text-success"></i> Ajoutez un emoji 😊 pour montrer l'enthousiasme</li>
+                        <li><i class="fas fa-check text-success"></i> Mentionnez un collègue avec @nom</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        {# Résultats #}
+        <div class="col-md-6">
+            <div id="resultCard" class="card shadow h-100" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> 📊 Analyse ML</h5>
+                </div>
+                <div class="card-body">
+                    {# Score principal #}
+                    <div class="text-center mb-4">
+                        <div class="display-1" id="engagementScore">-</div>
+                        <p class="text-muted">Score d'engagement /10</p>
+                        
+                        <div id="qualityBadge" class="badge fs-6">
+                            Analyse en cours...
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {# Estimations #}
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 id="estimatedReactions" class="text-primary">-</h4>
+                            <p class="text-muted"><i class="fas fa-thumbs-up"></i> Réactions estimées</p>
+                        </div>
+                        <div class="col-6">
+                            <h4 id="estimatedResponses" class="text-info">-</h4>
+                            <p class="text-muted"><i class="fas fa-reply"></i> Réponses estimées</p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {# Confiance #}
+                    <div class="mb-3">
+                        <strong><i class="fas fa-shield-alt"></i> Confiance ML:</strong>
+                        <div class="progress" style="height: 20px;">
+                            <div id="confidenceBar" class="progress-bar bg-success" role="progressbar" style="width: 0%">
+                                -
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {# Recommandations #}
+                    <div id="recommendations" style="display: none;">
+                        <h6><i class="fas fa-lightbulb text-warning"></i> Conseils d'amélioration:</h6>
+                        <ul class="list-group list-group-flush" id="recommendationsList">
+                        </ul>
+                    </div>
+
+                    {# Analyse du contenu #}
+                    <div class="mt-3">
+                        <h6><i class="fas fa-search"></i> Analyse de votre commentaire:</h6>
+                        <div id="contentAnalysis">
+                            <span class="badge bg-secondary me-1">Longueur: -</span>
+                            <span class="badge bg-secondary me-1">Question: -</span>
+                            <span class="badge bg-secondary me-1">Emoji: -</span>
+                            <span class="badge bg-secondary me-1">Mots +: -</span>
+                        </div>
+                    </div>
+
+                    {# Méthode #}
+                    <div class="mt-3 text-muted small">
+                        <i class="fas fa-cog"></i> Méthode: <span id="method">-</span>
+                    </div>
+                </div>
+            </div>
+
+            {# Message d'attente #}
+            <div id="waitingMessage" class="alert alert-info text-center" style="display: none;">
+                <i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>
+                L'IA analyse votre commentaire...
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('predictionForm');
+    const contentInput = document.getElementById('content');
+    const charCount = document.getElementById('charCount');
+    
+    // Compteur de caractères
+    contentInput.addEventListener('input', function() {
+        charCount.textContent = this.value.length;
+        if (this.value.length >= 20 && this.value.length <= 200) {
+            charCount.classList.add('text-success');
+            charCount.classList.remove('text-warning', 'text-danger');
+        } else if (this.value.length > 200) {
+            charCount.classList.add('text-warning');
+            charCount.classList.remove('text-success', 'text-danger');
+        } else {
+            charCount.classList.add('text-danger');
+            charCount.classList.remove('text-success', 'text-warning');
+        }
+    });
+    
+    // Soumission du formulaire
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const content = contentInput.value;
+        
+        if (!content.trim()) {
+            alert('Veuillez entrer un commentaire');
+            return;
+        }
+        
+        // Afficher le message d'attente
+        document.getElementById('waitingMessage').style.display = 'block';
+        document.getElementById('resultCard').style.display = 'none';
+        
+        try {
+            const response = await fetch('{{ path("comment_predict_engagement") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ content })
+            });
+            
+            const data = await response.json();
+            
+            document.getElementById('waitingMessage').style.display = 'none';
+            document.getElementById('resultCard').style.display = 'block';
+            
+            if (data.success) {
+                displayResults(data.data);
+            } else {
+                displayFallback(data.fallback);
+            }
+            
+        } catch (error) {
+            document.getElementById('waitingMessage').style.display = 'none';
+            alert('Erreur lors de l\'analyse: ' + error.message);
+        }
+    });
+    
+    function displayResults(data) {
+        // Score avec couleur
+        const score = parseFloat(data.engagement_score);
+        const scoreElement = document.getElementById('engagementScore');
+        scoreElement.textContent = data.engagement_score;
+        
+        // Couleur selon le score
+        if (score >= 8) {
+            scoreElement.className = 'display-1 text-success';
+        } else if (score >= 6) {
+            scoreElement.className = 'display-1 text-info';
+        } else if (score >= 4) {
+            scoreElement.className = 'display-1 text-warning';
+        } else {
+            scoreElement.className = 'display-1 text-danger';
+        }
+        
+        // Badge qualité
+        const badge = document.getElementById('qualityBadge');
+        const quality = data.quality || 'moyen';
+        
+        if (score >= 8) {
+            badge.className = 'badge bg-success fs-6';
+            badge.innerHTML = '<i class="fas fa-fire"></i> 🔥 Excellent !';
+        } else if (score >= 6) {
+            badge.className = 'badge bg-info fs-6';
+            badge.innerHTML = '<i class="fas fa-thumbs-up"></i> 👍 Bon';
+        } else if (score >= 4) {
+            badge.className = 'badge bg-warning text-dark fs-6';
+            badge.innerHTML = '<i class="fas fa-meh"></i> ⚠️ Moyen';
+        } else {
+            badge.className = 'badge bg-danger fs-6';
+            badge.innerHTML = '<i class="fas fa-arrow-down"></i> ❌ À améliorer';
+        }
+        
+        // Estimations
+        document.getElementById('estimatedReactions').textContent = data.estimated_reactions;
+        document.getElementById('estimatedResponses').textContent = data.estimated_responses;
+        
+        // Confiance
+        const confidence = Math.round((data.confidence || 0.5) * 100);
+        document.getElementById('confidenceBar').style.width = confidence + '%';
+        document.getElementById('confidenceBar').textContent = confidence + '%';
+        
+        // Recommandations
+        if (data.recommendations && data.recommendations.length > 0) {
+            document.getElementById('recommendations').style.display = 'block';
+            const list = document.getElementById('recommendationsList');
+            list.innerHTML = '';
+            data.recommendations.forEach(rec => {
+                list.innerHTML += `<li class="list-group-item"><i class="fas fa-lightbulb text-warning"></i> ${rec}</li>`;
+            });
+        } else {
+            document.getElementById('recommendations').innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> Votre commentaire est parfait !
+                </div>
+            `;
+            document.getElementById('recommendations').style.display = 'block';
+        }
+        
+        // Analyse du contenu
+        if (data.content_analysis) {
+            const analysis = data.content_analysis;
+            const lengthBadge = analysis.length >= 20 && analysis.length <= 200 ? 'bg-success' : 'bg-warning';
+            document.getElementById('contentAnalysis').innerHTML = `
+                <span class="badge ${lengthBadge} me-1">
+                    <i class="fas fa-ruler"></i> ${analysis.length} chars
+                </span>
+                <span class="badge ${analysis.has_question ? 'bg-success' : 'bg-secondary'} me-1">
+                    <i class="fas fa-question-circle"></i> Question: ${analysis.has_question ? 'Oui' : 'Non'}
+                </span>
+                <span class="badge ${analysis.has_emoji ? 'bg-success' : 'bg-secondary'} me-1">
+                    <i class="fas fa-smile"></i> Emoji: ${analysis.has_emoji ? 'Oui' : 'Non'}
+                </span>
+                <span class="badge ${analysis.positive_words > 0 ? 'bg-success' : 'bg-secondary'} me-1">
+                    <i class="fas fa-plus-circle"></i> Mots +: ${analysis.positive_words}
+                </span>
+            `;
+        }
+        
+        // Méthode
+        document.getElementById('method').textContent = data.method || 'rule_based';
+    }
+    
+    function displayFallback(fallback) {
+        if (!fallback) {
+            document.getElementById('resultCard').innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Analyse indisponible. Veuillez réessayer.
+                </div>
+            `;
+            return;
+        }
+        
+        document.getElementById('engagementScore').textContent = fallback.engagement_score;
+        document.getElementById('engagementScore').className = 'display-1 text-secondary';
+        document.getElementById('qualityBadge').className = 'badge bg-secondary fs-6';
+        document.getElementById('qualityBadge').innerHTML = '<i class="fas fa-cog"></i> Estimation basique';
+        document.getElementById('estimatedReactions').textContent = fallback.estimated_reactions;
+        document.getElementById('estimatedResponses').textContent = fallback.estimated_responses;
+        document.getElementById('confidenceBar').style.width = '30%';
+        document.getElementById('confidenceBar').textContent = '30%';
+        document.getElementById('method').textContent = fallback.method;
+    }
+});
+</script>
+{% endblock %}
