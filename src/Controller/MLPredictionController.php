@@ -43,11 +43,16 @@ class MLPredictionController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
+        $userId = $user->getId();
+        if (!is_int($userId)) {
+            return $this->redirectToRoute('app_login');
+        }
+        
         // Prédiction du prochain congé
-        $prediction = $this->mlService->predictCongeProbability($user->getId());
+        $prediction = $this->mlService->predictCongeProbability($userId);
         
         // Suggestion de période pour 5 jours
-        $suggestion = $this->mlService->suggestBestPeriod($user->getId(), 5);
+        $suggestion = $this->mlService->suggestBestPeriod($userId, 5);
         
         return $this->render('ml/dashboard.html.twig', [
             'user' => $user,
