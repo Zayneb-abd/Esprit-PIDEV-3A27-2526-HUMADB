@@ -9,6 +9,7 @@ use Twig\TwigFunction;
 class ReactionExtension extends AbstractExtension
 {
     private $reactionRepository;
+    private array $cache = [];
 
     public function __construct(ReactionPublicationRepository $reactionRepository)
     {
@@ -25,7 +26,10 @@ class ReactionExtension extends AbstractExtension
 
     public function getReactionsCount(int $publicationId): array
     {
-        return $this->reactionRepository->getReactionsCountForPublication($publicationId);
+        if (!isset($this->cache[$publicationId])) {
+            $this->cache[$publicationId] = $this->reactionRepository->getReactionsCountForPublication($publicationId);
+        }
+        return $this->cache[$publicationId];
     }
 
     public function getUserReaction(int $publicationId, ?int $userId): ?\App\Entity\ReactionPublication

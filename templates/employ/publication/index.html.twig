@@ -223,7 +223,7 @@
                     {% endif %}
                     
                     <!-- Boutons de réaction -->
-                    {% set counts = get_reactions_count(publication.id) %}
+                    {% set counts = reactions_counts[publication.id] ?? {'like': 0, 'dislike': 0} %}
                     {% set userReaction = get_user_reaction(publication.id, app.user ? app.user.id : null) %}
                     {% include 'components/reaction_buttons.html.twig' with {'publication': publication, 'counts': counts, 'userReaction': userReaction} %}
                     

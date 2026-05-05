@@ -32,9 +32,16 @@ class FormationRepository extends ServiceEntityRepository
             ->setParameter('query', '%' . $query . '%');
         }
 
-        $allowedSortFields = ['sujet', 'formateur', 'type', 'dateDebut', 'duree', 'localisation'];
-        if ($sortField && in_array($sortField, $allowedSortFields, true)) {
-            $qb->orderBy('f.' . $sortField, $sortOrder === 'DESC' ? 'DESC' : 'ASC');
+        $allowedSortFields = [
+            'sujet' => 'f.sujet',
+            'formateur' => 'f.formateur',
+            'type' => 'f.type',
+            'dateDebut' => 'f.dateDebut',
+            'duree' => 'f.duree',
+            'localisation' => 'f.localisation'
+        ];
+        if ($sortField && isset($allowedSortFields[$sortField])) {
+            $qb->orderBy($allowedSortFields[$sortField], $sortOrder === 'DESC' ? 'DESC' : 'ASC');
         } else {
             $qb->orderBy('f.dateDebut', 'DESC');
         }

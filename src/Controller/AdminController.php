@@ -1259,9 +1259,23 @@ class AdminController extends AbstractController
     }
 
     #[Route('/publication', name: 'admin_publication')]
-    public function publication(PublicationRepository $publicationRepository): Response
+    public function publication(EntityManagerInterface $em): Response
     {
-        $publications = $publicationRepository->findBy([], ['date_publication' => 'DESC']);
+        $qb = $em->createQueryBuilder();
+        $qb->select('p')
+            ->from(Publication::class, 'p')
+            ->leftJoin('p.user', 'u')
+            ->leftJoin('p.publicationMedias', 'pm')
+            ->leftJoin('p.commentaires', 'c')
+            ->addSelect('u')
+            ->addSelect('pm')
+            ->addSelect('c')
+            ->orderBy('p.date_publication', 'DESC');
+
+        $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($qb->getQuery());
+        $paginator->setUseOutputWalkers(false);
+        $publications = iterator_to_array($paginator);
+
         return $this->render('admin/publication/index.html.twig', [
             'publications' => $publications,
         ]);
@@ -1377,9 +1391,21 @@ class AdminController extends AbstractController
     }
 
     #[Route('/commentaire', name: 'admin_commentaire')]
-    public function commentaire(CommentaireRepository $commentaireRepository): Response
+    public function commentaire(EntityManagerInterface $em): Response
     {
-        $commentaires = $commentaireRepository->findBy([], ['date_commentaire' => 'DESC']);
+        $qb = $em->createQueryBuilder();
+        $qb->select('c')
+            ->from(Commentaire::class, 'c')
+            ->leftJoin('c.user', 'u')
+            ->addSelect('u')
+            ->leftJoin('c.publication', 'p')
+            ->addSelect('p')
+            ->orderBy('c.date_commentaire', 'DESC');
+
+        $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($qb->getQuery());
+        $paginator->setUseOutputWalkers(false);
+        $commentaires = iterator_to_array($paginator);
+
         return $this->render('admin/commentaire/index.html.twig', [
             'commentaires' => $commentaires,
         ]);

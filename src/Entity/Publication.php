@@ -148,7 +148,8 @@ class Publication
         return $this;
     }
 
-    #[ORM\OneToMany(targetEntity: ReactionPublication::class, mappedBy: 'publication', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    /** @var Collection<int, ReactionPublication> */
+    #[ORM\OneToMany(targetEntity: ReactionPublication::class, mappedBy: 'publication')]
     private Collection $reactionPublications;
 
     public function __construct()
@@ -158,9 +159,6 @@ class Publication
         $this->reactionPublications = new ArrayCollection();
     }
 
-    /**
-     * @return Collection<int, ReactionPublication>
-     */
     public function getReactionPublications(): Collection
     {
         return $this->reactionPublications;

@@ -6,7 +6,10 @@
             "branch": "main",
             "version": "0.1",
             "ref": "0a0c0e3972f784e628c4f759d2fb446e9eeb4959"
-        }
+        },
+        "files": [
+            "./config/packages/doctrine_doctor.yaml"
+        ]
     },
     "doctrine/deprecations": {
         "version": "1.1",
@@ -43,15 +46,6 @@
             "./config/packages/doctrine_migrations.yaml",
             "./migrations/.gitignore"
         ]
-    },
-    "friendsofsymfony/ckeditor-bundle": {
-        "version": "2.7",
-        "recipe": {
-            "repo": "github.com/symfony/recipes-contrib",
-            "branch": "main",
-            "version": "2.0",
-            "ref": "f5ad42002183a6881962683e6d84bbb25cdfce5d"
-        }
     },
     "knplabs/knp-paginator-bundle": {
         "version": "v6.10.0"

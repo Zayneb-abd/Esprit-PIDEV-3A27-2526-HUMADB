@@ -45,9 +45,10 @@ class ReactionController extends AbstractController
         }
 
         try {
+            $userId = (int) $user->getId();
             $reaction = $this->reactionRepository->addOrUpdateReaction(
                 $publicationId, 
-                $user->getId(), 
+                $userId, 
                 $type
             );
 
@@ -117,9 +118,10 @@ class ReactionController extends AbstractController
         }
 
         try {
+            $userId = (int) $user->getId();
             $reaction = $this->reactionRepository->getUserReactionForPublication(
                 $publicationId, 
-                $user->getId()
+                $userId
             );
 
             $userReaction = null;
@@ -157,7 +159,8 @@ class ReactionController extends AbstractController
         }
 
         try {
-            $this->reactionRepository->removeUserReaction($publicationId, $user->getId());
+            $userId = (int) $user->getId();
+            $this->reactionRepository->removeUserReaction($publicationId, $userId);
             
             // Obtenir les nouveaux comptes
             $counts = $this->reactionRepository->getReactionsCountForPublication($publicationId);

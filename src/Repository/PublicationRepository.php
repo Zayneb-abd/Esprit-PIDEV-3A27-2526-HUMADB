@@ -39,7 +39,9 @@ class PublicationRepository extends ServiceEntityRepository
             ->setParameter('q', '%' . mb_strtolower($keyword) . '%');
         }
 
-        return $qb->getQuery()->getResult();
+        $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($qb->getQuery());
+        $paginator->setUseOutputWalkers(false);
+        return iterator_to_array($paginator);
     }
 
 }
