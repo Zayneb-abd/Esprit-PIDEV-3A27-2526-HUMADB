@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Service\MLPredictionService;
 use App\Repository\CongeRepository;
-use App\Repository\AbsenceRepository;
+use App\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,18 +19,15 @@ class MLPredictionController extends AbstractController
 {
     private MLPredictionService $mlService;
     private CongeRepository $congeRepository;
-    private AbsenceRepository $absenceRepository;
     private Security $security;
     
     public function __construct(
         MLPredictionService $mlService,
         CongeRepository $congeRepository,
-        AbsenceRepository $absenceRepository,
         Security $security
     ) {
         $this->mlService = $mlService;
         $this->congeRepository = $congeRepository;
-        $this->absenceRepository = $absenceRepository;
         $this->security = $security;
     }
     
@@ -42,15 +39,20 @@ class MLPredictionController extends AbstractController
     public function dashboard(): Response
     {
         $user = $this->security->getUser();
-        if (!$user) {
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('app_login');
+        }
+        
+        $userId = $user->getId();
+        if (!is_int($userId)) {
             return $this->redirectToRoute('app_login');
         }
         
         // Prédiction du prochain congé
-        $prediction = $this->mlService->predictCongeProbability($user->getId());
+        $prediction = $this->mlService->predictCongeProbability($userId);
         
         // Suggestion de période pour 5 jours
-        $suggestion = $this->mlService->suggestBestPeriod($user->getId(), 5);
+        $suggestion = $this->mlService->suggestBestPeriod($userId, 5);
         
         return $this->render('ml/dashboard.html.twig', [
             'user' => $user,

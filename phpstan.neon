@@ -1,4 +1,10 @@
 parameters:
     level: 5
     paths:
-        - src
+        - src/PlanningBundle/Service
+        - src/Service
+        - src/Controller/MLPredictionController.php
+        - src/Controller/DebugJoursFeriesController.php
+    excludePaths:
+        - src/Repository
+        - src/Entity
