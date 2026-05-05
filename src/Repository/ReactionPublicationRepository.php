@@ -79,7 +79,7 @@ class ReactionPublicationRepository extends ServiceEntityRepository
     /**
      * Ajouter ou mettre à jour une réaction
      */
-    public function addOrUpdateReaction(int $publicationId, int $userId, string $type): ReactionPublication
+    public function addOrUpdateReaction(int $publicationId, int $userId, string $type): ?ReactionPublication
     {
         $type = strtolower(trim($type));
 

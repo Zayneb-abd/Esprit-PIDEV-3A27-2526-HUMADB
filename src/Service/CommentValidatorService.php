@@ -7,6 +7,7 @@ class CommentValidatorService
     /**
      * Liste locale de secours si BanBuilder n'est pas installé.
      * On garde une liste courte pour éviter de bloquer le flux commentaire.
+     * @var array<string>
      */
     private array $badWords = [
         'sale',
@@ -20,6 +21,9 @@ class CommentValidatorService
         'shit',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     public function validateComment(string $content): array
     {
         $found = $this->detectBadWords($content);
@@ -33,6 +37,9 @@ class CommentValidatorService
         ];
     }
 
+    /**
+     * @return array<string>
+     */
     private function detectBadWords(string $content): array
     {
         $found = [];
@@ -62,6 +69,9 @@ class CommentValidatorService
         return $censored;
     }
 
+    /**
+     * @param array<string> $words
+     */
     public function addCustomBadWords(array $words): void
     {
         foreach ($words as $word) {
@@ -77,6 +87,9 @@ class CommentValidatorService
         return in_array(mb_strtolower(trim($word)), $this->badWords, true);
     }
 
+    /**
+     * @return array<string>
+     */
     public function getBadWordsList(): array
     {
         return $this->badWords;

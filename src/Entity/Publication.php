@@ -96,6 +96,7 @@ class Publication
         return $this;
     }
 
+    /** @var Collection<int, Commentaire> */
     #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'publication')]
     private Collection $commentaires;
 
@@ -104,9 +105,6 @@ class Publication
      */
     public function getCommentaires(): Collection
     {
-        if (!$this->commentaires instanceof Collection) {
-            $this->commentaires = new ArrayCollection();
-        }
         return $this->commentaires;
     }
 
@@ -124,6 +122,7 @@ class Publication
         return $this;
     }
 
+    /** @var Collection<int, PublicationMedia> */
     #[ORM\OneToMany(targetEntity: PublicationMedia::class, mappedBy: 'publication')]
     private Collection $publicationMedias;
 
@@ -132,9 +131,6 @@ class Publication
      */
     public function getPublicationMedias(): Collection
     {
-        if (!$this->publicationMedias instanceof Collection) {
-            $this->publicationMedias = new ArrayCollection();
-        }
         return $this->publicationMedias;
     }
 
@@ -172,7 +168,7 @@ class Publication
         return $this;
     }
 
-    public function getDatePublication(): ?\DateTime
+    public function getDatePublication(): ?\DateTimeInterface
     {
         return $this->date_publication;
     }
