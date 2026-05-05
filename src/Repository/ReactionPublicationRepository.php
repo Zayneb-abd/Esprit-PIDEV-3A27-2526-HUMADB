@@ -36,6 +36,7 @@ class ReactionPublicationRepository extends ServiceEntityRepository
 
     /**
      * Compter les likes et dislikes pour une publication
+     * @return array<string, int>
      */
     public function getReactionsCountForPublication(int $publicationId): array
     {
@@ -127,6 +128,7 @@ class ReactionPublicationRepository extends ServiceEntityRepository
 
     /**
      * Obtenir les publications les plus aimées
+     * @return array<int, array<string, mixed>>
      */
     public function getMostLikedPublications(int $limit = 10): array
     {

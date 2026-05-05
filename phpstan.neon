@@ -1,9 +1,5 @@
 parameters:
-    level: 5
+    level: 8
     paths:
-        - src/PlanningBundle/Service
-        - src/Service
-    excludePaths:
-        - src/Repository
-        - src/Entity
-        - src/Controller
+        - src/
+

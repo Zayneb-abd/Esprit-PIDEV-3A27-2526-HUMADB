@@ -59,11 +59,14 @@ class CommentValidatorService
         $censored = $content;
 
         foreach ($this->badWords as $word) {
-            $censored = preg_replace(
+            $replacement = preg_replace(
                 '/\b' . preg_quote($word, '/') . '\b/iu',
                 str_repeat('*', max(3, mb_strlen($word))),
                 $censored
             );
+            if ($replacement !== null) {
+                $censored = $replacement;
+            }
         }
 
         return $censored;
