@@ -89,6 +89,10 @@
                        class="nav-item nav-link {% if app.request.attributes.get('_route') == 'client_services' %}active{% endif %}">
                        Services
                     </a>
+                    <a href="{{ path('client_jobs') }}"
+                       class="nav-item nav-link {% if app.request.attributes.get('_route') in ['client_jobs', 'client_job_show'] %}active{% endif %}">
+                       Jobs
+                    </a>
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Blog</a>
                         <div class="dropdown-menu m-0">
@@ -136,8 +140,11 @@
                 </div>
                 <div class="modal-body d-flex align-items-center justify-content-center">
                     <div class="input-group" style="max-width: 600px;">
-                        <input type="text" class="form-control bg-transparent border-primary p-3" placeholder="Type search keyword">
-                        <button class="btn btn-primary px-4"><i class="bi bi-search"></i></button>
+                        <label for="site-search-keyword" class="visually-hidden">Search keyword</label>
+                        <input id="site-search-keyword" type="text" class="form-control bg-transparent border-primary p-3" placeholder="Type search keyword">
+                        <button type="button" class="btn btn-primary px-4" aria-label="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -162,7 +169,8 @@
                         <p class="mt-3 mb-4">Lorem diam sit erat dolor elitr et, diam lorem justo amet clita stet eos sit.</p>
                         <form action="">
                             <div class="input-group">
-                                <input type="text" class="form-control border-white p-3" placeholder="Your Email">
+                                <label for="newsletter-email" class="visually-hidden">Your Email</label>
+                                <input id="newsletter-email" type="text" class="form-control border-white p-3" placeholder="Your Email">
                                 <button class="btn btn-dark">Sign Up</button>
                             </div>
                         </form>

@@ -59,20 +59,20 @@ class Entretien
         return $this;
     }
 
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'entretiens')]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'entretiensManager')]
     #[ORM\JoinColumn(name: 'manager_id', referencedColumnName: 'id')]
     private ?User $manager = null;
 
     public function getManager(): ?User
-{
-    return $this->manager;
-}
+    {
+        return $this->manager;
+    }
 
-public function setManager(?User $manager): static
-{
-    $this->manager = $manager;
-    return $this;
-}
+    public function setManager(?User $manager): static
+    {
+        $this->manager = $manager;
+        return $this;
+    }
     #[ORM\Column(type: 'datetime', nullable: false)]
     private ?\DateTimeInterface $date_entretien = null;
 

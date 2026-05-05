@@ -1,0 +1,123 @@
+{
+  "generated_at" : "2026-03-03T22:57:06.074135",
+  "offre_id" : 1,
+  "offre_titre" : "Développeur Java",
+  "offre_departement" : "dev",
+  "total_candidates" : 5,
+  "ranking" : [ {
+    "candidatureId" : 83,
+    "candidatId" : 37,
+    "candidatNom" : "Lopez Nina",
+    "candidatEmail" : "nina.lopez8@mail.com",
+    "offreId" : 1,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 88,
+    "candidatId" : 42,
+    "candidatNom" : "Boussaid Ahmed",
+    "candidatEmail" : "ahmed.boussaid13@mail.com",
+    "offreId" : 1,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 75,
+    "candidatId" : 29,
+    "candidatNom" : "Ivanov Dmitri",
+    "candidatEmail" : "dmitri.ivanov@huma.com",
+    "offreId" : 1,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 80,
+    "candidatId" : 34,
+    "candidatNom" : "Ali Mohamed",
+    "candidatEmail" : "mohamed.ali5@mail.com",
+    "offreId" : 1,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  }, {
+    "candidatureId" : 98,
+    "candidatId" : 52,
+    "candidatNom" : "Nguyen Linh",
+    "candidatEmail" : "linh.nguyen23@mail.com",
+    "offreId" : 1,
+    "scoreGlobal" : 4,
+    "scoreSkills" : 0,
+    "scoreExperience" : 0,
+    "scoreEducation" : 4,
+    "cvAnalysis" : {
+      "fullName" : null,
+      "email" : "",
+      "phone" : null,
+      "location" : null,
+      "yearsExperience" : 0.0,
+      "skills" : [ ],
+      "languages" : [ ],
+      "education" : [ ],
+      "certifications" : [ ],
+      "summary" : "Extraction locale (fallback) sans appel API externe."
+    },
+    "commentaire" : "skills=0/60, experience=0/25, education=4/15"
+  } ]
+}

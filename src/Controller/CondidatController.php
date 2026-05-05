@@ -3,28 +3,55 @@
 namespace App\Controller;
 
 use App\Entity\Candidature;
+use App\Entity\Entretien;
 use App\Entity\OffreEmploi;
+use App\Entity\Quiz;
+use App\Entity\ResultatQuiz;
 use App\Entity\User;
 use App\Form\CandidatPostulationType;
 use App\Repository\CandidatureRepository;
+use App\Repository\EntretienRepository;
 use App\Repository\OffreEmploiRepository;
+use App\Repository\ResultatQuizRepository;
+use App\Repository\QuizRepository;
+use App\Service\CandidateCvManager;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Form\FormError;
 
 #[Route('/candidat')]
 #[IsGranted('ROLE_CANDIDAT')]
 class CondidatController extends AbstractController
 {
     #[Route('', name: 'candidat_dashboard')]
-    public function dashboard(OffreEmploiRepository $offreEmploiRepository, CandidatureRepository $candidatureRepository): Response
+    public function dashboard(OffreEmploiRepository $offreEmploiRepository, CandidatureRepository $candidatureRepository, EntretienRepository $entretienRepository, ResultatQuizRepository $resultatQuizRepository): Response
     {
         $user = $this->getAuthenticatedUser();
         $offres = $offreEmploiRepository->findBy([], ['date_publication' => 'DESC', 'id' => 'DESC']);
         $candidatures = $candidatureRepository->findBy(['user' => $user], ['date_candidature' => 'DESC', 'id' => 'DESC']);
+        $entretiens = $entretienRepository->createQueryBuilder('e')
+            ->leftJoin('e.candidature', 'c')
+            ->andWhere('c.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('e.date_entretien', 'ASC')
+            ->setMaxResults(3)
+            ->getQuery()
+            ->getResult();
+
+        $entretiensCount = (int) $entretienRepository->createQueryBuilder('e')
+            ->select('COUNT(e.id)')
+            ->leftJoin('e.candidature', 'c')
+            ->andWhere('c.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $quizResults = $resultatQuizRepository->findBy(['user' => $user], ['id' => 'DESC'], 3);
 
         return $this->render('candidat/dashboard/index.html.twig', [
             'stats' => [
@@ -32,9 +59,12 @@ class CondidatController extends AbstractController
                 'postulations' => count($candidatures),
                 'en_attente' => count(array_filter($candidatures, static fn (Candidature $candidature): bool => $candidature->getStatut() === 'En attente')),
                 'acceptees' => count(array_filter($candidatures, static fn (Candidature $candidature): bool => $candidature->getStatut() === 'Acceptee')),
+                'entretiens' => $entretiensCount,
             ],
             'offres_recentes' => array_slice($offres, 0, 4),
             'candidatures_recentes' => array_slice($candidatures, 0, 5),
+            'entretiens_a_venir' => $entretiens,
+            'quiz_recents' => $quizResults,
         ]);
     }
 
@@ -59,7 +89,7 @@ class CondidatController extends AbstractController
     }
 
     #[Route('/product/create', name: 'candidat_product_create')]
-    public function createProduct(Request $request, EntityManagerInterface $entityManager): Response
+    public function createProduct(Request $request, EntityManagerInterface $entityManager, CandidateCvManager $candidateCvManager): Response
     {
         $user = $this->getAuthenticatedUser();
         $candidature = new Candidature();
@@ -68,7 +98,10 @@ class CondidatController extends AbstractController
         $candidature->setDateStatut(new \DateTime());
         $candidature->setStatut('En attente');
 
-        $form = $this->createForm(CandidatPostulationType::class, $candidature);
+        $form = $this->createForm(CandidatPostulationType::class, $candidature, [
+            'include_offer' => true,
+            'require_cv' => true,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -78,12 +111,41 @@ class CondidatController extends AbstractController
                 return $this->redirectToRoute('candidat_reports');
             }
 
+            $uploadedCv = $form->get('cvFile')->getData();
+            if ($uploadedCv === null) {
+                $this->addFlash('danger', 'Veuillez televerser votre CV PDF avant de continuer.');
+
+                return $this->render('candidat/product/create.html.twig', [
+                    'form' => $form->createView(),
+                ]);
+            }
+
+            try {
+                $candidature->setCv($candidateCvManager->storeUploadedApplicationCv($uploadedCv));
+            } catch (FileException $exception) {
+                $this->addFlash('danger', 'Le televersement du CV a echoue. Verifiez les permissions du dossier uploads et reessayez.');
+
+                return $this->render('candidat/product/create.html.twig', [
+                    'form' => $form->createView(),
+                ]);
+            }
+
             $entityManager->persist($candidature);
             $entityManager->flush();
+
+            if ($this->findQuizForOffer($candidature->getOffreEmploi()) instanceof Quiz) {
+                $this->addFlash('success', 'Etape 1 terminee: CV envoye. Passez maintenant le quiz.');
+
+                return $this->redirectToRoute('candidat_candidature_quiz', ['id' => $candidature->getId()]);
+            }
 
             $this->addFlash('success', 'Votre candidature a bien ete envoyee.');
 
             return $this->redirectToRoute('candidat_reports');
+        }
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('danger', $this->extractFormErrors($form));
         }
 
         return $this->render('candidat/product/create.html.twig', [
@@ -92,12 +154,31 @@ class CondidatController extends AbstractController
     }
 
     #[Route('/reports', name: 'candidat_reports')]
-    public function reports(CandidatureRepository $candidatureRepository): Response
+    public function reports(CandidatureRepository $candidatureRepository, ResultatQuizRepository $resultatQuizRepository): Response
     {
         $user = $this->getAuthenticatedUser();
+        $candidatures = $candidatureRepository->findBy(['user' => $user], ['date_candidature' => 'DESC', 'id' => 'DESC']);
+        $resultatsParQuiz = [];
+        $entretiensParCandidature = [];
+
+        foreach ($candidatures as $candidature) {
+            $quiz = $this->findQuizForOffer($candidature->getOffreEmploi());
+            if ($quiz instanceof Quiz) {
+                $resultatsParQuiz[$candidature->getId()] = $resultatQuizRepository->findOneBy([
+                    'user' => $user,
+                    'quiz' => $quiz,
+                ]);
+            }
+
+            $entretiens = $candidature->getEntretiens()->toArray();
+            usort($entretiens, static fn (Entretien $left, Entretien $right): int => ($right->getDateEntretien()?->getTimestamp() ?? 0) <=> ($left->getDateEntretien()?->getTimestamp() ?? 0));
+            $entretiensParCandidature[$candidature->getId()] = $entretiens[0] ?? null;
+        }
 
         return $this->render('candidat/reports/index.html.twig', [
-            'candidatures' => $candidatureRepository->findBy(['user' => $user], ['date_candidature' => 'DESC', 'id' => 'DESC']),
+            'candidatures' => $candidatures,
+            'resultats_par_candidature' => $resultatsParQuiz,
+            'entretiens_par_candidature' => $entretiensParCandidature,
         ]);
     }
 
@@ -108,24 +189,44 @@ class CondidatController extends AbstractController
     }
 
     #[Route('/offres/{id}', name: 'candidat_offer_show', requirements: ['id' => '\d+'])]
-    public function showOffer(OffreEmploi $offreEmploi, CandidatureRepository $candidatureRepository): Response
+    public function showOffer(OffreEmploi $offreEmploi, CandidatureRepository $candidatureRepository, ResultatQuizRepository $resultatQuizRepository): Response
     {
         $user = $this->getAuthenticatedUser();
         $candidature = $candidatureRepository->findOneBy([
             'user' => $user,
             'offreEmploi' => $offreEmploi,
         ]);
+        $quiz = $this->findQuizForOffer($offreEmploi);
+        $resultatQuiz = null;
+        $latestEntretien = null;
+
+        if ($quiz instanceof Quiz) {
+            $resultatQuiz = $resultatQuizRepository->findOneBy([
+                'user' => $user,
+                'quiz' => $quiz,
+            ]);
+        }
+
+        if ($candidature instanceof Candidature) {
+            $entretiens = $candidature->getEntretiens()->toArray();
+            usort($entretiens, static fn (Entretien $left, Entretien $right): int => ($right->getDateEntretien()?->getTimestamp() ?? 0) <=> ($left->getDateEntretien()?->getTimestamp() ?? 0));
+            $latestEntretien = $entretiens[0] ?? null;
+        }
 
         return $this->render('candidat/offre/show.html.twig', [
             'offre' => $offreEmploi,
             'candidature' => $candidature,
+            'quiz' => $quiz,
+            'resultat_quiz' => $resultatQuiz,
+            'latest_entretien' => $latestEntretien,
         ]);
     }
 
     #[Route('/offres/{id}/postuler', name: 'candidat_offer_apply', requirements: ['id' => '\d+'])]
-    public function applyToOffer(Request $request, OffreEmploi $offreEmploi, CandidatureRepository $candidatureRepository, EntityManagerInterface $entityManager): Response
+    public function applyToOffer(Request $request, OffreEmploi $offreEmploi, CandidatureRepository $candidatureRepository, EntityManagerInterface $entityManager, CandidateCvManager $candidateCvManager): Response
     {
         $user = $this->getAuthenticatedUser();
+
         $existing = $candidatureRepository->findOneBy([
             'user' => $user,
             'offreEmploi' => $offreEmploi,
@@ -144,17 +245,50 @@ class CondidatController extends AbstractController
         $candidature->setDateStatut(new \DateTime());
         $candidature->setStatut('En attente');
 
-        $form = $this->createForm(CandidatPostulationType::class, $candidature);
-        $form->remove('offreEmploi');
+        $form = $this->createForm(CandidatPostulationType::class, $candidature, [
+            'include_offer' => false,
+            'require_cv' => true,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $uploadedCv = $form->get('cvFile')->getData();
+            if ($uploadedCv === null) {
+                $this->addFlash('danger', 'Veuillez televerser votre CV PDF avant de continuer.');
+
+                return $this->render('candidat/offre/apply.html.twig', [
+                    'offre' => $offreEmploi,
+                    'form' => $form->createView(),
+                ]);
+            }
+
+            try {
+                $candidature->setCv($candidateCvManager->storeUploadedApplicationCv($uploadedCv));
+            } catch (FileException $exception) {
+                $this->addFlash('danger', 'Le televersement du CV a echoue. Verifiez les permissions du dossier uploads et reessayez.');
+
+                return $this->render('candidat/offre/apply.html.twig', [
+                    'offre' => $offreEmploi,
+                    'form' => $form->createView(),
+                ]);
+            }
+
             $entityManager->persist($candidature);
             $entityManager->flush();
+
+            if ($this->findQuizForOffer($offreEmploi) instanceof Quiz) {
+                $this->addFlash('success', 'Etape 1 terminee: CV envoye. Passez maintenant le quiz dans le temps imparti.');
+
+                return $this->redirectToRoute('candidat_candidature_quiz', ['id' => $candidature->getId()]);
+            }
 
             $this->addFlash('success', 'Votre candidature a bien ete envoyee.');
 
             return $this->redirectToRoute('candidat_reports');
+        }
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('danger', $this->extractFormErrors($form));
         }
 
         return $this->render('candidat/offre/apply.html.twig', [
@@ -184,5 +318,35 @@ class CondidatController extends AbstractController
             'user' => $user,
             'offreEmploi' => $offreEmploi,
         ]) instanceof Candidature;
+    }
+
+    private function findQuizForOffer(?OffreEmploi $offreEmploi): ?Quiz
+    {
+        if (!$offreEmploi instanceof OffreEmploi) {
+            return null;
+        }
+
+        foreach ($offreEmploi->getQuizs() as $quiz) {
+            return $quiz;
+        }
+
+        return null;
+    }
+
+    private function extractFormErrors(\Symfony\Component\Form\FormInterface $form): string
+    {
+        $messages = [];
+
+        foreach ($form->getErrors(true) as $error) {
+            if ($error instanceof FormError) {
+                $messages[] = $error->getMessage();
+            }
+        }
+
+        if ($messages === []) {
+            return 'Le formulaire contient des erreurs. Verifiez le fichier PDF et reessayez.';
+        }
+
+        return implode(' ', array_unique($messages));
     }
 }

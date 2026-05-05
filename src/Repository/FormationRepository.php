@@ -16,34 +16,27 @@ class FormationRepository extends ServiceEntityRepository
         parent::__construct($registry, Formation::class);
     }
 
-    //    /**
-    //     * @return Formation[] Returns an array of Formation objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('f')
-    //            ->andWhere('f.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('f.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    public function searchAndSort(?string $query, ?string $sortField, ?string $sortOrder): array
+    public function searchAndSort(?string $query, ?string $sortField, string $sortOrder = 'ASC'): array
     {
         $qb = $this->createQueryBuilder('f');
 
         if ($query) {
-            $qb->andWhere('f.sujet LIKE :query OR f.formateur LIKE :query OR f.type LIKE :query OR f.localisation LIKE :query')
-               ->setParameter('query', '%' . $query . '%');
+            $qb->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->like('f.sujet', ':query'),
+                    $qb->expr()->like('f.formateur', ':query'),
+                    $qb->expr()->like('f.type', ':query'),
+                    $qb->expr()->like('f.localisation', ':query')
+                )
+            )
+            ->setParameter('query', '%' . $query . '%');
         }
 
-        if ($sortField) {
-            $qb->orderBy('f.' . $sortField, $sortOrder ?: 'ASC');
+        $allowedSortFields = ['sujet', 'formateur', 'type', 'dateDebut', 'duree', 'localisation'];
+        if ($sortField && in_array($sortField, $allowedSortFields, true)) {
+            $qb->orderBy('f.' . $sortField, $sortOrder === 'DESC' ? 'DESC' : 'ASC');
         } else {
-            $qb->orderBy('f.id', 'DESC');
+            $qb->orderBy('f.dateDebut', 'DESC');
         }
 
         return $qb->getQuery()->getResult();

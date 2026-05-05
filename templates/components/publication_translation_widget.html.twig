@@ -1,0 +1,72 @@
+<div class="publication-translation-widget mt-3" data-publication-id="{{ publication.id }}">
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button type="button" class="btn btn-sm btn-outline-primary translate-btn" data-locale="en">EN</button>
+        <button type="button" class="btn btn-sm btn-outline-primary translate-btn" data-locale="ar">AR</button>
+        <button type="button" class="btn btn-sm btn-outline-primary translate-btn" data-locale="ru">RU</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary translate-btn" data-locale="fr">FR</button>
+        <span class="small text-muted">Traduire la publication</span>
+    </div>
+
+    <div class="translation-result mt-2 p-3 border rounded bg-light d-none"></div>
+</div>
+
+<script>
+if (!window.publicationTranslationWidgetInitialized) {
+    window.publicationTranslationWidgetInitialized = true;
+
+    document.addEventListener('click', function(event) {
+        const button = event.target.closest('.translate-btn');
+        if (!button) {
+            return;
+        }
+
+        const widget = button.closest('.publication-translation-widget');
+        if (!widget) {
+            return;
+        }
+
+        const publicationId = widget.dataset.publicationId;
+        const locale = button.dataset.locale;
+        const resultBox = widget.querySelector('.translation-result');
+
+        if (!resultBox) {
+            return;
+        }
+
+        resultBox.classList.remove('d-none');
+        resultBox.innerHTML = '<span class="text-muted">Traduction en cours...</span>';
+
+        fetch(`/api/publications/${publicationId}/translate/${locale}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                resultBox.innerHTML = '<span class="text-danger">' + (data.error || 'Erreur de traduction') + '</span>';
+                return;
+            }
+
+            resultBox.innerHTML = `
+                <div class="small text-muted mb-1">Traduction en ${locale.toUpperCase()}</div>
+                <div style="white-space: pre-wrap;">${escapeHtml(data.translated_content || '')}</div>
+            `;
+        })
+        .catch(() => {
+            resultBox.innerHTML = '<span class="text-danger">Erreur de connexion au serveur</span>';
+        });
+    });
+
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+}
+</script>

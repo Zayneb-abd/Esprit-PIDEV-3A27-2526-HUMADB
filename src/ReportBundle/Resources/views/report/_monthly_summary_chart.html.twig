@@ -1,0 +1,53 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const canvas = document.getElementById('monthlySummaryChart');
+    if (!canvas || !window.Chart) {
+        return;
+    }
+
+    const data = [
+        {{ summary.approved|default(0) }},
+        {{ summary.rejected|default(0) }},
+        {{ summary.pending|default(0) }}
+    ];
+
+    new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: ['Approuvées', 'Refusées', 'En attente'],
+            datasets: [{
+                label: 'Demandes',
+                data: data,
+                backgroundColor: ['#28a745', '#dc3545', '#ffc107'],
+                borderRadius: 10,
+                maxBarThickness: 90
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: true }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.06)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+})();
+</script>

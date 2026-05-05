@@ -22,7 +22,7 @@ class CandidatureType extends AbstractType
             ->add('user', EntityType::class, [
                 'class' => User::class,
                 'label' => 'Candidat',
-                'required' => true,
+                'required' => false,
                 'placeholder' => 'Choisir un candidat',
                 'query_builder' => static function (UserRepository $userRepository) {
                     return $userRepository->createQueryBuilder('u')
@@ -39,7 +39,7 @@ class CandidatureType extends AbstractType
             ->add('offreEmploi', EntityType::class, [
                 'class' => OffreEmploi::class,
                 'label' => "Offre d'emploi",
-                'required' => true,
+                'required' => false,
                 'placeholder' => 'Choisir une offre',
                 'choice_label' => static function (OffreEmploi $offre): string {
                     return trim(sprintf('%s - %s', $offre->getTitre(), $offre->getDepartement()));
@@ -48,7 +48,7 @@ class CandidatureType extends AbstractType
             ])
             ->add('statut', ChoiceType::class, [
                 'label' => 'Statut',
-                'required' => true,
+                'required' => false,
                 'choices' => [
                     'En attente' => 'En attente',
                     'En cours' => 'En cours',
@@ -60,19 +60,19 @@ class CandidatureType extends AbstractType
             ])
             ->add('cv', TextType::class, [
                 'label' => 'CV',
-                'required' => true,
-                'attr' => ['class' => 'form-control', 'placeholder' => 'Nom du fichier ou lien vers le CV', 'minlength' => 3, 'maxlength' => 255],
+                'required' => false,
+                'attr' => ['class' => 'form-control', 'placeholder' => 'Nom du fichier ou lien vers le CV'],
             ])
             ->add('date_candidature', DateType::class, [
                 'label' => 'Date de candidature',
                 'widget' => 'single_text',
-                'required' => true,
+                'required' => false,
                 'attr' => ['class' => 'form-control'],
             ])
             ->add('date_statut', DateType::class, [
                 'label' => 'Date du statut',
                 'widget' => 'single_text',
-                'required' => true,
+                'required' => false,
                 'attr' => ['class' => 'form-control'],
             ]);
     }

@@ -1,0 +1,186 @@
+{% extends 'employ/base_employe.html.twig' %}
+
+{% block title %}Modifier commentaire{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <h1 class="fs-4 fw-bold mb-1">Modifier commentaire #{{ commentaire.id }}</h1>
+    <p class="text-muted">Publication: #{{ commentaire.publication ? commentaire.publication.id : 'N/A' }}</p>
+    
+    <div class="row">
+        {# Formulaire de commentaire #}
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body p-4">
+                    {{ form_start(form) }}
+                    <div class="mb-3">
+                        {{ form_label(form.contenu) }}
+                        {{ form_widget(form.contenu, {'attr': {'class': 'form-control', 'id': 'comment_content', 'rows': '4'}}) }}
+                        <div class="form-text text-end">
+                            <span id="charCount">0</span> caractères
+                        </div>
+                    </div>
+                    
+                    {# Bouton ML #}
+                    <button type="button" id="btnAnalyzeML" class="btn btn-info mb-3 text-white">
+                        <i class="fas fa-robot"></i> 🤖 Analyser mon commentaire
+                    </button>
+                    
+                    <div class="mt-3">
+                        <button class="btn btn-primary">Mettre a jour</button>
+                        <a class="btn btn-outline-secondary" href="{{ path('employ_publication_index') }}">Retour</a>
+                    </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+        
+        {# Résultats ML #}
+        <div class="col-md-4">
+            <div id="mlCard" class="card border-info" style="display: none;">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-chart-line"></i> 🤖 Analyse ML</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="text-center mb-3">
+                        <div class="h2 text-primary" id="mlScore">-</div>
+                        <small class="text-muted">Score /10</small>
+                        <div id="mlQuality" class="badge mt-1">-</div>
+                    </div>
+                    
+                    <div class="row text-center mb-2">
+                        <div class="col-6">
+                            <small class="text-muted d-block">👍 Réactions</small>
+                            <span id="mlReactions" class="fw-bold">-</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">💬 Réponses</small>
+                            <span id="mlResponses" class="fw-bold">-</span>
+                        </div>
+                    </div>
+                    
+                    <div id="mlRecommendations" class="small">
+                        {# Recommandations dynamiques #}
+                    </div>
+                </div>
+            </div>
+            
+            {# Conseils ML #}
+            <div class="card mt-3 border-warning">
+                <div class="card-header bg-warning text-dark py-2">
+                    <small class="fw-bold"><i class="fas fa-lightbulb"></i> 💡 Astuces</small>
+                </div>
+                <div class="card-body p-2">
+                    <ul class="list-unstyled small mb-0">
+                        <li>✅ Posez une question</li>
+                        <li>✅ Utilisez des mots positifs</li>
+                        <li>✅ Longueur: 20-200 chars</li>
+                        <li>✅ Ajoutez un emoji 😊</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const contentField = document.querySelector('textarea[name$="[contenu]"]');
+    const charCount = document.getElementById('charCount');
+    const btnAnalyze = document.getElementById('btnAnalyzeML');
+    const mlCard = document.getElementById('mlCard');
+    
+    // Compteur de caractères
+    if (contentField) {
+        contentField.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+            if (this.value.length >= 20 && this.value.length <= 200) {
+                charCount.classList.add('text-success');
+                charCount.classList.remove('text-danger');
+            } else {
+                charCount.classList.add('text-danger');
+                charCount.classList.remove('text-success');
+            }
+        });
+    }
+    
+    // Analyse ML
+    btnAnalyze.addEventListener('click', async function() {
+        const content = contentField ? contentField.value : '';
+        
+        if (!content.trim()) {
+            alert('Veuillez d\'abord écrire un commentaire');
+            return;
+        }
+        
+        btnAnalyze.disabled = true;
+        btnAnalyze.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse...';
+        
+        try {
+            const response = await fetch('{{ path("comment_predict_engagement") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ content })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                displayMLResults(data.data);
+            } else if (data.fallback) {
+                displayMLResults(data.fallback);
+            }
+            
+        } catch (error) {
+            console.error('Erreur ML:', error);
+        } finally {
+            btnAnalyze.disabled = false;
+            btnAnalyze.innerHTML = '<i class="fas fa-robot"></i> 🤖 Analyser mon commentaire';
+        }
+    });
+    
+    function displayMLResults(data) {
+        mlCard.style.display = 'block';
+        
+        // Score
+        const score = parseFloat(data.engagement_score);
+        document.getElementById('mlScore').textContent = data.engagement_score;
+        
+        // Qualité
+        const qualityBadge = document.getElementById('mlQuality');
+        if (score >= 8) {
+            qualityBadge.className = 'badge bg-success mt-1';
+            qualityBadge.innerHTML = '🔥 Excellent';
+        } else if (score >= 6) {
+            qualityBadge.className = 'badge bg-info mt-1';
+            qualityBadge.innerHTML = '👍 Bon';
+        } else if (score >= 4) {
+            qualityBadge.className = 'badge bg-warning text-dark mt-1';
+            qualityBadge.innerHTML = '⚠️ Moyen';
+        } else {
+            qualityBadge.className = 'badge bg-danger mt-1';
+            qualityBadge.innerHTML = '❌ À améliorer';
+        }
+        
+        // Estimations
+        document.getElementById('mlReactions').textContent = data.estimated_reactions || '-';
+        document.getElementById('mlResponses').textContent = data.estimated_responses || '-';
+        
+        // Recommandations
+        const recDiv = document.getElementById('mlRecommendations');
+        if (data.recommendations && data.recommendations.length > 0) {
+            recDiv.innerHTML = '<hr class="my-2"><small class="fw-bold text-warning">💡 Conseils:</small><ul class="mb-0 ps-3">';
+            data.recommendations.forEach(rec => {
+                recDiv.innerHTML += `<li>${rec}</li>`;
+            });
+            recDiv.innerHTML += '</ul>';
+        } else {
+            recDiv.innerHTML = '<hr class="my-2"><div class="alert alert-success py-1 mb-0 small">✅ Parfait !</div>';
+        }
+    }
+});
+</script>
+{% endblock %}

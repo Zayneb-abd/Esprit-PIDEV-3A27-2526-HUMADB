@@ -40,4 +40,49 @@ class AbsenceRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    public function searchAndSort(?string $query, ?string $sortField, ?string $sortOrder): array
+    {
+        $qb = $this->createQueryBuilder('a')
+            ->leftJoin('a.user', 'u');
+
+        if ($query) {
+            $qb->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->like('a.type_absence', ':query'),
+                    $qb->expr()->like('a.statut', ':query'),
+                    $qb->expr()->like('u.nom', ':query'),
+                    $qb->expr()->like('u.prenom', ':query')
+                )
+            )
+            ->setParameter('query', '%' . $query . '%');
+        }
+
+        $allowedSortFields = ['date_debut', 'date_fin', 'type_absence', 'statut'];
+        if ($sortField && in_array($sortField, $allowedSortFields, true)) {
+            $qb->orderBy('a.' . $sortField, $sortOrder === 'DESC' ? 'DESC' : 'ASC');
+        } else {
+            $qb->orderBy('a.date_debut', 'DESC');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Find absences by date range and user IDs
+     * @param array<int> $userIds
+     * @return array<Absence>
+     */
+    public function findByDateRangeAndUsers(\DateTime $start, \DateTime $end, array $userIds): array
+    {
+        return $this->createQueryBuilder('a')
+            ->where('a.user IN (:userIds)')
+            ->andWhere('a.date_debut <= :end')
+            ->andWhere('a.date_fin >= :start')
+            ->setParameter('userIds', $userIds)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->getQuery()
+            ->getResult();
+    }
 }

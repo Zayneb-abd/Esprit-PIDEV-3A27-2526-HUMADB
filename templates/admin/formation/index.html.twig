@@ -6,20 +6,41 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            <div class="mb-4">
                 <div>
                     <h1 class="fs-3 mb-1">Gestion des Formations</h1>
-                    <p class="mb-0">Liste de toutes les formations disponibles</p>
-                </div>
-                <div>
-                    <a href="{{ path('admin_formation_new') }}" class="btn btn-primary">Ajouter une Formation</a>
+                    <p class="mb-0">Gérez les formations et sessions de formation</p>
                 </div>
             </div>
 
             <div class="card p-3 mb-4">
-                <form action="{{ path('admin_formation_index') }}" method="GET" class="row g-3">
-                    <div class="col-md-10">
+                <form action="{{ path('admin_formation') }}" method="GET" class="row g-3">
+                    <div class="col-md-8">
                         <input type="text" name="q" class="form-control" placeholder="Rechercher par sujet, formateur, type ou localisation..." value="{{ query }}">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="sort" class="form-select">
+                            <option value="">Trier par...</option>
+                            <option value="sujet" {% if sort == 'sujet' %}selected{% endif %}>Sujet</option>
+                            <option value="formateur" {% if sort == 'formateur' %}selected{% endif %}>Formateur</option>
+                            <option value="type" {% if sort == 'type' %}selected{% endif %}>Type</option>
+                            <option value="date_debut" {% if sort == 'date_debut' %}selected{% endif %}>Date début</option>
+                            <option value="duree" {% if sort == 'duree' %}selected{% endif %}>Durée</option>
+                            <option value="localisation" {% if sort == 'localisation' %}selected{% endif %}>Localisation</option>
+                        </select>
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-secondary w-100">
@@ -29,69 +50,78 @@
                 </form>
             </div>
 
-            {% for message in app.flashes('success') %}
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-12">
             <div class="card table-responsive">
-                <table class="table mb-0 text-nowrap table-hover">
-                    <thead class="table-light border-light">
-                        <tr>
-                            <th>
-                                <a href="{{ path('admin_formation_index', {q: query, sort: 'sujet', order: sort == 'sujet' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
-                                    Sujet {% if sort == 'sujet' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
-                                </a>
-                            </th>
-                            <th>
-                                <a href="{{ path('admin_formation_index', {q: query, sort: 'formateur', order: sort == 'formateur' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
-                                    Formateur {% if sort == 'formateur' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
-                                </a>
-                            </th>
-                            <th>
-                                <a href="{{ path('admin_formation_index', {q: query, sort: 'type', order: sort == 'type' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
-                                    Type {% if sort == 'type' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
-                                </a>
-                            </th>
-                            <th>
-                                <a href="{{ path('admin_formation_index', {q: query, sort: 'dateDebut', order: sort == 'dateDebut' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
-                                    Date Début {% if sort == 'dateDebut' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
-                                </a>
-                            </th>
-                            <th>
-                                <a href="{{ path('admin_formation_index', {q: query, sort: 'duree', order: sort == 'duree' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
-                                    Durée {% if sort == 'duree' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
-                                </a>
-                            </th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for formation in formations %}
-                        <tr class="align-middle">
-                            <td>{{ formation.sujet }}</td>
-                            <td>{{ formation.formateur }}</td>
-                            <td>{{ formation.type }}</td>
-                            <td>{{ formation.dateDebut ? formation.dateDebut|date('Y-m-d') : '' }}</td>
-                            <td>{{ formation.duree }}</td>
-                            <td>
-                                <a href="{{ path('admin_formation_show', {'id': formation.id}) }}"><i class="ti ti-eye"></i></a>
-                                <a href="{{ path('admin_formation_edit', {'id': formation.id}) }}"><i class="ti ti-edit ms-2"></i></a>
-                                {{ include('admin/formation/_delete_form.html.twig') }}
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="7" class="text-center">Aucune formation trouvée</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive" style="overflow-x: auto; max-height: 500px !important;">
+                    <table class="table mb-0 table-hover" style="min-width: 900px;">
+                        <colgroup>
+                            <col style="width: 60px;"> <!-- ID -->
+                            <col style="width: 280px;"> <!-- Sujet -->
+                            <col style="width: 160px;"> <!-- Formateur -->
+                            <col style="width: 130px;"> <!-- Date Début -->
+                            <col style="width: 100px;"> <!-- Durée -->
+                            <col style="width: 180px;"> <!-- Localisation -->
+                            <col style="width: 180px;"> <!-- Actions -->
+                        </colgroup>
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>
+                                    <a href="{{ path('admin_formation_index', {q: query, sort: 'sujet', order: sort == 'sujet' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
+                                        Sujet {% if sort == 'sujet' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="{{ path('admin_formation_index', {q: query, sort: 'formateur', order: sort == 'formateur' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
+                                        Formateur {% if sort == 'formateur' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="{{ path('admin_formation_index', {q: query, sort: 'dateDebut', order: sort == 'dateDebut' and order == 'ASC' ? 'DESC' : 'ASC'}) }}">
+                                        Date Début {% if sort == 'dateDebut' %}<i class="ti ti-chevron-{{ order == 'ASC' ? 'up' : 'down' }}"></i>{% endif %}
+                                    </a>
+                                </th>
+                                <th>Localisation</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for formation in formations %}
+                                <tr class="align-middle">
+                                    <td>{{ formation.id }}</td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ formation.sujet }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                Type: {{ formation.type }} | Durée: {{ formation.duree }} jours
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>{{ formation.formateur }}</td>
+                                    <td>{{ formation.dateDebut ? formation.dateDebut|date('d/m/Y') : 'Non définie' }}</td>
+                                    <td>{{ formation.localisation }}</td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ path('admin_formation_edit', {'id': formation.id}) }}" class="btn btn-sm btn-outline-primary" title="Modifier">
+                                                <i class="ti ti-edit"></i>
+                                            </a>
+                                            <form action="{{ path('admin_formation_delete', {'id': formation.id}) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette formation ?');" style="margin: 0; padding: 0;">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ formation.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                    <i class="ti ti-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">Aucune formation trouvée.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

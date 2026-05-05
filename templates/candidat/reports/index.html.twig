@@ -1,8 +1,10 @@
-{% extends 'candidat/base_admin.html.twig' %}
+{% extends 'candidat/base_candidat.html.twig' %}
 
 {% block title %}Mes candidatures{% endblock %}
 
 {% block body %}
+{% set selected_meet_id = app.request.query.get('meet') %}
+{% set selected_meet_link = null %}
 <div class="container-fluid">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
@@ -21,11 +23,18 @@
                         <th>Departement</th>
                         <th>Date candidature</th>
                         <th>CV</th>
+                        <th>Quiz</th>
+                        <th>Entretien</th>
                         <th>Statut</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for candidature in candidatures %}
+                        {% set resultatQuiz = resultats_par_candidature[candidature.id] ?? null %}
+                        {% set entretien = entretiens_par_candidature[candidature.id] ?? null %}
+                        {% if entretien and selected_meet_id and selected_meet_id == entretien.id and entretien.meetLink %}
+                            {% set selected_meet_link = entretien.meetLink %}
+                        {% endif %}
                         <tr>
                             <td>
                                 {% if candidature.offreEmploi %}
@@ -38,7 +47,36 @@
                             </td>
                             <td>{{ candidature.offreEmploi ? candidature.offreEmploi.departement : '-' }}</td>
                             <td>{{ candidature.dateCandidature ? candidature.dateCandidature|date('d/m/Y') : '-' }}</td>
-                            <td>{{ candidature.cv ?: '-' }}</td>
+                            <td>
+                                {% if candidature.cv %}
+                                    <a href="{{ asset('uploads/candidatures/cv/' ~ candidature.cv) }}" target="_blank">PDF</a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if resultatQuiz %}
+                                    <span class="badge text-bg-{{ resultatQuiz.statut == 'REUSSI' ? 'success' : 'danger' }}">{{ resultatQuiz.scorePourcentage }}%</span>
+                                {% elseif candidature.offreEmploi and candidature.offreEmploi.quizs|length > 0 %}
+                                    <a href="{{ path('candidat_candidature_quiz', {id: candidature.id}) }}" class="btn btn-sm btn-outline-primary">Passer</a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if entretien %}
+                                    <div>{{ entretien.dateEntretien ? entretien.dateEntretien|date('d/m/Y H:i') : '-' }}</div>
+                                    <div class="small text-secondary">
+                                        Admin: {{ entretien.user ? entretien.user.prenom ~ ' ' ~ entretien.user.nom : '-' }}
+                                        | Manager: {{ entretien.manager ? entretien.manager.prenom ~ ' ' ~ entretien.manager.nom : '-' }}
+                                    </div>
+                                    {% if entretien.meetLink %}
+                                        <a href="{{ path('candidat_reports', {meet: entretien.id}) }}#jitsi-meet" class="small">Jitsi dans la page</a>
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                             <td>
                                 <span class="badge text-bg-{{ candidature.statut == 'Acceptee' ? 'success' : (candidature.statut == 'Refusee' ? 'danger' : (candidature.statut == 'En cours' ? 'primary' : 'warning')) }}">
                                     {{ candidature.statut ?: 'En attente' }}
@@ -47,12 +85,32 @@
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-secondary">Vous n'avez encore aucune candidature.</td>
+                            <td colspan="7" class="text-center py-4 text-secondary">Vous n'avez encore aucune candidature.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+
+    {% if selected_meet_link %}
+        <div class="card border-0 shadow-sm mt-4" id="jitsi-meet">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+                    <div>
+                        <h5 class="mb-1">Meet Jitsi</h5>
+                        <p class="mb-0 text-secondary">Le meet est affiche directement dans cette page.</p>
+                    </div>
+                    <a href="{{ selected_meet_link }}" target="_blank" class="btn btn-outline-primary btn-sm">Ouvrir dans un nouvel onglet</a>
+                </div>
+                <iframe
+                    src="{{ selected_meet_link }}"
+                    title="Meet Jitsi"
+                    style="width: 100%; min-height: 720px; border: 0; border-radius: 12px;"
+                    allow="camera; microphone; fullscreen; display-capture; autoplay"
+                ></iframe>
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

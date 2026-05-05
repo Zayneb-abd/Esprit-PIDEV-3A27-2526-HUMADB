@@ -1,0 +1,451 @@
+{% extends 'employ/base_employe.html.twig' %}
+
+{% block title %}Publications{% endblock %}
+
+{% block body %}
+<style>
+.facebook-post {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.facebook-post-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e9ebee;
+}
+.facebook-post-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    margin-right: 12px;
+}
+.facebook-post-info {
+    flex: 1;
+}
+.facebook-post-author {
+    font-weight: 600;
+    color: #1c1e21;
+    margin: 0;
+    font-size: 15px;
+}
+.facebook-post-meta {
+    color: #65676b;
+    font-size: 13px;
+    margin: 0;
+}
+.facebook-post-content {
+    padding: 15px;
+    color: #1c1e21;
+    font-size: 15px;
+    line-height: 1.5;
+}
+.facebook-post-media {
+    padding: 0 15px;
+}
+.facebook-post-media img {
+    max-width: 100%;
+    max-height: 300px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.facebook-post-media video {
+    max-width: 100%;
+    max-height: 300px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.facebook-post-footer {
+    padding: 12px 15px;
+    border-top: 1px solid #e9ebee;
+}
+.facebook-post-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #65676b;
+}
+.facebook-post-buttons {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 8px;
+    border-top: 1px solid #e9ebee;
+}
+.facebook-post-button {
+    background: none;
+    border: none;
+    color: #65676b;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s;
+}
+.facebook-post-button:hover {
+    background-color: #f0f2f5;
+}
+.facebook-comments {
+    padding: 0 15px 15px;
+}
+.facebook-comment {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px;
+    background: #f0f2f5;
+    border-radius: 8px;
+}
+.facebook-comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+.facebook-comment-content {
+    flex: 1;
+}
+.facebook-comment-author {
+    font-weight: 600;
+    color: #1c1e21;
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+.facebook-comment-text {
+    color: #1c1e21;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+.facebook-comment-meta {
+    color: #65676b;
+    font-size: 12px;
+}
+.facebook-comment-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+.facebook-comment-action {
+    background: none;
+    border: none;
+    color: #65676b;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0;
+}
+.facebook-comment-action:hover {
+    text-decoration: underline;
+}
+
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fs-4 fw-bold mb-1">Publications</h1>
+            <p class="text-muted mb-0">Découvrez les dernières publications de l'entreprise.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for publication in publications %}
+            <div class="col-12">
+                <div class="facebook-post">
+                    <div class="facebook-post-header">
+                        <div class="facebook-post-avatar">
+                            {{ publication.user ? publication.user.prenom|first ~ publication.user.nom|first : 'U' }}
+                        </div>
+                        <div class="facebook-post-info">
+                            <div class="facebook-post-author">
+                                {{ publication.user ? publication.user.prenom ~ ' ' ~ publication.user.nom : 'Utilisateur inconnu' }}
+                            </div>
+                            <div class="facebook-post-meta">
+                                {{ publication.datePublication ? publication.datePublication|date('d M Y à H:i') : '-' }}
+                                {% if publication.type %}
+                                    <span class="badge text-bg-primary ms-2">{{ publication.type }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="facebook-post-content">
+                        <p>{{ publication.contenu|raw|nl2br }}</p>
+                    </div>
+
+                    {% include 'components/publication_translation_widget.html.twig' with {'publication': publication} %}
+                    
+                    
+                    {% if publication.publicationMedias|length > 0 %}
+                        <div class="facebook-post-media">
+                            {% for media in publication.publicationMedias %}
+                                {% if media.type == 'image' %}
+                                    <img src="{{ asset(media.path) }}" alt="Image de la publication" class="img-fluid rounded">
+                                {% elseif media.type == 'video' %}
+                                    <video controls class="img-fluid rounded">
+                                        <source src="{{ asset(media.path) }}" type="video/mp4">
+                                        <source src="{{ asset(media.path) }}" type="video/webm">
+                                        <source src="{{ asset(media.path) }}" type="video/ogg">
+                                        Votre navigateur ne supporte pas les vidéos.
+                                    </video>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Boutons de réaction -->
+                    {% set counts = get_reactions_count(publication.id) %}
+                    {% set userReaction = get_user_reaction(publication.id, app.user ? app.user.id : null) %}
+                    {% include 'components/reaction_buttons.html.twig' with {'publication': publication, 'counts': counts, 'userReaction': userReaction} %}
+                    
+                    <div class="facebook-post-stats">
+                        <div>
+                            {% if publication.commentaires|length > 0 %}
+                                <span>{{ publication.commentaires|length }} commentaire{{ publication.commentaires|length > 1 ? 's' : '' }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ publication.datePublication|date('d M Y H:i') }}
+                        </div>
+                    </div>
+
+                    {% if publication.commentaires|length > 0 %}
+                        <div class="facebook-comments">
+                            {% for commentaire in publication.commentaires %}
+                                <div class="facebook-comment">
+                                    <div class="facebook-comment-avatar">
+                                        {{ commentaire.user ? commentaire.user.prenom|first ~ commentaire.user.nom|first : 'U' }}
+                                    </div>
+                                    <div class="facebook-comment-content">
+                                        <div class="facebook-comment-author">
+                                            {{ commentaire.user ? commentaire.user.prenom ~ ' ' ~ publication.user.nom : 'Utilisateur inconnu' }}
+                                        </div>
+                                        <div class="facebook-comment-text">
+                                            {{ commentaire.contenu|raw }}
+                                        </div>
+                                        <div class="facebook-comment-meta">
+                                            {{ commentaire.dateCommentaire ? commentaire.dateCommentaire|date('d M Y à H:i') : '-' }}
+                                        </div>
+                                        <div class="facebook-comment-actions">
+                                            <button class="facebook-comment-action">Like</button>
+                                            <button class="facebook-comment-action">Répondre</button>
+                                            {% if commentaire.user == app.user %}
+                                                <form method="post" action="{{ path('employ_comment_delete', { id: commentaire.id }) }}" style="display: inline;">
+                                                    <button type="submit" class="facebook-comment-action text-danger">Supprimer</button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="facebook-comments">
+                        <form method="post" action="{{ path('employ_publication_comment', { id: publication.id }) }}" class="mt-3" id="comment-form-{{ publication.id }}">
+                            <div class="mb-2">
+                                <input type="text" name="contenu" class="form-control comment-input" id="comment-input-{{ publication.id }}" placeholder="Ajouter un commentaire...">
+                                <small class="text-muted char-counter" id="char-count-{{ publication.id }}">0 caractères</small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-info btn-sm text-white btn-analyze-ml" data-publication-id="{{ publication.id }}">
+                                    <i class="fas fa-robot"></i> 🤖 Analyser
+                                </button>
+                                <button class="btn btn-primary btn-sm" type="submit">
+                                    <i class="ti ti-send me-1"></i>Envoyer
+                                </button>
+                            </div>
+                            {# Résultats ML #}
+                            <div class="ml-result card border-info mt-2" id="ml-result-{{ publication.id }}" style="display: none;">
+                                <div class="card-body p-2">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="text-center">
+                                            <span class="h5 mb-0" id="ml-score-{{ publication.id }}">-</span>
+                                            <small class="text-muted d-block">/10</small>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <span class="badge" id="ml-quality-{{ publication.id }}">-</span>
+                                            <small class="text-muted d-block mt-1">
+                                                👍 <span id="ml-reactions-{{ publication.id }}">-</span> réactions | 
+                                                💬 <span id="ml-responses-{{ publication.id }}">-</span> réponses
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 small text-muted" id="ml-recommendations-{{ publication.id }}"></div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{# Script ML pour tous les formulaires de commentaire #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Compteurs de caractères
+    document.querySelectorAll('.comment-input').forEach(function(input) {
+        const pubId = input.id.replace('comment-input-', '');
+        const counter = document.getElementById('char-count-' + pubId);
+        
+        input.addEventListener('input', function() {
+            const length = this.value.length;
+            counter.textContent = length + ' caractères';
+            
+            if (length >= 20 && length <= 200) {
+                counter.classList.add('text-success');
+                counter.classList.remove('text-danger');
+            } else {
+                counter.classList.add('text-danger');
+                counter.classList.remove('text-success');
+            }
+        });
+    });
+    
+    // Boutons Analyser ML
+    document.querySelectorAll('.btn-analyze-ml').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+            const pubId = this.dataset.publicationId;
+            const input = document.getElementById('comment-input-' + pubId);
+            const resultCard = document.getElementById('ml-result-' + pubId);
+            const content = input.value;
+            
+            if (!content.trim()) {
+                alert('Veuillez d\'abord écrire un commentaire');
+                return;
+            }
+            
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse...';
+            
+            try {
+                console.log('Envoi requête ML pour pubId:', pubId);
+                console.log('Contenu:', content);
+                
+                const response = await fetch('{{ path("comment_predict_engagement") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ content: content })
+                });
+                
+                console.log('Réponse reçue:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                
+                const data = await response.json();
+                console.log('Données:', data);
+                
+                resultCard.style.display = 'block';
+                
+                if (data.success || data.fallback) {
+                    const result = data.success ? data.data : data.fallback;
+                    const score = parseFloat(result.engagement_score || 0);
+                    
+                    // Score
+                    const scoreEl = document.getElementById('ml-score-' + pubId);
+                    if (scoreEl) scoreEl.textContent = result.engagement_score || '-';
+                    
+                    // Qualité
+                    const qualityBadge = document.getElementById('ml-quality-' + pubId);
+                    if (qualityBadge) {
+                        if (score >= 8) {
+                            qualityBadge.className = 'badge bg-success';
+                            qualityBadge.innerHTML = '🔥 Excellent';
+                        } else if (score >= 6) {
+                            qualityBadge.className = 'badge bg-info';
+                            qualityBadge.innerHTML = '👍 Bon';
+                        } else if (score >= 4) {
+                            qualityBadge.className = 'badge bg-warning text-dark';
+                            qualityBadge.innerHTML = '⚠️ Moyen';
+                        } else {
+                            qualityBadge.className = 'badge bg-danger';
+                            qualityBadge.innerHTML = '❌ À améliorer';
+                        }
+                    }
+                    
+                    // Estimations
+                    const reactionsEl = document.getElementById('ml-reactions-' + pubId);
+                    const responsesEl = document.getElementById('ml-responses-' + pubId);
+                    if (reactionsEl) reactionsEl.textContent = result.estimated_reactions || '0';
+                    if (responsesEl) responsesEl.textContent = result.estimated_responses || '0';
+                    
+                    // Recommandations
+                    const recDiv = document.getElementById('ml-recommendations-' + pubId);
+                    if (recDiv) {
+                        if (result.recommendations && result.recommendations.length > 0) {
+                            recDiv.innerHTML = '<strong>💡 Conseils:</strong> ' + result.recommendations.slice(0, 2).join(' • ');
+                        } else {
+                            recDiv.innerHTML = '<span class="text-success">✅ Parfait !</span>';
+                        }
+                    }
+                } else {
+                    alert('Erreur: ' + (data.error || 'Réponse invalide'));
+                }
+                
+            } catch (error) {
+                console.error('Erreur ML:', error);
+                resultCard.style.display = 'block';
+                resultCard.innerHTML = `
+                    <div class="card-body p-3">
+                        <div class="alert alert-danger mb-0">
+                            <strong>❌ Erreur:</strong> ${error.message}<br>
+                            <small class="text-muted">Vérifiez la console (F12) pour plus de détails</small>
+                        </div>
+                    </div>
+                `;
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-robot"></i> 🤖 Analyser';
+            }
+        });
+    });
+});
+</script>
+
+    {% if publications is not empty and publications.getPageCount > 1 %}
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4 mb-2">
+            <small class="text-muted">
+                Page {{ publications.getCurrentPageNumber }} / {{ publications.getPageCount }}
+            </small>
+            <div>
+                {{ knp_pagination_render(publications) }}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

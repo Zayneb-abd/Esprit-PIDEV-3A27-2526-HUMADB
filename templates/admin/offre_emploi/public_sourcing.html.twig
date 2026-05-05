@@ -1,0 +1,143 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Sourcing public{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h1 class="fs-3 mb-1">Sourcing multi-sites avec Goutte</h1>
+            <p class="mb-0 text-secondary">Offre: {{ offre.titre ?: 'Offre sans titre' }}</p>
+        </div>
+        <a href="{{ path('admin_offre_show', {id: offre.id}) }}" class="btn btn-outline-primary">Retour a l offre</a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h2 class="fs-5 mb-3">Bot de scraping PHP Goutte</h2>
+            <p class="text-secondary mb-3">Le bot explore plusieurs sources professionnelles et de recrutement publiques, puis extrait des profils en PHP avec Goutte. Vous pouvez aussi lui donner des URLs manuelles.</p>
+            <div class="alert {{ external_ai_configured ? 'alert-info' : 'alert-secondary' }} mb-3">
+                {% if external_ai_configured %}
+                    L'API externe d'analyse IA est configuree. Les profils publics seront enrichis par une interpretation plus avancee quand possible.
+                {% else %}
+                    L'analyse locale fonctionne deja. Ajoutez la configuration de l'API externe pour obtenir un scoring et des insights plus avances.
+                {% endif %}
+            </div>
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label d-block">Mode de recherche</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="search_mode" id="search-mode-auto" value="auto" {% if search_mode|default('auto') == 'auto' %}checked{% endif %}>
+                        <label class="form-check-label" for="search-mode-auto">Automatique depuis l'offre</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="search_mode" id="search-mode-manual" value="manual" {% if search_mode|default('auto') == 'manual' %}checked{% endif %}>
+                        <label class="form-check-label" for="search-mode-manual">Manuel avec URLs</label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="urls" class="form-label">URLs publiques optionnelles</label>
+                    <textarea id="urls" name="urls" class="form-control" rows="8" placeholder="https://example.com/profile-1&#10;https://example.com/profile-2">{{ raw_urls }}</textarea>
+                    <div class="form-text">Laissez vide pour lancer la recherche automatique a partir de la description de l'offre.</div>
+                </div>
+                <button type="submit" class="btn btn-primary">Lancer le sourcing</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h2 class="fs-5 mb-3">Resultats</h2>
+            {% if results is not empty %}
+                <div class="row g-3">
+                    {% for item in results %}
+                        <div class="col-lg-6">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                    <div class="d-flex gap-3 align-items-start">
+                                        {% if item.photo %}
+                                            <img
+                                                src="{{ item.photo }}"
+                                                alt="{{ item.name }}"
+                                                class="rounded border"
+                                                style="width: 72px; height: 72px; object-fit: cover;"
+                                            >
+                                        {% else %}
+                                            <div class="rounded border d-flex align-items-center justify-content-center bg-light text-secondary"
+                                                 style="width: 72px; height: 72px;">
+                                                Photo
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="fw-semibold">{{ item.name }}</div>
+                                            <div class="small text-secondary mb-1">{{ item.title }}</div>
+                                            <div class="small mb-1">
+                                                <span class="badge text-bg-light border">{{ item.source_label }}</span>
+                                            </div>
+                                            <a href="{{ item.url }}" target="_blank" class="small">{{ item.url }}</a>
+                                        </div>
+                                    </div>
+                                    <span class="badge text-bg-{{ item.score >= 75 ? 'success' : (item.score >= 50 ? 'warning' : 'secondary') }}">
+                                        Match {{ item.score }}%
+                                    </span>
+                                </div>
+
+                                <div class="small mb-3 text-secondary">
+                                    <strong>Description:</strong>
+                                    {{ item.description }}
+                                </div>
+
+                                <div class="small mb-3">
+                                    <strong>Contact:</strong>
+                                    {% if item.contact.email %}
+                                        <a href="mailto:{{ item.contact.email }}">{{ item.contact.email }}</a>
+                                    {% elseif item.contact.phone %}
+                                        <span>{{ item.contact.phone }}</span>
+                                    {% else %}
+                                        <a href="{{ item.contact.website }}" target="_blank">Voir le profil</a>
+                                    {% endif %}
+                                </div>
+
+                                <div class="small mb-2">
+                                    <strong>Statut:</strong>
+                                    {% if item.status == 'scraping_fallback' %}
+                                        fallback du bot de scraping
+                                    {% else %}
+                                        {{ item.status }}
+                                    {% endif %}
+                                </div>
+
+                                <div class="small mb-2">
+                                    <strong>Mots-cles trouves:</strong>
+                                    {{ item.matched_keywords is not empty ? item.matched_keywords|join(', ') : 'Aucun mot-cle fort detecte' }}
+                                </div>
+
+                                <div class="small mb-3 text-secondary">
+                                    <strong>Mots-cles manquants:</strong>
+                                    {{ item.missing_keywords is not empty ? item.missing_keywords|join(', ') : 'Aucun manque majeur detecte' }}
+                                </div>
+
+                                {% if item.advanced_analysis %}
+                                    <div class="small border-top pt-2 mb-3">
+                                        <div class="fw-semibold mb-1">Analyse IA avancee</div>
+                                        <div class="text-secondary mb-2">{{ item.advanced_analysis.summary }}</div>
+                                        <div class="mb-1"><strong>Recommendation:</strong> {{ item.advanced_analysis.recommendation }}</div>
+                                        <div class="mb-1"><strong>Forces:</strong> {{ item.advanced_analysis.strengths is not empty ? item.advanced_analysis.strengths|join(', ') : '-' }}</div>
+                                        <div class="text-secondary"><strong>Risques:</strong> {{ item.advanced_analysis.risks is not empty ? item.advanced_analysis.risks|join(', ') : '-' }}</div>
+                                    </div>
+                                {% endif %}
+
+                                <div class="small text-secondary border-top pt-2">
+                                    {{ item.preview ?: 'Aucun texte exploitable trouve.' }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="mb-0 text-secondary">Aucun resultat pour le moment.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

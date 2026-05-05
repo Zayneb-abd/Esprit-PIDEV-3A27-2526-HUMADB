@@ -6,6 +6,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\FeedbackRepository;
 
@@ -30,6 +31,13 @@ class Feedback
     }
 
     #[ORM\Column(type: 'text', nullable: false)]
+    #[Assert\NotBlank(message: 'Le contenu du feedback ne peut pas etre vide.')]
+    #[Assert\Length(
+        min: 10,
+        max: 2000,
+        minMessage: 'Le message doit contenir au moins {{ limit }} caracteres.',
+        maxMessage: 'Le message ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private ?string $contenu = null;
 
     public function getContenu(): ?string
@@ -58,6 +66,7 @@ class Feedback
     }
 
     #[ORM\Column(type: 'boolean', nullable: true)]
+    #[Assert\Type(type: 'bool', message: 'Le champ anonyme doit etre un booleen.')]
     private ?bool $est_anonyme = null;
 
     public function isEst_anonyme(): ?bool
@@ -72,6 +81,7 @@ class Feedback
     }
 
     #[ORM\Column(type: 'integer', nullable: true)]
+    #[Assert\Positive(message: 'L identifiant employe doit etre positif.')]
     private ?int $employe_id = null;
 
     public function getEmploye_id(): ?int
@@ -101,6 +111,11 @@ class Feedback
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: 'La categorie est obligatoire.')]
+    #[Assert\Choice(
+        choices: ['Soutien technique', 'Suggestion', 'Plainte', 'Culture de l\'entreprise', 'Autre'],
+        message: 'Categorie invalide.'
+    )]
     private ?string $category = null;
 
     public function getCategory(): ?string
@@ -115,7 +130,27 @@ class Feedback
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Choice(
+        choices: ['nouveau', 'en_cours', 'traite', 'rejete'],
+        message: 'Statut invalide.'
+    )]
     private ?string $status = null;
+
+    #[ORM\Column(type: 'string', length: 20, options: ['default' => 'normal'])]
+    #[Assert\Choice(
+        choices: ['bas', 'normal', 'haute', 'urgente'],
+        message: 'Priorite invalide.'
+    )]
+    private string $priority = 'normal';
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $auto_response = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $auto_response_generated_at = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $auto_response_sent_at = null;
 
     public function getStatus(): ?string
     {
@@ -125,6 +160,50 @@ class Feedback
     public function setStatus(?string $status): self
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function getPriority(): string
+    {
+        return $this->priority;
+    }
+
+    public function setPriority(string $priority): self
+    {
+        $this->priority = $priority;
+        return $this;
+    }
+
+    public function getAutoResponse(): ?string
+    {
+        return $this->auto_response;
+    }
+
+    public function setAutoResponse(?string $autoResponse): self
+    {
+        $this->auto_response = $autoResponse;
+        return $this;
+    }
+
+    public function getAutoResponseGeneratedAt(): ?\DateTimeInterface
+    {
+        return $this->auto_response_generated_at;
+    }
+
+    public function setAutoResponseGeneratedAt(?\DateTimeInterface $generatedAt): self
+    {
+        $this->auto_response_generated_at = $generatedAt;
+        return $this;
+    }
+
+    public function getAutoResponseSentAt(): ?\DateTimeInterface
+    {
+        return $this->auto_response_sent_at;
+    }
+
+    public function setAutoResponseSentAt(?\DateTimeInterface $sentAt): self
+    {
+        $this->auto_response_sent_at = $sentAt;
         return $this;
     }
 

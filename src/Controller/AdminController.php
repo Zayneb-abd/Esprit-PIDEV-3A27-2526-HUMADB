@@ -9,98 +9,415 @@ use App\Form\CandidatureType;
 use App\Form\OffreEmploiType;
 use App\Repository\CandidatureRepository;
 use App\Repository\OffreEmploiRepository;
+use App\Repository\FeedbackRepository;
+use App\Repository\PublicationRepository;
+use App\Repository\UserRepository;
+use App\Repository\LogRepository;
+use App\Repository\CongeRepository;
+use App\Repository\AbsenceRepository;
+use App\Repository\FormationRepository;
+use App\Repository\CommentaireRepository;
+use App\Form\PublicationType;
+use App\Entity\Conge;
+use App\Entity\Absence;
+use App\Entity\Formation;
+use App\Entity\Log;
+use App\Entity\Publication;
+use App\Entity\PublicationMedia;
+use App\Entity\Commentaire;
+use App\Form\AdminUserType;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/admin')]
 class AdminController extends AbstractController
 {
     #[Route('/', name: 'admin_dashboard')]
-    public function dashboard(): Response
+    #[Route('/dashboard', name: 'admin_dashboard_alt')]
+    public function dashboard(
+        UserRepository $userRepository,
+        FeedbackRepository $feedbackRepository,
+        FormationRepository $formationRepository
+    ): Response
     {
-        return $this->render('admin/dashboard/index.html.twig');
-    }
+        $totalUsers = $userRepository->count([]);
+        $countByRole = $userRepository->countByRole();
+        $recentUsers = $userRepository->findRecentUsers(5);
 
-    #[Route('/inventory', name: 'admin_inventory')]
-    public function inventory(Request $request, OffreEmploiRepository $offreEmploiRepository, CandidatureRepository $candidatureRepository): Response
-    {
-        $offres = $offreEmploiRepository->findBy([], ['date_publication' => 'DESC', 'id' => 'DESC']);
-        $candidatures = $candidatureRepository->findBy([], ['date_candidature' => 'DESC', 'id' => 'DESC']);
-        $search = trim((string) $request->query->get('q', ''));
+        $formations = $formationRepository->findAll();
+        $participantsPerTraining = [];
+        $trainingLabels = [];
+        $resultsDistribution = [
+            'validé' => 0,
+            'non validé' => 0,
+            'en cours' => 0,
+        ];
 
-        if ($search !== '') {
-            $searchLower = mb_strtolower($search);
+        foreach ($formations as $formation) {
+            $participations = $formation->getParticipations();
+            $participantsPerTraining[] = count($participations);
+            $trainingLabels[] = $formation->getSujet() ?? 'Formation ' . $formation->getId();
 
-            $offres = array_values(array_filter(
-                $offres,
-                static function (OffreEmploi $offre) use ($searchLower): bool {
-                    $haystacks = [
-                        $offre->getTitre(),
-                        $offre->getDepartement(),
-                        $offre->getTypeContrat(),
-                        $offre->getDescription(),
-                    ];
-
-                    foreach ($haystacks as $value) {
-                        if ($value !== null && str_contains(mb_strtolower($value), $searchLower)) {
-                            return true;
-                        }
-                    }
-
-                    return false;
+            foreach ($participations as $participation) {
+                $resultat = $participation->getResultat() ?? 'en cours';
+                if (isset($resultsDistribution[$resultat])) {
+                    $resultsDistribution[$resultat]++;
                 }
-            ));
-
-            $candidatures = array_values(array_filter(
-                $candidatures,
-                static function (Candidature $candidature) use ($searchLower): bool {
-                    $user = $candidature->getUser();
-                    $offre = $candidature->getOffreEmploi();
-                    $haystacks = [
-                        $candidature->getStatut(),
-                        $candidature->getCv(),
-                        $user?->getNom(),
-                        $user?->getPrenom(),
-                        $user?->getEmail(),
-                        $offre?->getTitre(),
-                    ];
-
-                    foreach ($haystacks as $value) {
-                        if ($value !== null && str_contains(mb_strtolower($value), $searchLower)) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }
-            ));
+            }
         }
 
-        $totalPostes = array_reduce(
-            $offres,
-            static fn (int $carry, OffreEmploi $offre): int => $carry + ($offre->getNombrePostes() ?? 0),
-            0
-        );
+        $feedbackByStatus = $feedbackRepository->countByStatus();
+        $feedbackTimeline = $feedbackRepository->countByDayLastDays(7);
 
-        $candidaturesEnAttente = count(array_filter(
-            $candidatures,
-            static fn (Candidature $candidature): bool => $candidature->getStatut() === 'En attente'
-        ));
-
-        return $this->render('admin/inventory/index.html.twig', [
-            'offres' => $offres,
-            'candidatures' => $candidatures,
-            'search' => $search,
-            'stats' => [
-                'offres' => count($offres),
-                'candidatures' => count($candidatures),
-                'postes' => $totalPostes,
-                'candidatures_en_attente' => $candidaturesEnAttente,
-            ],
+        return $this->render('admin/dashboard.html.twig', [
+            'total_users'  => $totalUsers,
+            'count_by_role' => $countByRole,
+            'recent_users' => $recentUsers,
+            'trainingLabels' => $trainingLabels,
+            'participantsPerTraining' => $participantsPerTraining,
+            'resultsDistribution' => $resultsDistribution,
+            'feedback_by_status' => $feedbackByStatus,
+            'feedback_timeline_labels' => $feedbackTimeline['labels'],
+            'feedback_timeline_data' => $feedbackTimeline['data'],
         ]);
+    }
+
+    // ─────────────── USER CRUD ───────────────
+
+    #[Route('/users', name: 'admin_users', methods: ['GET'])]
+    public function listUsers(Request $request, UserRepository $userRepository): Response
+    {
+        $search = trim((string) $request->query->get('q', ''));
+        $role   = trim((string) $request->query->get('role', ''));
+        $page   = max(1, (int) $request->query->get('page', 1));
+        $limit  = 10;
+
+        $users = $userRepository->searchPaginated($search, $role, $page, $limit);
+        $total = $userRepository->countSearch($search, $role);
+        $pages = (int) ceil($total / $limit);
+
+        return $this->render('admin/users.html.twig', [
+            'users'  => $users,
+            'search' => $search,
+            'role'   => $role,
+            'page'   => $page,
+            'pages'  => $pages,
+            'total'  => $total,
+        ]);
+    }
+
+    #[Route('/users/add', name: 'admin_user_add', methods: ['GET', 'POST'])]
+    public function addUser(
+        Request $request,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $passwordHasher,
+        SluggerInterface $slugger,
+    ): Response {
+        $user = new User();
+        $form = $this->createForm(AdminUserType::class, $user, ['is_edit' => false]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $existing = $em->getRepository(User::class)->findOneBy(['email' => $user->getEmail()]);
+            if ($existing) {
+                $this->addFlash('danger', 'Cet email est déjà utilisé.');
+                return $this->render('admin/add_user.html.twig', ['form' => $form->createView()]);
+            }
+
+            $plainPassword = $form->get('plainPassword')->getData();
+            if ($plainPassword) {
+                $user->setMdp($passwordHasher->hashPassword($user, $plainPassword));
+            }
+
+            $faceImageFile = $form->get('faceImageFile')->getData();
+            if ($faceImageFile) {
+                $safeFilename = (string) $slugger->slug(pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_FILENAME));
+                $extension = $faceImageFile->guessExtension() ?: pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/faces';
+
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0775, true);
+                }
+
+                try {
+                    $faceImageFile->move($uploadDir, $newFilename);
+                    $user->setFaceImage($newFilename);
+                } catch (FileException) {
+                    $this->addFlash('warning', 'Erreur lors du téléchargement de l\'image.');
+                }
+            }
+
+            $user->setReputationScore(0);
+            $em->persist($user);
+            $em->flush();
+
+            $log = new Log();
+            $log->setUser($this->getUser() instanceof User ? $this->getUser() : null);
+            $log->setAction('user_created (admin: ' . $user->getEmail() . ')');
+            $em->persist($log);
+            $em->flush();
+
+            $this->addFlash('success', 'Utilisateur créé avec succès.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        return $this->render('admin/add_user.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/users/{id}/edit', name: 'admin_user_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    public function editUser(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $passwordHasher,
+        SluggerInterface $slugger,
+    ): Response {
+        $user = $userRepository->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        $form = $this->createForm(AdminUserType::class, $user, ['is_edit' => true]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $plainPassword = $form->get('plainPassword')->getData();
+            if ($plainPassword) {
+                $user->setMdp($passwordHasher->hashPassword($user, $plainPassword));
+            }
+
+            $faceImageFile = $form->get('faceImageFile')->getData();
+            if ($faceImageFile) {
+                $safeFilename = (string) $slugger->slug(pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_FILENAME));
+                $extension = $faceImageFile->guessExtension() ?: pathinfo($faceImageFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/faces';
+
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0775, true);
+                }
+
+                try {
+                    $faceImageFile->move($uploadDir, $newFilename);
+                    $user->setFaceImage($newFilename);
+                } catch (FileException) {
+                    $this->addFlash('warning', 'Erreur lors du téléchargement de l\'image.');
+                }
+            }
+
+            $em->flush();
+
+            $log = new Log();
+            $log->setUser($this->getUser() instanceof User ? $this->getUser() : null);
+            $log->setAction('user_updated (admin edited: ' . $user->getEmail() . ')');
+            $em->persist($log);
+            $em->flush();
+
+            $this->addFlash('success', 'Utilisateur mis à jour.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        return $this->render('admin/edit_user.html.twig', [
+            'form' => $form->createView(),
+            'user' => $user,
+        ]);
+    }
+
+    #[Route('/users/{id}/delete', name: 'admin_user_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function deleteUser(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+    ): Response {
+        $user = $userRepository->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        if ($this->isCsrfTokenValid('delete_user_' . $id, (string) $request->request->get('_token'))) {
+            $email = $user->getEmail();
+            $em->remove($user);
+            $em->flush();
+
+            $log = new Log();
+            $log->setUser(null);
+            $log->setAction('user_deleted (admin deleted: ' . $email . ')');
+            $em->persist($log);
+            $em->flush();
+
+            $this->addFlash('success', 'Utilisateur supprimé.');
+        }
+
+        return $this->redirectToRoute('admin_users');
+    }
+
+    #[Route('/users/{id}/toggle-status', name: 'admin_user_toggle_status', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function toggleUserStatus(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $em,
+    ): Response {
+        $user = $userRepository->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        if ($this->isCsrfTokenValid('toggle_status_user_' . $id, (string) $request->request->get('_token'))) {
+            $user->setIsActive(!$user->isActive());
+            $em->flush();
+
+            $this->addFlash('success', $user->isActive()
+                ? 'Compte utilisateur active.'
+                : 'Compte utilisateur desactive.');
+        }
+
+        return $this->redirectToRoute('admin_users', [
+            'q' => (string) $request->query->get('q', ''),
+            'role' => (string) $request->query->get('role', ''),
+            'page' => (int) $request->query->get('page', 1),
+        ]);
+    }
+
+    #[Route('/users/export', name: 'admin_users_export', methods: ['GET'])]
+    public function exportUsers(Request $request, UserRepository $userRepository): StreamedResponse
+    {
+        $search = trim((string) $request->query->get('q', ''));
+        $role = trim((string) $request->query->get('role', ''));
+        $users = $userRepository->findForExport($search, $role);
+
+        $response = new StreamedResponse(function () use ($users): void {
+            $handle = fopen('php://output', 'w');
+            if (!$handle) {
+                return;
+            }
+
+            fputcsv($handle, ['id', 'nom', 'prenom', 'email', 'role', 'is_active', 'reputation_score', 'date_naissance']);
+            foreach ($users as $user) {
+                fputcsv($handle, [
+                    $user->getId(),
+                    $user->getNom(),
+                    $user->getPrenom(),
+                    $user->getEmail(),
+                    $user->getRole(),
+                    $user->isActive() ? '1' : '0',
+                    $user->getReputationScore(),
+                    $user->getDateNaissance() ? $user->getDateNaissance()->format('Y-m-d') : '',
+                ]);
+            }
+            fclose($handle);
+        });
+
+        $filename = 'users_export_' . (new \DateTime())->format('Ymd_His') . '.csv';
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+        return $response;
+    }
+
+    // ─────────────── LOGS ───────────────
+
+    #[Route('/logs', name: 'admin_logs', methods: ['GET'])]
+    public function logs(Request $request, LogRepository $logRepository): Response
+    {
+        $page  = max(1, (int) $request->query->get('page', 1));
+        $limit = 20;
+        $logs  = $logRepository->findAllOrderedByDate($limit, ($page - 1) * $limit);
+
+        return $this->render('admin/logs.html.twig', [
+            'logs' => $logs,
+            'page' => $page,
+        ]);
+    }
+
+    // ─────────────── EXISTING ROUTES (preserved) ───────────────
+
+
+    #[Route('/inventory-legacy', name: 'admin_inventory_legacy')]
+    public function inventory(Request $request): Response
+    {
+        return $this->redirectToRoute('admin_inventory', [
+            'q' => (string) $request->query->get('q', ''),
+            'page' => (int) $request->query->get('page', 1),
+        ]);
+    }
+
+    /**
+     * @template T of object
+     * @param array<int, T> $items
+     * @param callable(T): ?\DateTimeInterface $dateAccessor
+     * @return array{labels: array<int, string>, series: array<int, int>}
+     */
+    private function buildMonthlySeries(array $items, callable $dateAccessor, int $months = 6): array
+    {
+        $labels = [];
+        $series = [];
+        $counts = [];
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $month = (new \DateTimeImmutable('first day of this month'))->modify(sprintf('-%d months', $i));
+            $key = $month->format('Y-m');
+            $labels[] = $month->format('M Y');
+            $counts[$key] = 0;
+        }
+
+        foreach ($items as $item) {
+            $date = $dateAccessor($item);
+            if (!$date instanceof \DateTimeInterface) {
+                continue;
+            }
+
+            $key = $date->format('Y-m');
+            if (array_key_exists($key, $counts)) {
+                $counts[$key]++;
+            }
+        }
+
+        foreach ($counts as $count) {
+            $series[] = $count;
+        }
+
+        return ['labels' => $labels, 'series' => $series];
+    }
+
+    /**
+     * @template T of object
+     * @param array<int, T> $items
+     * @param callable(T): string $categoryAccessor
+     * @return array{labels: array<int, string>, series: array<int, int>}
+     */
+    private function buildCategorySeries(array $items, callable $categoryAccessor): array
+    {
+        $counts = [];
+
+        foreach ($items as $item) {
+            $label = trim($categoryAccessor($item));
+            if ($label === '') {
+                $label = 'Non défini';
+            }
+
+            $counts[$label] = ($counts[$label] ?? 0) + 1;
+        }
+
+        return [
+            'labels' => array_keys($counts),
+            'series' => array_values($counts),
+        ];
     }
 
     #[Route('/offres/new', name: 'admin_offre_new')]
@@ -264,10 +581,862 @@ class AdminController extends AbstractController
     {
         return $this->render('admin/reports/index.html.twig');
     }
-
+//route
     #[Route('/docs', name: 'admin_docs')]
     public function docs(): Response
     {
         return $this->render('admin/docs/index.html.twig');
+    }
+
+    #[Route('/absence', name: 'admin_absence')]
+    public function absence(Request $request, AbsenceRepository $absenceRepository, EntityManagerInterface $em): Response
+    {
+        $searchQuery = $request->query->get('q');
+
+        if ($searchQuery) {
+            $qb = $em->createQueryBuilder();
+            $qb->select('a', 'u')
+                ->from(Absence::class, 'a')
+                ->leftJoin('a.user', 'u')
+                ->where(
+                    $qb->expr()->orX(
+                        $qb->expr()->like('u.nom', ':query'),
+                        $qb->expr()->like('u.prenom', ':query'),
+                        $qb->expr()->like('a.type_absence', ':query'),
+                        $qb->expr()->like('a.statut', ':query')
+                    )
+                )
+                ->setParameter('query', '%' . $searchQuery . '%')
+                ->orderBy('a.date_debut', 'DESC');
+
+            $absences = $qb->getQuery()->getResult();
+        } else {
+            $absences = $absenceRepository->findAll();
+        }
+
+        return $this->render('admin/absence/index.html.twig', [
+            'absences' => $absences,
+        ]);
+    }
+
+    #[Route('/absence/new', name: 'admin_absence_new', methods: ['GET', 'POST'])]
+    public function newAbsence(Request $request, EntityManagerInterface $em, UserRepository $userRepository): Response
+    {
+        $users = $userRepository->findAll();
+        $errors = [];
+        $MAX_DUREE = 30;
+
+        if ($request->isMethod('POST')) {
+            $employeId = $request->request->get('employe_id');
+            $typeAbsence = $request->request->get('type_absence');
+            $dateDebutStr = $request->request->get('date_debut');
+            $dateFinStr = $request->request->get('date_fin');
+            $statut = $request->request->get('statut', 'en_attente');
+            $motif = $request->request->get('motif', '');
+
+            // Validation employé
+            if (empty($employeId)) {
+                $errors[] = 'Veuillez sélectionner un employé.';
+            }
+
+            // Validation type
+            $typesValides = ['maladie', 'accident', 'absence_injustifiee', 'retard', 'formation', 'autre'];
+            if (empty($typeAbsence)) {
+                $errors[] = 'Veuillez sélectionner un type d\'absence.';
+            } elseif (!in_array($typeAbsence, $typesValides)) {
+                $errors[] = 'Le type d\'absence sélectionné n\'est pas valide.';
+            }
+
+            // Validation statut
+            $statutsValides = ['en_attente', 'approuve', 'refuse'];
+            if (empty($statut)) {
+                $errors[] = 'Le statut est obligatoire.';
+            } elseif (!in_array($statut, $statutsValides)) {
+                $errors[] = 'Le statut sélectionné n\'est pas valide.';
+            }
+
+            // Validation dates
+            $dateDebut = null;
+            $dateFin = null;
+            $duree = 0;
+
+            if (empty($dateDebutStr)) {
+                $errors[] = 'La date de début est obligatoire.';
+            } else {
+                try {
+                    $dateDebut = new \DateTime($dateDebutStr);
+                    $today = new \DateTime('today');
+                    $today->setTime(0, 0, 0);
+                    $dateDebut->setTime(0, 0, 0);
+                    if ($dateDebut < $today) {
+                        $errors[] = 'La date de début ne peut pas être dans le passé.';
+                    }
+                    // Validation: année max 2026
+                    $yearDebut = (int)$dateDebut->format('Y');
+                    if ($yearDebut > 2026) {
+                        $errors[] = 'La date de début ne peut pas être en 2027 ou au-delà.';
+                    }
+                } catch (\Exception $e) {
+                    $errors[] = 'La date de début n\'est pas valide.';
+                }
+            }
+
+            if (empty($dateFinStr)) {
+                $errors[] = 'La date de fin est obligatoire.';
+            } else {
+                try {
+                    $dateFin = new \DateTime($dateFinStr);
+                    // Validation: année max 2026
+                    $yearFin = (int)$dateFin->format('Y');
+                    if ($yearFin > 2026) {
+                        $errors[] = 'La date de fin ne peut pas être en 2027 ou au-delà.';
+                    }
+                    if ($dateDebut && $dateFin <= $dateDebut) {
+                        $errors[] = 'La date de fin doit être après la date de début.';
+                    }
+                } catch (\Exception $e) {
+                    $errors[] = 'La date de fin n\'est pas valide.';
+                }
+            }
+
+            // Validation durée maximale
+            if ($dateDebut && $dateFin) {
+                $diff = $dateDebut->diff($dateFin);
+                $duree = $diff->days + 1;
+                if ($duree > $MAX_DUREE) {
+                    $errors[] = 'La durée maximale d\'une absence est de ' . $MAX_DUREE . ' jours.';
+                }
+            }
+
+            // Validation motif obligatoire pour maladie > 3 jours
+            if ($typeAbsence === 'maladie' && $duree > 3 && empty(trim($motif))) {
+                $errors[] = 'Le motif est obligatoire pour les absences maladie de plus de 3 jours.';
+            }
+
+            // Si pas d'erreurs, créer l'absence
+            if (empty($errors)) {
+                $absence = new Absence();
+                $absence->setDateDebut($dateDebut);
+                $absence->setDateFin($dateFin);
+                $absence->setTypeAbsence($typeAbsence);
+                $absence->setStatut($statut);
+
+                $user = $userRepository->find($employeId);
+                if (!$user) {
+                    $errors[] = 'L\'employé sélectionné n\'existe pas.';
+                } else {
+                    $absence->setUser($user);
+                    $em->persist($absence);
+                    $em->flush();
+
+                    $this->addFlash('success', 'Absence créée avec succès.');
+                    return $this->redirectToRoute('admin_absence');
+                }
+            }
+
+            foreach ($errors as $error) {
+                $this->addFlash('error', $error);
+            }
+        }
+
+        return $this->render('admin/absence/new.html.twig', [
+            'users' => $users,
+        ]);
+    }
+
+    #[Route('/absence/{id}/edit', name: 'admin_absence_edit', methods: ['GET', 'POST'])]
+    public function editAbsence(Absence $absence, Request $request, EntityManagerInterface $em, UserRepository $userRepository): Response
+    {
+        $users = $userRepository->findAll();
+        $errors = [];
+
+        if ($request->isMethod('POST')) {
+            $employeId = $request->request->get('employe_id');
+            $typeAbsence = $request->request->get('type_absence');
+            $dateDebutStr = $request->request->get('date_debut');
+            $dateFinStr = $request->request->get('date_fin');
+            $statut = $request->request->get('statut');
+
+            if (empty($employeId)) {
+                $errors[] = 'Veuillez sélectionner un employé.';
+            }
+            if (empty($typeAbsence)) {
+                $errors[] = 'Veuillez sélectionner un type d\'absence.';
+            }
+            if (empty($statut)) {
+                $errors[] = 'Le statut est obligatoire.';
+            }
+            if (empty($dateDebutStr)) {
+                $errors[] = 'La date de début est obligatoire.';
+            } else {
+                try {
+                    $dateDebut = new \DateTime($dateDebutStr);
+                    $today = new \DateTime('today');
+                    $today->setTime(0, 0, 0);
+                    $dateDebut->setTime(0, 0, 0);
+                    $currentDateDebut = $absence->getDateDebut();
+                    if ($currentDateDebut) {
+                        $currentDateDebut->setTime(0, 0, 0);
+                        if ($dateDebut != $currentDateDebut && $dateDebut < $today) {
+                            $errors[] = 'La nouvelle date de début ne peut pas être dans le passé.';
+                        }
+                    }
+                } catch (\Exception $e) {
+                    $errors[] = 'La date de début n\'est pas valide.';
+                }
+            }
+            if (empty($dateFinStr)) {
+                $errors[] = 'La date de fin est obligatoire.';
+            } else {
+                try {
+                    $dateFin = new \DateTime($dateFinStr);
+                    if (isset($dateDebut) && $dateFin <= $dateDebut) {
+                        $errors[] = 'La date de fin doit être après la date de début.';
+                    }
+                } catch (\Exception $e) {
+                    $errors[] = 'La date de fin n\'est pas valide.';
+                }
+            }
+
+            if (empty($errors)) {
+                $absence->setDateDebut(new \DateTime($dateDebutStr));
+                $absence->setDateFin(new \DateTime($dateFinStr));
+                $absence->setTypeAbsence($typeAbsence);
+                $absence->setStatut($statut);
+
+                $user = $userRepository->find($employeId);
+                if (!$user) {
+                    $errors[] = 'L\'employé sélectionné n\'existe pas.';
+                } else {
+                    $absence->setUser($user);
+                    $em->flush();
+
+                    $this->addFlash('success', 'Absence modifiée avec succès.');
+                    return $this->redirectToRoute('admin_absence');
+                }
+            }
+
+            foreach ($errors as $error) {
+                $this->addFlash('error', $error);
+            }
+        }
+
+        return $this->render('admin/absence/edit.html.twig', [
+            'absence' => $absence,
+            'users' => $users,
+        ]);
+    }
+
+    #[Route('/absence/{id}/delete', name: 'admin_absence_delete', methods: ['POST'])]
+    public function deleteAbsence(Absence $absence, EntityManagerInterface $em): Response
+    {
+        $em->remove($absence);
+        $em->flush();
+
+        $this->addFlash('success', 'Absence supprimée avec succès.');
+        return $this->redirectToRoute('admin_absence');
+    }
+
+    #[Route('/conge', name: 'admin_conge')]
+    public function conge(Request $request, CongeRepository $congeRepository, EntityManagerInterface $em): Response
+    {
+        $searchQuery = $request->query->get('q');
+
+        if ($searchQuery) {
+            // Recherche avec filtre
+            $qb = $em->createQueryBuilder();
+            $qb->select('c', 'a', 'u')
+                ->from(Conge::class, 'c')
+                ->leftJoin('c.absence', 'a')
+                ->leftJoin('a.user', 'u')
+                ->where(
+                    $qb->expr()->orX(
+                        $qb->expr()->like('u.nom', ':query'),
+                        $qb->expr()->like('u.prenom', ':query'),
+                        $qb->expr()->like('a.type_absence', ':query'),
+                        $qb->expr()->like('a.statut', ':query')
+                    )
+                )
+                ->setParameter('query', '%' . $searchQuery . '%')
+                ->orderBy('c.date_demande', 'DESC');
+
+            $conges = $qb->getQuery()->getResult();
+        } else {
+            // Récupérer tous les congés avec leurs relations absence et user
+            $qb = $em->createQueryBuilder();
+            $qb->select('c', 'a', 'u')
+                ->from(Conge::class, 'c')
+                ->leftJoin('c.absence', 'a')
+                ->leftJoin('a.user', 'u')
+                ->orderBy('c.date_demande', 'DESC');
+
+            $conges = $qb->getQuery()->getResult();
+        }
+
+        return $this->render('admin/conge/index.html.twig', [
+            'conges' => $conges,
+        ]);
+    }
+
+    #[Route('/conge/new', name: 'admin_conge_new', methods: ['GET', 'POST'])]
+    public function newConge(Request $request, EntityManagerInterface $em, UserRepository $userRepository): Response
+    {
+        $conge = new Conge();
+        $conge->setDateDemande(new \DateTime());
+
+        $users = $userRepository->findAll();
+        $errors = [];
+
+        if ($request->isMethod('POST')) {
+            // Validation des données
+            $employeId = $request->request->get('employe_id');
+            $typeAbsence = $request->request->get('type_absence');
+            $dateDebutStr = $request->request->get('date_debut');
+            $dateFinStr = $request->request->get('date_fin');
+
+            // Validation employé
+            if (empty($employeId)) {
+                $errors[] = 'Veuillez sélectionner un employé.';
+            }
+
+            // Validation type
+            if (empty($typeAbsence)) {
+                $errors[] = 'Veuillez sélectionner un type de congé.';
+            }
+
+            // Validation dates
+            if (empty($dateDebutStr)) {
+                $errors[] = 'La date de début est obligatoire.';
+            } else {
+                try {
+                    $dateDebut = new \DateTime($dateDebutStr);
+                    $today = new \DateTime('today');
+                    $today->setTime(0, 0, 0);
+                    $dateDebut->setTime(0, 0, 0);
+
+                    if ($dateDebut < $today) {
+                        $errors[] = 'La date de début ne peut pas être dans le passé.';
+                    }
+                } catch (\Exception $e) {
+                    $errors[] = 'La date de début n\'est pas valide.';
+                }
+            }
+
+            if (empty($dateFinStr)) {
+                $errors[] = 'La date de fin est obligatoire.';
+            } else {
+                try {
+                    $dateFin = new \DateTime($dateFinStr);
+
+                    if (isset($dateDebut) && $dateFin <= $dateDebut) {
+                        $errors[] = 'La date de fin doit être après la date de début.';
+                    }
+                } catch (\Exception $e) {
+                    $errors[] = 'La date de fin n\'est pas valide.';
+                }
+            }
+
+            // Si pas d'erreurs, créer le congé
+            if (empty($errors)) {
+                $absence = new Absence();
+                $absence->setDateDebut(new \DateTime($dateDebutStr));
+                $absence->setDateFin(new \DateTime($dateFinStr));
+                $absence->setTypeAbsence($typeAbsence);
+                $absence->setStatut('en_attente');
+
+                $user = $userRepository->find($employeId);
+                if (!$user) {
+                    $errors[] = 'L\'employé sélectionné n\'existe pas.';
+                } else {
+                    $absence->setUser($user);
+                    $em->persist($absence);
+
+                    $conge->setAbsence($absence);
+                    $conge->setUser($this->getUser());
+
+                    $em->persist($conge);
+                    $em->flush();
+
+                    $this->addFlash('success', 'Demande de congé créée avec succès.');
+                    return $this->redirectToRoute('admin_conge');
+                }
+            }
+
+            // Si erreurs, les afficher
+            foreach ($errors as $error) {
+                $this->addFlash('error', $error);
+            }
+        }
+
+        return $this->render('admin/conge/new.html.twig', [
+            'users' => $users,
+        ]);
+    }
+
+    #[Route('/conge/{id}/edit', name: 'admin_conge_edit', methods: ['GET', 'POST'])]
+    public function editConge(
+        Conge $conge,
+        Request $request,
+        EntityManagerInterface $em,
+        UserRepository $userRepository,
+        MailerInterface $mailer
+    ): Response
+    {
+        $users = $userRepository->findAll();
+        $errors = [];
+
+        if ($request->isMethod('POST')) {
+            $employeId = $request->request->get('employe_id');
+            $typeAbsence = $request->request->get('type_absence');
+            $dateDebutStr = $request->request->get('date_debut');
+            $dateFinStr = $request->request->get('date_fin');
+            $statut = $request->request->get('statut');
+
+            // Validation employé
+            if (empty($employeId)) {
+                $errors[] = 'Veuillez sélectionner un employé.';
+            }
+
+            // Validation type
+            if (empty($typeAbsence)) {
+                $errors[] = 'Veuillez sélectionner un type de congé.';
+            }
+
+            // Validation statut
+            if (empty($statut)) {
+                $errors[] = 'Le statut est obligatoire.';
+            } elseif (!in_array($statut, ['en_attente', 'approuve', 'refuse'])) {
+                $errors[] = 'Le statut sélectionné n\'est pas valide.';
+            }
+
+            // Validation dates
+            if (empty($dateDebutStr)) {
+                $errors[] = 'La date de début est obligatoire.';
+            } else {
+                try {
+                    $dateDebut = new \DateTime($dateDebutStr);
+                    $today = new \DateTime('today');
+                    $today->setTime(0, 0, 0);
+                    $dateDebut->setTime(0, 0, 0);
+
+                    // Pour l'édition, vérifier si la date a changé
+                    $absence = $conge->getAbsence();
+                    $currentDateDebut = $absence ? $absence->getDateDebut() : null;
+
+                    if ($currentDateDebut) {
+                        $currentDateDebut->setTime(0, 0, 0);
+                        // Si la date a changé et est dans le passé
+                        if ($dateDebut != $currentDateDebut && $dateDebut < $today) {
+                            $errors[] = 'La nouvelle date de début ne peut pas être dans le passé.';
+                        }
+                    }
+                } catch (\Exception $e) {
+                    $errors[] = 'La date de début n\'est pas valide.';
+                }
+            }
+
+            if (empty($dateFinStr)) {
+                $errors[] = 'La date de fin est obligatoire.';
+            } else {
+                try {
+                    $dateFin = new \DateTime($dateFinStr);
+
+                    if (isset($dateDebut) && $dateFin <= $dateDebut) {
+                        $errors[] = 'La date de fin doit être après la date de début.';
+                    }
+                } catch (\Exception $e) {
+                    $errors[] = 'La date de fin n\'est pas valide.';
+                }
+            }
+
+            // Si pas d'erreurs, mettre à jour
+            if (empty($errors)) {
+                $absence = $conge->getAbsence();
+                $previousStatus = $absence ? $absence->getStatut() : null;
+                $absence->setDateDebut(new \DateTime($dateDebutStr));
+                $absence->setDateFin(new \DateTime($dateFinStr));
+                $absence->setTypeAbsence($typeAbsence);
+                $absence->setStatut($statut);
+
+                $user = $userRepository->find($employeId);
+                if (!$user) {
+                    $errors[] = 'L\'employé sélectionné n\'existe pas.';
+                } else {
+                    $absence->setUser($user);
+
+                    $conge->setCommentaireValidation($request->request->get('commentaire_validation'));
+
+                    if ($statut === 'approuve' && !$conge->getDateValidation()) {
+                        $conge->setDateValidation(new \DateTime());
+                    }
+
+                    $em->flush();
+
+                    if ($absence->getUser() && $previousStatus !== $statut && in_array($statut, ['approuve', 'refuse'], true)) {
+                        try {
+                            $email = (new TemplatedEmail())
+                                ->from('noreply@huma.tn')
+                                ->to($absence->getUser()->getEmail())
+                                ->subject($statut === 'approuve' ? 'Votre demande de congé a été approuvée' : 'Votre demande de congé a été refusée')
+                                ->htmlTemplate($statut === 'approuve' ? 'emails/conge_approved.html.twig' : 'emails/conge_rejected.html.twig')
+                                ->context([
+                                    'user' => $absence->getUser(),
+                                    'conge' => $conge,
+                                    'absence' => $absence,
+                                    'comment' => $conge->getCommentaireValidation(),
+                                    'reason' => $conge->getCommentaireValidation(),
+                                ]);
+
+                            $mailer->send($email);
+                        } catch (\Throwable) {
+                            $this->addFlash('warning', 'Le congé a été enregistré, mais l\'email n\'a pas pu être envoyé.');
+                        }
+                    }
+
+                    $this->addFlash('success', 'Demande de congé modifiée avec succès.');
+                    return $this->redirectToRoute('admin_conge');
+                }
+            }
+
+            // Si erreurs, les afficher
+            foreach ($errors as $error) {
+                $this->addFlash('error', $error);
+            }
+        }
+
+        return $this->render('admin/conge/edit.html.twig', [
+            'conge' => $conge,
+            'users' => $users,
+        ]);
+    }
+
+    #[Route('/conge/{id}/delete', name: 'admin_conge_delete', methods: ['POST'])]
+    public function deleteConge(Conge $conge, EntityManagerInterface $em): Response
+    {
+        $absence = $conge->getAbsence();
+        if ($absence) {
+            $em->remove($absence);
+        }
+        $em->remove($conge);
+        $em->flush();
+
+        $this->addFlash('success', 'Demande de congé supprimée avec succès.');
+        return $this->redirectToRoute('admin_conge');
+    }
+
+    #[Route('/formation', name: 'admin_formation')]
+    public function formation(Request $request, FormationRepository $formationRepository): Response
+    {
+        $query = $request->query->get('q');
+        $sortField = $request->query->get('sort');
+        $sortOrder = $request->query->get('order', 'ASC');
+
+        $formations = $formationRepository->searchAndSort($query, $sortField, $sortOrder);
+
+        return $this->render('admin/formation/index.html.twig', [
+            'formations' => $formations,
+            'query' => $query,
+            'sort' => $sortField,
+            'order' => $sortOrder,
+        ]);
+    }
+
+    #[Route('/formation/new', name: 'admin_formation_new', methods: ['GET', 'POST'])]
+    public function newFormation(Request $request, EntityManagerInterface $em): Response
+    {
+        $errors = [];
+
+        if ($request->isMethod('POST')) {
+            $sujet = $request->request->get('sujet');
+            $formateur = $request->request->get('formateur');
+            $type = $request->request->get('type');
+            $dateDebutStr = $request->request->get('date_debut');
+            $duree = $request->request->get('duree');
+            $localisation = $request->request->get('localisation');
+
+            if (empty($sujet)) {
+                $errors[] = 'Le sujet est obligatoire.';
+            }
+            if (empty($formateur)) {
+                $errors[] = 'Le formateur est obligatoire.';
+            }
+            if (empty($type)) {
+                $errors[] = 'Le type est obligatoire.';
+            }
+            if (empty($dateDebutStr)) {
+                $errors[] = 'La date de début est obligatoire.';
+            }
+            if (empty($duree) || $duree <= 0) {
+                $errors[] = 'La durée doit être supérieure à 0.';
+            }
+
+            if (empty($errors)) {
+                $formation = new Formation();
+                $formation->setSujet($sujet);
+                $formation->setFormateur($formateur);
+                $formation->setType($type);
+                $formation->setDateDebut(new \DateTime($dateDebutStr));
+                $formation->setDuree((int)$duree);
+                $formation->setLocalisation($localisation);
+                $formation->setUser($this->getUser());
+
+                $em->persist($formation);
+                $em->flush();
+
+                $this->addFlash('success', 'Formation créée avec succès.');
+                return $this->redirectToRoute('admin_formation');
+            }
+
+            foreach ($errors as $error) {
+                $this->addFlash('error', $error);
+            }
+        }
+
+        return $this->render('admin/formation/new.html.twig');
+    }
+
+    #[Route('/formation/{id}/edit', name: 'admin_formation_edit', methods: ['GET', 'POST'])]
+    public function editFormation(Formation $formation, Request $request, EntityManagerInterface $em): Response
+    {
+        $errors = [];
+
+        if ($request->isMethod('POST')) {
+            $sujet = $request->request->get('sujet');
+            $formateur = $request->request->get('formateur');
+            $type = $request->request->get('type');
+            $dateDebutStr = $request->request->get('date_debut');
+            $duree = $request->request->get('duree');
+            $localisation = $request->request->get('localisation');
+
+            if (empty($sujet)) {
+                $errors[] = 'Le sujet est obligatoire.';
+            }
+            if (empty($formateur)) {
+                $errors[] = 'Le formateur est obligatoire.';
+            }
+            if (empty($type)) {
+                $errors[] = 'Le type est obligatoire.';
+            }
+            if (empty($dateDebutStr)) {
+                $errors[] = 'La date de début est obligatoire.';
+            }
+            if (empty($duree) || $duree <= 0) {
+                $errors[] = 'La durée doit être supérieure à 0.';
+            }
+
+            if (empty($errors)) {
+                $formation->setSujet($sujet);
+                $formation->setFormateur($formateur);
+                $formation->setType($type);
+                $formation->setDateDebut(new \DateTime($dateDebutStr));
+                $formation->setDuree((int)$duree);
+                $formation->setLocalisation($localisation);
+
+                $em->flush();
+
+                $this->addFlash('success', 'Formation modifiée avec succès.');
+                return $this->redirectToRoute('admin_formation');
+            }
+
+            foreach ($errors as $error) {
+                $this->addFlash('error', $error);
+            }
+        }
+
+        return $this->render('admin/formation/edit.html.twig', [
+            'formation' => $formation,
+        ]);
+    }
+
+    #[Route('/formation/{id}/delete', name: 'admin_formation_delete', methods: ['POST'])]
+    public function deleteFormation(Formation $formation, EntityManagerInterface $em): Response
+    {
+        $em->remove($formation);
+        $em->flush();
+
+        $this->addFlash('success', 'Formation supprimée avec succès.');
+        return $this->redirectToRoute('admin_formation');
+    }
+
+    #[Route('/publication', name: 'admin_publication')]
+    public function publication(PublicationRepository $publicationRepository): Response
+    {
+        $publications = $publicationRepository->findBy([], ['date_publication' => 'DESC']);
+        return $this->render('admin/publication/index.html.twig', [
+            'publications' => $publications,
+        ]);
+    }
+
+    #[Route('/publication/new', name: 'admin_publication_new', methods: ['GET', 'POST'])]
+    public function newPublication(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
+    {
+        $publication = new Publication();
+        $form = $this->createForm(PublicationType::class, $publication);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $publication->setDate_publication(new \DateTime());
+            $publication->setUser($this->getUser());
+
+            $em->persist($publication);
+            $this->handlePublicationMediaUploads(
+                $publication,
+                $form->get('mediaFiles')->getData() ?? [],
+                $slugger,
+                $em
+            );
+            $em->flush();
+
+            $this->addFlash('success', 'Publication créée avec succès.');
+            return $this->redirectToRoute('admin_publication');
+        }
+
+        return $this->render('admin/publication/new.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/publication/{id}/edit', name: 'admin_publication_edit', methods: ['GET', 'POST'])]
+    public function editPublication(Publication $publication, Request $request, EntityManagerInterface $em): Response
+    {
+        if ($request->isMethod('POST')) {
+            $publication->setContenu($request->request->get('contenu'));
+            $publication->setType($request->request->get('type'));
+
+            $em->flush();
+            $this->addFlash('success', 'Publication modifiée avec succès.');
+            return $this->redirectToRoute('admin_publication');
+        }
+
+        return $this->render('admin/publication/edit.html.twig', [
+            'publication' => $publication,
+        ]);
+    }
+
+    /**
+     * @param UploadedFile[] $uploadedFiles
+     */
+    private function handlePublicationMediaUploads(
+        Publication $publication,
+        array $uploadedFiles,
+        SluggerInterface $slugger,
+        EntityManagerInterface $em
+    ): void {
+        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/publications';
+
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0775, true);
+        }
+
+        foreach ($uploadedFiles as $uploadedFile) {
+            if (!$uploadedFile instanceof UploadedFile) {
+                continue;
+            }
+
+            $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = (string) $slugger->slug($originalFilename);
+            $extension = $uploadedFile->guessExtension() ?: pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'bin';
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . strtolower($extension);
+            $mimeType = $uploadedFile->getClientMimeType() ?: '';
+
+            try {
+                $guessedMimeType = $uploadedFile->getMimeType();
+                if (is_string($guessedMimeType) && $guessedMimeType !== '') {
+                    $mimeType = $guessedMimeType;
+                }
+            } catch (\Throwable) {
+                // If Symfony cannot inspect the temporary file, fall back to the client MIME type.
+            }
+
+            $mediaType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+
+            try {
+                $uploadedFile->move($uploadDir, $newFilename);
+            } catch (FileException) {
+                $this->addFlash('warning', 'Une image ou vidéo n\'a pas pu être téléversée.');
+                continue;
+            }
+
+            $media = new PublicationMedia();
+            $media->setPublication($publication);
+            $media->setType($mediaType);
+            $media->setPath('/uploads/publications/' . $newFilename);
+
+            $em->persist($media);
+        }
+    }
+
+    #[Route('/publication/{id}/delete', name: 'admin_publication_delete', methods: ['POST'])]
+    public function deletePublication(Publication $publication, EntityManagerInterface $em): Response
+    {
+        $em->remove($publication);
+        $em->flush();
+
+        $this->addFlash('success', 'Publication supprimée avec succès.');
+        return $this->redirectToRoute('admin_publication');
+    }
+
+    #[Route('/commentaire', name: 'admin_commentaire')]
+    public function commentaire(CommentaireRepository $commentaireRepository): Response
+    {
+        $commentaires = $commentaireRepository->findBy([], ['date_commentaire' => 'DESC']);
+        return $this->render('admin/commentaire/index.html.twig', [
+            'commentaires' => $commentaires,
+        ]);
+    }
+
+    #[Route('/commentaire/new', name: 'admin_commentaire_new', methods: ['GET', 'POST'])]
+    public function newCommentaire(Request $request, EntityManagerInterface $em): Response
+    {
+        $publicationId = $request->query->get('publication');
+        $publication = $em->getRepository(Publication::class)->find($publicationId);
+
+        if ($request->isMethod('POST')) {
+            $contenu = $request->request->get('contenu');
+            $publicationId = $request->request->get('publication_id');
+            $publication = $em->getRepository(Publication::class)->find($publicationId);
+
+            $commentaire = new Commentaire();
+            $commentaire->setContenu($contenu);
+            $commentaire->setDate_commentaire(new \DateTime());
+            $commentaire->setPublication($publication);
+            $commentaire->setUser($this->getUser());
+
+            $em->persist($commentaire);
+            $em->flush();
+
+            $this->addFlash('success', 'Commentaire ajouté avec succès.');
+            return $this->redirectToRoute('admin_publication');
+        }
+
+        return $this->render('admin/commentaire/new.html.twig', [
+            'publication' => $publication,
+        ]);
+    }
+
+    #[Route('/commentaire/{id}/edit', name: 'admin_commentaire_edit', methods: ['GET', 'POST'])]
+    public function editCommentaire(Commentaire $commentaire, Request $request, EntityManagerInterface $em): Response
+    {
+        if ($request->isMethod('POST')) {
+            $commentaire->setContenu($request->request->get('contenu'));
+
+            $em->flush();
+            $this->addFlash('success', 'Commentaire modifié avec succès.');
+            return $this->redirectToRoute('admin_publication');
+        }
+
+        return $this->render('admin/commentaire/edit.html.twig', [
+            'commentaire' => $commentaire,
+        ]);
+    }
+
+    #[Route('/commentaire/{id}/delete', name: 'admin_commentaire_delete', methods: ['POST'])]
+    public function deleteCommentaire(Commentaire $commentaire, EntityManagerInterface $em): Response
+    {
+        $em->remove($commentaire);
+        $em->flush();
+
+        $this->addFlash('success', 'Commentaire supprimé avec succès.');
+        return $this->redirectToRoute('admin_publication');
     }
 }

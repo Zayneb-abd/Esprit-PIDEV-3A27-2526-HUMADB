@@ -1,0 +1,162 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Détails de la Participation{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4">
+                <a href="{{ path('admin_participation_index') }}" class="btn btn-outline-secondary">
+                    <i class="ti ti-arrow-left"></i> Retour à la liste
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Détails de la Participation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Informations Employé</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Nom:</th>
+                                    <td>{{ participation.user.nom }} {{ participation.user.prenom }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td>{{ participation.user.email }}</td>
+                                </tr>
+                                {% if participation.user.telephone %}
+                                <tr>
+                                    <th>Téléphone:</th>
+                                    <td>{{ participation.user.telephone }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Informations Formation</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Sujet:</th>
+                                    <td>{{ participation.formation.sujet }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Formateur:</th>
+                                    <td>{{ participation.formation.formateur }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Type:</th>
+                                    <td>{{ participation.formation.type }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Date Début:</th>
+                                    <td>{{ participation.formation.dateDebut ? participation.formation.dateDebut|date('d/m/Y H:i') : 'Non définie' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Durée:</th>
+                                    <td>{{ participation.formation.duree }} jours</td>
+                                </tr>
+                                <tr>
+                                    <th>Localisation:</th>
+                                    <td>{{ participation.formation.localisation }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Informations Participation</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Date Demande:</th>
+                                    <td>{{ participation.dateInscription ? participation.dateInscription|date('d/m/Y H:i') : '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Statut:</th>
+                                    <td>
+                                        <span class="badge 
+                                            {% if participation.statut == 'accepté' %}bg-success
+                                            {% elseif participation.statut == 'refusé' %}bg-danger
+                                            {% else %}bg-warning{% endif %}">
+                                            {{ participation.statut|capitalize }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if participation.formation.localisation and (participation.formation.type == 'présentiel' or participation.formation.type == 'hybride') %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">Localisation sur la Carte</h6>
+                            <div id="locationMap" style="height: 400px; width: 100%;"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let locationMap;
+let locationMarker;
+
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    {% if participation.formation.localisation and (participation.formation.type == 'présentiel' or participation.formation.type == 'hybride') %}
+        {% set coordinates = null %}
+        {% if participation.formation.localisation matches '/(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)/' %}
+            {% set coordinates = {latitude: matches[1], longitude: matches[2]} %}
+        {% endif %}
+        
+        {% if coordinates %}
+            initializeLocationMap({{ coordinates.latitude }}, {{ coordinates.longitude }}, '{{ participation.formation.sujet|e('js') }}');
+        {% endif %}
+    {% endif %}
+});
+
+function initializeLocationMap(lat, lng, title) {
+    // Load Leaflet if not already loaded
+    if (typeof L === 'undefined') {
+        // Load CSS
+        const leafletCSS = document.createElement('link');
+        leafletCSS.rel = 'stylesheet';
+        leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(leafletCSS);
+        
+        // Load JS
+        const leafletJS = document.createElement('script');
+        leafletJS.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        leafletJS.onload = function() {
+            createLocationMap(lat, lng, title);
+        };
+        document.head.appendChild(leafletJS);
+    } else {
+        createLocationMap(lat, lng, title);
+    }
+}
+
+function createLocationMap(lat, lng, title) {
+    const location = [lat, lng];
+    
+    locationMap = L.map('locationMap').setView(location, 15);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(locationMap);
+    
+    // Add marker
+    locationMarker = L.marker(location).addTo(locationMap);
+    locationMarker.bindPopup(title).openPopup();
+}
+</script>
+{% endblock %}

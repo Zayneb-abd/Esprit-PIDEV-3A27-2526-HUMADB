@@ -1,4 +1,4 @@
-{% extends 'employ/base_admin.html.twig' %}
+{% extends 'employ/base_employe.html.twig' %}
 
 {% block title %}Détails de la Formation{% endblock %}
 
@@ -47,6 +47,56 @@
                     </tbody>
                 </table>
 
+                {# OpenStreetMap Section - only for presentiel and hybrid #}
+                {% if formation.localisation and (formation.type == 'présentiel' or formation.type == 'hybride') %}
+                    {% set coordinates = null %}
+                    {% if formation.localisation matches '/(-?\d+\.\d+),(-?\d+\.\d+)/' %}
+                        {% set coordinates = {latitude: matches[1], longitude: matches[2]} %}
+                    {% endif %}
+                    
+                    {% if coordinates %}
+                    <div class="mt-4">
+                        <h5>Localisation sur la carte</h5>
+                        <div id="map" style="height: 400px; width: 100%; margin-bottom: 20px;"></div>
+                        <div class="alert alert-info">
+                            <strong>Coordonnées GPS:</strong> {{ coordinates.latitude }}, {{ coordinates.longitude }}<br>
+                            <strong>Type de formation:</strong> {{ formation.type }}<br>
+                            <small>Scannez le QR code ci-dessous pour ajouter cette formation à votre calendrier avec la localisation.</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% elseif formation.type == 'en ligne' %}
+                <div class="mt-4">
+                    <div class="alert alert-info">
+                        <h5>Formation en ligne</h5>
+                        <p>Cette formation se déroule en ligne, aucune localisation physique n'est requise.</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {# QR Code Section #}
+                {% if qrCodePath %}
+                <div class="mt-4">
+                    <h5>QR Code - Ajouter au calendrier</h5>
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center">
+                            <img src="{{ asset(qrCodePath) }}" alt="QR Code Formation" class="img-fluid border rounded" style="max-width: 200px;">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="alert alert-success">
+                                <h6>Comment utiliser ce QR Code :</h6>
+                                <ul class="mb-0">
+                                    <li>Scannez ce QR Code avec votre smartphone</li>
+                                    <li>L'événement sera automatiquement ajouté à votre calendrier</li>
+                                    <li>Inclut : sujet, dates, description et localisation GPS</li>
+                                    <li>Compatible avec Google Calendar, Apple Calendar, Outlook</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="d-flex gap-2 mt-4">
                     <a href="{{ path('employ_formation_index') }}" class="btn btn-outline-secondary">Retour à la liste</a>
                     <a href="{{ path('employ_formation_edit', {'id': formation.id}) }}" class="btn btn-warning">Modifier</a>
@@ -56,4 +106,50 @@
         </div>
     </div>
 </div>
+
+{# OpenStreetMap Script #}
+{% if coordinates %}
+<script>
+function initMap() {
+    // Load Leaflet CSS and JS if not already loaded
+    if (typeof L === 'undefined') {
+        // Load CSS
+        const leafletCSS = document.createElement('link');
+        leafletCSS.rel = 'stylesheet';
+        leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(leafletCSS);
+        
+        // Load JS
+        const leafletJS = document.createElement('script');
+        leafletJS.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        leafletJS.onload = function() {
+            createMap();
+        };
+        document.head.appendChild(leafletJS);
+    } else {
+        createMap();
+    }
+}
+
+function createMap() {
+    const location = [{{ coordinates.latitude }}, {{ coordinates.longitude }}];
+    
+    const map = L.map('map').setView(location, 15);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Add marker
+    const marker = L.marker(location).addTo(map);
+    marker.bindPopup("{{ formation.sujet|e('js') }}").openPopup();
+}
+
+// Initialize map when page loads
+window.addEventListener('load', function() {
+    setTimeout(initMap, 100);
+});
+</script>
+{% endif %}
 {% endblock %}

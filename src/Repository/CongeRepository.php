@@ -40,4 +40,51 @@ class CongeRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    public function searchAndSort(?string $query, ?string $sortField, ?string $sortOrder): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->leftJoin('c.absence', 'a')
+            ->leftJoin('a.user', 'u');
+
+        if ($query) {
+            $qb->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->like('c.commentaire_validation', ':query'),
+                    $qb->expr()->like('c.statut', ':query'),
+                    $qb->expr()->like('a.type_absence', ':query'),
+                    $qb->expr()->like('u.nom', ':query'),
+                    $qb->expr()->like('u.prenom', ':query')
+                )
+            )
+            ->setParameter('query', '%' . $query . '%');
+        }
+
+        $allowedSortFields = ['date_demande', 'statut', 'commentaire_validation'];
+        if ($sortField && in_array($sortField, $allowedSortFields, true)) {
+            $qb->orderBy('c.' . $sortField, $sortOrder === 'DESC' ? 'DESC' : 'ASC');
+        } else {
+            $qb->orderBy('c.date_demande', 'DESC');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Find conges by date range and user IDs
+     * @param array<int> $userIds
+     * @return array<Conge>
+     */
+    public function findByDateRangeAndUsers(\DateTime $start, \DateTime $end, array $userIds): array
+    {
+        return $this->createQueryBuilder('c')
+            ->where('c.user IN (:userIds)')
+            ->andWhere('c.date_debut <= :end')
+            ->andWhere('c.date_fin >= :start')
+            ->setParameter('userIds', $userIds)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->getQuery()
+            ->getResult();
+    }
 }

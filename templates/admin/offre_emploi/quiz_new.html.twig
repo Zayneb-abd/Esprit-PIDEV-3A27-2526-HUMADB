@@ -1,0 +1,195 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Creer un quiz{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h1 class="fs-3 mb-1">Creer un quiz</h1>
+            <p class="mb-0 text-secondary">Offre: {{ offre.titre ?: 'Offre sans titre' }}</p>
+        </div>
+        <a href="{{ path('admin_offre_show', {id: offre.id}) }}" class="btn btn-outline-primary">Retour a l offre</a>
+    </div>
+
+    <form method="post" class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="row g-3 mb-4">
+                <div class="col-lg-6">
+                    <label for="quiz-titre" class="form-label">Titre du quiz</label>
+                    <input id="quiz-titre" type="text" name="titre" class="form-control" value="{{ app.request.request.get('titre', 'Quiz - ' ~ (offre.titre ?: 'Offre')) }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="quiz-duree" class="form-label">Duree (minutes)</label>
+                    <input id="quiz-duree" type="number" name="duree_minutes" class="form-control" min="1" value="{{ app.request.request.get('duree_minutes', 12) }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="quiz-seuil" class="form-label">Seuil de reussite (%)</label>
+                    <input id="quiz-seuil" type="number" name="seuil_pourcentage" class="form-control" min="0" max="100" value="{{ app.request.request.get('seuil_pourcentage', 70) }}" required>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="fs-5 mb-0">Questions QCM</h2>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="add-question">Ajouter une question</button>
+            </div>
+
+            <div id="questions-list">
+                {% for q in 0..1 %}
+                    <div class="border rounded-3 p-3 mb-3 question-block" data-question-index="{{ q }}">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="fs-6 mb-0">Question <span class="question-number">{{ q + 1 }}</span></h3>
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-question">Supprimer</button>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-lg-9">
+                                <label for="question-text-{{ q }}" class="form-label">Question</label>
+                                <textarea id="question-text-{{ q }}" name="questions[{{ q }}][question_text]" class="form-control" rows="2" required></textarea>
+                            </div>
+                            <div class="col-lg-3">
+                                <label for="question-points-{{ q }}" class="form-label">Points</label>
+                                <input id="question-points-{{ q }}" type="number" name="questions[{{ q }}][points]" class="form-control" min="1" value="1" required>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="form-label">Reponses</label>
+                            {% for a in 0..3 %}
+                                <div class="row g-2 align-items-center mb-2">
+                                    <div class="col-lg-9">
+                                        <label for="question-{{ q }}-answer-{{ a }}" class="visually-hidden">Reponse {{ a + 1 }}</label>
+                                        <input id="question-{{ q }}-answer-{{ a }}" type="text" name="questions[{{ q }}][answers][{{ a }}][texte]" class="form-control" placeholder="Reponse {{ a + 1 }}" required>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="questions[{{ q }}][answers][{{ a }}][correcte]" value="1" id="q{{ q }}a{{ a }}">
+                                            <label class="form-check-label" for="q{{ q }}a{{ a }}">Bonne reponse</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Creer le quiz</button>
+                <a href="{{ path('admin_offre_show', {id: offre.id}) }}" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<template id="question-template">
+    <div class="border rounded-3 p-3 mb-3 question-block" data-question-index="__INDEX__">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="fs-6 mb-0">Question <span class="question-number">__NUMBER__</span></h3>
+            <button type="button" class="btn btn-outline-danger btn-sm remove-question">Supprimer</button>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-9">
+                <label for="question-text-__INDEX__" class="form-label">Question</label>
+                <textarea id="question-text-__INDEX__" name="questions[__INDEX__][question_text]" class="form-control" rows="2" required></textarea>
+            </div>
+            <div class="col-lg-3">
+                <label for="question-points-__INDEX__" class="form-label">Points</label>
+                <input id="question-points-__INDEX__" type="number" name="questions[__INDEX__][points]" class="form-control" min="1" value="1" required>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <label class="form-label">Reponses</label>
+            <div class="row g-2 align-items-center mb-2">
+                <div class="col-lg-9">
+                    <label for="question-__INDEX__-answer-0" class="visually-hidden">Reponse 1</label>
+                    <input id="question-__INDEX__-answer-0" type="text" name="questions[__INDEX__][answers][0][texte]" class="form-control" placeholder="Reponse 1" required>
+                </div>
+                <div class="col-lg-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="questions[__INDEX__][answers][0][correcte]" value="1" id="q__INDEX__a0">
+                        <label class="form-check-label" for="q__INDEX__a0">Bonne reponse</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-2 align-items-center mb-2">
+                <div class="col-lg-9">
+                    <label for="question-__INDEX__-answer-1" class="visually-hidden">Reponse 2</label>
+                    <input id="question-__INDEX__-answer-1" type="text" name="questions[__INDEX__][answers][1][texte]" class="form-control" placeholder="Reponse 2" required>
+                </div>
+                <div class="col-lg-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="questions[__INDEX__][answers][1][correcte]" value="1" id="q__INDEX__a1">
+                        <label class="form-check-label" for="q__INDEX__a1">Bonne reponse</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-2 align-items-center mb-2">
+                <div class="col-lg-9">
+                    <label for="question-__INDEX__-answer-2" class="visually-hidden">Reponse 3</label>
+                    <input id="question-__INDEX__-answer-2" type="text" name="questions[__INDEX__][answers][2][texte]" class="form-control" placeholder="Reponse 3" required>
+                </div>
+                <div class="col-lg-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="questions[__INDEX__][answers][2][correcte]" value="1" id="q__INDEX__a2">
+                        <label class="form-check-label" for="q__INDEX__a2">Bonne reponse</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-2 align-items-center mb-2">
+                <div class="col-lg-9">
+                    <label for="question-__INDEX__-answer-3" class="visually-hidden">Reponse 4</label>
+                    <input id="question-__INDEX__-answer-3" type="text" name="questions[__INDEX__][answers][3][texte]" class="form-control" placeholder="Reponse 4" required>
+                </div>
+                <div class="col-lg-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="questions[__INDEX__][answers][3][correcte]" value="1" id="q__INDEX__a3">
+                        <label class="form-check-label" for="q__INDEX__a3">Bonne reponse</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    (() => {
+        const list = document.getElementById('questions-list');
+        const template = document.getElementById('question-template');
+        const addButton = document.getElementById('add-question');
+
+        const refreshNumbers = () => {
+            list.querySelectorAll('.question-block').forEach((block, index) => {
+                block.querySelector('.question-number').textContent = String(index + 1);
+            });
+        };
+
+        addButton.addEventListener('click', () => {
+            const index = list.querySelectorAll('.question-block').length;
+            const html = template.innerHTML
+                .replaceAll('__INDEX__', String(index))
+                .replaceAll('__NUMBER__', String(index + 1));
+
+            list.insertAdjacentHTML('beforeend', html);
+            refreshNumbers();
+        });
+
+        list.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement) || !target.classList.contains('remove-question')) {
+                return;
+            }
+
+            const blocks = list.querySelectorAll('.question-block');
+            if (blocks.length <= 1) {
+                return;
+            }
+
+            target.closest('.question-block')?.remove();
+            refreshNumbers();
+        });
+    })();
+</script>
+{% endblock %}

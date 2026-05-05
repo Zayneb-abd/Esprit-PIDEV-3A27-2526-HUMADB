@@ -12,6 +12,25 @@
         <div class="d-flex gap-2">
             <a href="{{ path('admin_offre_edit', {id: offre.id}) }}" class="btn btn-primary">Modifier</a>
             <a href="{{ path('admin_candidature_new') }}" class="btn btn-outline-primary">Ajouter une candidature</a>
+            <a href="{{ path('admin_offre_quiz_new', {id: offre.id}) }}" class="btn btn-outline-dark">Creer un quiz</a>
+            <a href="{{ path('admin_offre_public_sourcing', {id: offre.id}) }}" class="btn btn-outline-info">Sourcing URLs publiques</a>
+            <form method="post" action="{{ path('admin_offre_publish_facebook', {id: offre.id}) }}" class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('publish_facebook_' ~ offre.id) }}">
+                <button type="submit" class="btn btn-outline-primary" {% if not facebook_publish_configured %}disabled title="Configuration Facebook manquante"{% endif %}>
+                    Publier sur Facebook
+                </button>
+            </form>
+            <form method="post" action="{{ path('admin_offre_generate_quiz', {id: offre.id}) }}" class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('generate_quiz_' ~ offre.id) }}">
+                <button type="submit" class="btn btn-outline-success">Generer un quiz</button>
+            </form>
+            {% if offre.quizs|length > 0 %}
+                <form method="post" action="{{ path('admin_offre_generate_quiz', {id: offre.id}) }}" class="d-inline">
+                    <input type="hidden" name="_token" value="{{ csrf_token('generate_quiz_' ~ offre.id) }}">
+                    <input type="hidden" name="replace" value="1">
+                    <button type="submit" class="btn btn-outline-warning">Regenerer le quiz</button>
+                </form>
+            {% endif %}
         </div>
     </div>
 
@@ -39,8 +58,111 @@
                     <h2 class="fs-5 mb-3">Suivi</h2>
                     <p class="mb-2"><strong>Responsable:</strong> {{ offre.user ? offre.user.prenom ~ ' ' ~ offre.user.nom : 'Non assigne' }}</p>
                     <p class="mb-2"><strong>Email:</strong> {{ offre.user ? offre.user.email : '-' }}</p>
-                    <p class="mb-0"><strong>Candidatures associees:</strong> {{ offre.candidatures|length }}</p>
+                    <p class="mb-2"><strong>Candidatures associees:</strong> {{ offre.candidatures|length }}</p>
+                    <p class="mb-0">
+                        <strong>Facebook auto publish:</strong>
+                        {{ facebook_publish_configured ? 'Configure' : 'Non configure' }}
+                    </p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body p-0">
+            <div class="p-4 border-bottom">
+                <h2 class="fs-5 mb-1">Analyse NLP des CV</h2>
+                <p class="mb-0 text-secondary">Classement automatique des candidatures selon les mots-cles de l offre et le score du quiz quand il existe.</p>
+            </div>
+            <div class="p-4">
+                <div class="alert {{ external_ai_configured ? 'alert-info' : 'alert-secondary' }} mb-4">
+                    {% if external_ai_configured %}
+                        L'analyse IA avancee via API externe est active. Les meilleurs profils sont enrichis avec une evaluation RH plus detaillee.
+                    {% else %}
+                        L'analyse avancee est prete, mais l'API externe n'est pas encore configuree. Le classement local continue de fonctionner normalement.
+                    {% endif %}
+                </div>
+                {% if cv_rankings is not empty %}
+                    <div class="row g-3">
+                        {% for item in cv_rankings|slice(0, 5) %}
+                            <div class="col-lg-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                        <div>
+                                            <div class="fw-semibold">
+                                                {{ item.candidature.user ? item.candidature.user.prenom ~ ' ' ~ item.candidature.user.nom : 'Candidat' }}
+                                            </div>
+                                            <div class="small text-secondary">
+                                                {{ item.candidature.user ? item.candidature.user.email : '-' }}
+                                            </div>
+                                        </div>
+                                        <span class="badge text-bg-{{ item.score >= 75 ? 'success' : (item.score >= 50 ? 'warning' : 'secondary') }}">
+                                            Match {{ item.score }}%
+                                        </span>
+                                    </div>
+
+                                    <div class="small mb-2">
+                                        <strong>Quiz:</strong>
+                                        {{ item.quiz_score is not null ? item.quiz_score ~ '%' : 'Non passe' }}
+                                    </div>
+
+                                    <div class="small mb-2">
+                                        <strong>Mode d'analyse:</strong>
+                                        {% if item.analysis_mode == 'external_ai' %}
+                                            IA externe
+                                        {% elseif item.analysis_mode == 'local_fallback' %}
+                                            IA externe indisponible, fallback local
+                                        {% else %}
+                                            Analyse locale
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="small mb-2">
+                                        <strong>Mots-cles trouves:</strong>
+                                        {{ item.matched_keywords is not empty ? item.matched_keywords|join(', ') : 'Aucun mot-cle fort detecte' }}
+                                    </div>
+
+                                    <div class="small mb-3 text-secondary">
+                                        <strong>Mots-cles manquants:</strong>
+                                        {{ item.missing_keywords is not empty ? item.missing_keywords|join(', ') : 'Aucun manque majeur detecte' }}
+                                    </div>
+
+                                    {% if item.cv_preview %}
+                                        <div class="small text-secondary border-top pt-2">
+                                            {{ item.cv_preview|slice(0, 260) }}{% if item.cv_preview|length > 260 %}...{% endif %}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if item.advanced_analysis %}
+                                        <div class="mt-3 p-3 rounded-3 bg-light border">
+                                            <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                                <strong>Analyse IA avancee</strong>
+                                                <span class="badge text-bg-{{ item.advanced_analysis.recommendation == 'FORTE' ? 'success' : (item.advanced_analysis.recommendation == 'FAIBLE' ? 'danger' : 'warning') }}">
+                                                    {{ item.advanced_analysis.recommendation }}
+                                                </span>
+                                            </div>
+                                            <div class="small mb-2 text-secondary">{{ item.advanced_analysis.summary }}</div>
+                                            <div class="small mb-2">
+                                                <strong>Forces:</strong>
+                                                {{ item.advanced_analysis.strengths is not empty ? item.advanced_analysis.strengths|join(', ') : 'Aucune force specifique retournee.' }}
+                                            </div>
+                                            <div class="small text-secondary">
+                                                <strong>Points d'attention:</strong>
+                                                {{ item.advanced_analysis.risks is not empty ? item.advanced_analysis.risks|join(', ') : 'Aucun risque majeur retourne.' }}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="mt-3">
+                                        <a href="{{ path('admin_candidature_show', {id: item.candidature.id}) }}" class="btn btn-sm btn-outline-primary">Voir la candidature</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="mb-0 text-secondary">Aucune candidature a analyser pour cette offre.</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -78,6 +200,48 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body p-0">
+            <div class="p-4 border-bottom">
+                <h2 class="fs-5 mb-1">Quiz genere</h2>
+                <p class="mb-0 text-secondary">QCM rattache a cette offre pour l'evaluation des candidats.</p>
+            </div>
+            <div class="p-4">
+                {% set quiz = offre.quizs|first %}
+                {% if quiz %}
+                    <div class="mb-4">
+                        <div class="fw-semibold">{{ quiz.titre ?: 'Quiz de recrutement' }}</div>
+                        <div class="text-secondary small">
+                            Duree: {{ quiz.dureeMinutes ?: 0 }} min · Seuil: {{ quiz.seuilPourcentage ?: 0 }}% · Questions: {{ quiz.questions|length }}
+                        </div>
+                    </div>
+
+                    {% for question in quiz.questions %}
+                        <div class="border rounded-3 p-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                <div class="fw-semibold">Question {{ loop.index }}</div>
+                                <span class="badge text-bg-light border">{{ question.points ?? 1 }} pts</span>
+                            </div>
+                            <p class="mb-3">{{ question.questionText ?: question.question_text }}</p>
+                            <ul class="mb-0">
+                                {% for reponse in question.reponseQcms %}
+                                    <li>
+                                        {{ reponse.texte }}
+                                        {% if reponse.correcte %}
+                                            <span class="badge text-bg-success ms-2">Correcte</span>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="mb-0 text-secondary">Aucun quiz n'est encore associe a cette offre.</p>
+                {% endif %}
             </div>
         </div>
     </div>

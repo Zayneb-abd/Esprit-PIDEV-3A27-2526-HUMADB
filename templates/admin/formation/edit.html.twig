@@ -1,46 +1,289 @@
 {% extends 'admin/base_admin.html.twig' %}
 
-{% block title %}Modifier la Formation{% endblock %}
+{% block title %}Modifier Formation{% endblock %}
 
 {% block body %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
             <div class="mb-4">
-                <h1 class="fs-3 mb-1">Modifier la Formation</h1>
-                <p class="mb-0">Mettez à jour les informations de la formation</p>
+                <h1 class="fs-3 mb-1">Modifier Formation</h1>
+                <p class="mb-0">Modifier les informations de la formation</p>
             </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-8 col-12 mx-auto">
-            <div class="card p-4">
-                {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-                    <div class="mb-3">
-                        {{ form_row(form.sujet) }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.formateur) }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.type) }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.dateDebut) }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.duree) }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.localisation) }}
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                        <a href="{{ path('admin_formation_index') }}" class="btn btn-outline-secondary">Retour à la liste</a>
-                    </div>
-                {{ form_end(form) }}
+
+            <div class="card">
+                <div class="card-body">
+                    {{ form_start(form, {'attr': {'id': 'formationForm'}}) }}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.sujet, 'Sujet', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.sujet, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.sujet) }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.formateur, 'Formateur', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.formateur, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.formateur) }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.type, 'Type', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.type, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.type) }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.dateDebut, 'Date de début', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.dateDebut, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.dateDebut) }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.duree, 'Durée (jours)', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.duree, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.duree) }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Localisation</label>
+                                <div id="adminLocationSection">
+                                    <button type="button" onclick="document.getElementById('adminLocationInputSection').style.display='block'; document.getElementById('adminLocationInputSection').scrollIntoView({behavior: 'smooth'});" class="btn btn-outline-primary mb-3">
+                                        <i class="ti ti-map-pin"></i> Sélectionner la localisation
+                                    </button>
+                                    <div id="adminSelectedLocation" class="alert alert-info d-none">
+                                        <strong>Localisation sélectionnée:</strong> <span id="adminLocationText"></span>
+                                    </div>
+                                </div>
+                                {{ form_widget(form.localisation, {'attr': {'class': 'd-none'}}) }}
+                                {{ form_errors(form.localisation) }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('admin_formation_index') }}" class="btn btn-secondary">
+                                <i class="ti ti-arrow-left"></i> Retour
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-check"></i> Enregistrer les modifications
+                            </button>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Simple Location Input Section -->
+<div class="card mt-3" id="adminLocationInputSection">
+    <div class="card-header">
+        <h6 class="mb-0">Localisation de la formation</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="adminLatitudeInput" class="form-label">Latitude</label>
+                <input type="number" id="adminLatitudeInput" class="form-control" step="0.000001" placeholder="Ex: 36.8065">
+            </div>
+            <div class="col-md-6">
+                <label for="adminLongitudeInput" class="form-label">Longitude</label>
+                <input type="number" id="adminLongitudeInput" class="form-control" step="0.000001" placeholder="Ex: 10.1815">
+            </div>
+        </div>
+        <div class="mt-3">
+            <button type="button" id="adminSaveLocationBtn" class="btn btn-primary">
+                <i class="ti ti-check"></i> Enregistrer la localisation
+            </button>
+            <a href="https://www.google.com/maps" target="_blank" class="btn btn-outline-secondary">
+                <i class="ti ti-external-link"></i> Trouver sur Google Maps
+            </a>
+        </div>
+        <div class="mt-2">
+            <small class="text-muted">
+                Utilisez Google Maps pour trouver les coordonnées GPS d'un lieu, puis entrez-les ici.
+                Pour la Tunisie : latitude entre 30-38, longitude entre 7-12.
+            </small>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show/hide location section based on formation type
+function toggleLocationSection() {
+    const typeField = document.querySelector('select[name="formation[type]"]') || document.querySelector('#formation_type');
+    const locationSection = document.getElementById('adminLocationSection');
+    const locationInputSection = document.getElementById('adminLocationInputSection');
+    
+    if (typeField && locationSection && locationInputSection) {
+        const selectedType = typeField.value;
+        if (selectedType === 'Présentiel' || selectedType === 'Hybride') {
+            locationSection.style.display = 'block';
+            locationInputSection.style.display = 'block';
+        } else {
+            locationSection.style.display = 'none';
+            locationInputSection.style.display = 'none';
+        }
+    } else {
+        // If type field not found, show location section by default
+        if (locationSection && locationInputSection) {
+            locationSection.style.display = 'block';
+            locationInputSection.style.display = 'block';
+        }
+    }
+}
+
+// Save location from manual input
+document.getElementById('adminSaveLocationBtn')?.addEventListener('click', function() {
+    const lat = document.getElementById('adminLatitudeInput').value;
+    const lng = document.getElementById('adminLongitudeInput').value;
+    
+    if (lat && lng) {
+        // Validate coordinates
+        const latNum = parseFloat(lat);
+        const lngNum = parseFloat(lng);
+        
+        if (isNaN(latNum) || isNaN(lngNum)) {
+            alert('Veuillez entrer des coordonnées valides.');
+            return;
+        }
+        
+        // Check if coordinates are reasonable for Tunisia
+        if (latNum < 30 || latNum > 38 || lngNum < 7 || lngNum > 12) {
+            if (!confirm('Ces coordonnées semblent en dehors de la Tunisie. Voulez-vous continuer?')) {
+                return;
+            }
+        }
+        
+        // Update the hidden localisation field
+        document.getElementById('formation_localisation').value = `${latNum},${lngNum}`;
+        
+        // Update the display
+        document.getElementById('adminSelectedLocation').classList.remove('d-none');
+        document.getElementById('adminLocationText').textContent = `Localisation: ${latNum.toFixed(6)}, ${lngNum.toFixed(6)}`;
+        
+        // Clear input fields
+        document.getElementById('adminLatitudeInput').value = '';
+        document.getElementById('adminLongitudeInput').value = '';
+        
+        alert('Localisation enregistrée avec succès!');
+    } else {
+        alert('Veuillez entrer la latitude et la longitude.');
+    }
+});
+
+// Initialize location section toggle on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleLocationSection();
+    
+    // Add event listener for type change
+    const typeSelect = document.querySelector('select[name="formation[type]"]') || document.querySelector('#formation_type');
+    if (typeSelect) {
+        typeSelect.addEventListener('change', toggleLocationSection);
+    }
+    
+    // Load existing location if any
+    const localisationInput = document.querySelector('#formation_localisation');
+    if (localisationInput && localisationInput.value) {
+        document.getElementById('adminSelectedLocation').classList.remove('d-none');
+        document.getElementById('adminLocationText').textContent = `Localisation: ${localisationInput.value}`;
+        
+        // Also populate the input fields
+        const coords = localisationInput.value.split(',');
+        if (coords.length === 2) {
+            document.getElementById('adminLatitudeInput').value = coords[0];
+            document.getElementById('adminLongitudeInput').value = coords[1];
+        }
+    }
+});
+
+// Original form validation code
+    const form = document.getElementById('formationForm');
+    const errorAlert = document.getElementById('errorAlert');
+    const errorList = document.getElementById('errorList');
+
+    function showErrors(errors) {
+        errorList.innerHTML = '';
+        errors.forEach(error => {
+            const li = document.createElement('li');
+            li.textContent = error;
+            errorList.appendChild(li);
+        });
+        errorAlert.classList.remove('d-none');
+    }
+
+    function hideErrors() {
+        errorAlert.classList.add('d-none');
+        errorList.innerHTML = '';
+    }
+
+    function validateForm() {
+        const errors = [];
+        let isValid = true;
+
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        hideErrors();
+
+        const sujet = document.getElementById('sujet').value.trim();
+        if (!sujet) {
+            errors.push('Le sujet est obligatoire.');
+            document.getElementById('sujet').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        const formateur = document.getElementById('formateur').value.trim();
+        if (!formateur) {
+            errors.push('Le formateur est obligatoire.');
+            document.getElementById('formateur').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        const type = document.getElementById('type').value;
+        if (!type) {
+            errors.push('Le type est obligatoire.');
+            document.getElementById('type').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        const dateDebut = document.getElementById('date_debut').value;
+        if (!dateDebut) {
+            errors.push('La date de début est obligatoire.');
+            document.getElementById('date_debut').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        const duree = document.getElementById('duree').value;
+        if (!duree || duree <= 0) {
+            errors.push('La durée doit être supérieure à 0.');
+            document.getElementById('duree').classList.add('is-invalid');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            showErrors(errors);
+        }
+
+        return isValid;
+    }
+
+    ['sujet', 'formateur', 'type', 'date_debut', 'duree'].forEach(field => {
+        document.getElementById(field).addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+        });
+    });
+
+    form.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
 {% endblock %}

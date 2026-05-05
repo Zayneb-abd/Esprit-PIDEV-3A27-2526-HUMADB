@@ -1,0 +1,535 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Recrutement{% endblock %}
+
+{% block css %}
+<style>
+    .recruitment-kpi-card {
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .recruitment-kpi-card .kpi-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .recruitment-kpi-card .kpi-chip {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .recruitment-kpi-card .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 0.35rem;
+    }
+
+    .recruitment-kpi-card .kpi-chart {
+        min-height: 120px;
+    }
+
+    .recruitment-pagination-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+        padding: 1.1rem 1.25rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbfb 100%);
+        border-top: 1px solid #e9eef2;
+    }
+
+    .recruitment-pagination-meta {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .recruitment-pagination-title {
+        margin: 0;
+        font-weight: 600;
+        color: #1f2d3d;
+    }
+
+    .recruitment-pagination-subtitle {
+        margin: 0.15rem 0 0;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .recruitment-pagination-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background: rgba(26, 95, 95, 0.08);
+        color: #1a5f5f;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .recruitment-pagination .pagination {
+        margin: 0;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+
+    .recruitment-pagination .page-item {
+        margin: 0;
+    }
+
+    .recruitment-pagination .page-link {
+        min-width: 2.6rem;
+        height: 2.6rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #d7e3e3;
+        border-radius: 999px;
+        color: #31515a;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+        transition: all 0.2s ease;
+    }
+
+    .recruitment-pagination .page-link:hover {
+        color: #1a5f5f;
+        border-color: rgba(26, 95, 95, 0.35);
+        background: rgba(26, 95, 95, 0.06);
+        transform: translateY(-1px);
+    }
+
+    .recruitment-pagination .page-item.active .page-link {
+        color: #fff;
+        border-color: #1a5f5f;
+        background: linear-gradient(135deg, #1a5f5f 0%, #4ecdc4 100%);
+        box-shadow: 0 10px 20px rgba(26, 95, 95, 0.18);
+    }
+
+    .recruitment-pagination .page-item.disabled .page-link {
+        color: #a0aebb;
+        background: #f7fafb;
+        border-color: #e4ebef;
+        box-shadow: none;
+        transform: none;
+        opacity: 1;
+    }
+
+    .recruitment-pagination .page-item:first-child .page-link,
+    .recruitment-pagination .page-item:last-child .page-link {
+        padding-inline: 0.9rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h1 class="fs-3 mb-1">Recrutement</h1>
+            <p class="mb-0 text-secondary">Gestion complete des offres d'emploi et des candidatures.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <form method="post" action="{{ path('admin_recruitment_cleanup_orphans') }}" onsubmit="return confirm('Supprimer les candidatures et entretiens orphelins ?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('cleanup_orphan_candidatures') }}">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="ti ti-broom me-1"></i> Nettoyer les orphelins
+                </button>
+            </form>
+            <a href="{{ path('admin_offre_new') }}" class="btn btn-primary">
+                <i class="ti ti-briefcase me-1"></i> Nouvelle offre
+            </a>
+            <a href="{{ path('admin_candidature_new') }}" class="btn btn-outline-primary">
+                <i class="ti ti-user-plus me-1"></i> Nouvelle candidature
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100 recruitment-kpi-card">
+                <div class="card-body p-4">
+                    <div class="kpi-head">
+                        <div>
+                            <p class="text-muted mb-2">Offres publiees</p>
+                            <div class="kpi-value">{{ stats.offres }}</div>
+                            <div class="small text-secondary">Evolution sur 6 mois</div>
+                        </div>
+                        <div class="kpi-chip" style="background: linear-gradient(135deg, #1a5f5f 0%, #4ecdc4 100%);">
+                            <i class="ti ti-briefcase"></i>
+                        </div>
+                    </div>
+                    <div id="kpiOffersChart" class="kpi-chart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100 recruitment-kpi-card">
+                <div class="card-body p-4">
+                    <div class="kpi-head">
+                        <div>
+                            <p class="text-muted mb-2">Candidatures</p>
+                            <div class="kpi-value">{{ stats.candidatures }}</div>
+                            <div class="small text-secondary">Flux mensuel des depots</div>
+                        </div>
+                        <div class="kpi-chip" style="background: linear-gradient(135deg, #ff8a65 0%, #ffb74d 100%);">
+                            <i class="ti ti-users"></i>
+                        </div>
+                    </div>
+                    <div id="kpiApplicationsChart" class="kpi-chart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100 recruitment-kpi-card">
+                <div class="card-body p-4">
+                    <div class="kpi-head">
+                        <div>
+                            <p class="text-muted mb-2">Postes ouverts</p>
+                            <div class="kpi-value">{{ stats.postes }}</div>
+                            <div class="small text-secondary">Repartition par contrat</div>
+                        </div>
+                        <div class="kpi-chip" style="background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);">
+                            <i class="ti ti-layout-grid"></i>
+                        </div>
+                    </div>
+                    <div id="kpiContractsChart" class="kpi-chart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100 recruitment-kpi-card">
+                <div class="card-body p-4">
+                    <div class="kpi-head">
+                        <div>
+                            <p class="text-muted mb-2">En attente</p>
+                            <div class="kpi-value">{{ stats.candidatures_en_attente }}</div>
+                            <div class="small text-secondary">Statuts des candidatures</div>
+                        </div>
+                        <div class="kpi-chip" style="background: linear-gradient(135deg, #f59e0b 0%, #fcd34d 100%);">
+                            <i class="ti ti-hourglass-high"></i>
+                        </div>
+                    </div>
+                    <div id="kpiStatusesChart" class="kpi-chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body p-4">
+            <form method="get" action="{{ path('admin_inventory') }}" class="row g-3 align-items-end">
+                <div class="col-lg-8">
+                    <label for="recrutement-search" class="form-label">Recherche</label>
+                    <input
+                        id="recrutement-search"
+                        type="search"
+                        name="q"
+                        value="{{ search|default('') }}"
+                        class="form-control"
+                        placeholder="Rechercher par offre, departement, candidat, email, statut..."
+                    >
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <button type="submit" class="btn btn-primary w-100">Rechercher</button>
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <a href="{{ path('admin_inventory') }}" class="btn btn-outline-secondary w-100">Reinitialiser</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body p-0">
+            <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+                <div>
+                    <h2 class="fs-5 mb-1">Offres d'emploi</h2>
+                    <p class="mb-0 text-secondary">Liste complete des offres disponibles. {{ offres.getTotalItemCount }} resultat(s).</p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Titre</th>
+                            <th>Departement</th>
+                            <th>Contrat</th>
+                            <th>Publication</th>
+                            <th>Postes</th>
+                            <th>Candidatures</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for offre in offres %}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">{{ offre.titre ?: 'Sans titre' }}</div>
+                                    <small class="text-secondary">ID #{{ offre.id }}</small>
+                                </td>
+                                <td>{{ offre.departement ?: '-' }}</td>
+                                <td>{{ offre.typeContrat ?: '-' }}</td>
+                                <td>{{ offre.datePublication ? offre.datePublication|date('d/m/Y') : '-' }}</td>
+                                <td>{{ offre.nombrePostes ?? 0 }}</td>
+                                <td>{{ offre.candidatures|length }}</td>
+                                <td class="text-end">
+                                    <a href="{{ path('admin_offre_show', {id: offre.id}) }}" class="btn btn-sm btn-light">Voir</a>
+                                    <a href="{{ path('admin_offre_edit', {id: offre.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                                    <form method="post" action="{{ path('admin_offre_delete', {id: offre.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_offre_' ~ offre.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette offre ainsi que ses candidatures, entretiens et quiz lies ?');">Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-secondary">Aucune offre d'emploi disponible.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if offres.getPageCount > 1 %}
+                <div class="recruitment-pagination-shell">
+                    <div class="recruitment-pagination-meta">
+                        <div>
+                            <p class="recruitment-pagination-title">Navigation des offres</p>
+                            <p class="recruitment-pagination-subtitle">
+                                Page {{ offres.getCurrentPageNumber }} sur {{ offres.getPageCount }}
+                            </p>
+                        </div>
+                        <div class="recruitment-pagination-badge">
+                            <i class="ti ti-layout-list me-1"></i>
+                            {{ offres.getTotalItemCount }} offre(s)
+                        </div>
+                    </div>
+                    <div class="recruitment-pagination">
+                        {{ knp_pagination_render(offres) }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+                <div>
+                    <h2 class="fs-5 mb-1">Candidatures</h2>
+                    <p class="mb-0 text-secondary">Suivi des candidatures associees aux offres. {{ candidatures.getTotalItemCount }} resultat(s).</p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Candidat</th>
+                            <th>Offre</th>
+                            <th>Statut</th>
+                            <th>Date candidature</th>
+                            <th>Date statut</th>
+                            <th>CV</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for candidature in candidatures %}
+                            <tr>
+                                <td>
+                                    {% if candidature.user %}
+                                        <div class="fw-semibold">{{ candidature.user.prenom }} {{ candidature.user.nom }}</div>
+                                        <small class="text-secondary">{{ candidature.user.email }}</small>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ candidature.offreEmploi ? candidature.offreEmploi.titre : '-' }}</td>
+                                <td>
+                                    <span class="badge text-bg-{{ candidature.statut == 'Acceptee' ? 'success' : (candidature.statut == 'Refusee' ? 'danger' : (candidature.statut == 'En cours' ? 'primary' : 'warning')) }}">
+                                        {{ candidature.statut ?: 'Non defini' }}
+                                    </span>
+                                </td>
+                                <td>{{ candidature.dateCandidature ? candidature.dateCandidature|date('d/m/Y') : '-' }}</td>
+                                <td>{{ candidature.dateStatut ? candidature.dateStatut|date('d/m/Y') : '-' }}</td>
+                                <td>{{ candidature.cv ?: '-' }}</td>
+                                <td class="text-end">
+                                    <a href="{{ path('admin_candidature_show', {id: candidature.id}) }}" class="btn btn-sm btn-light">Voir</a>
+                                    <a href="{{ path('admin_candidature_show', {id: candidature.id}) }}#planifier-entretien" class="btn btn-sm btn-outline-success">Planifier entretien</a>
+                                    <a href="{{ path('admin_candidature_edit', {id: candidature.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                                    <form method="post" action="{{ path('admin_candidature_delete', {id: candidature.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_candidature_' ~ candidature.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette candidature ?');">Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-secondary">Aucune candidature enregistree.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if candidatures.getPageCount > 1 %}
+                <div class="recruitment-pagination-shell">
+                    <div class="recruitment-pagination-meta">
+                        <div>
+                            <p class="recruitment-pagination-title">Navigation des candidatures</p>
+                            <p class="recruitment-pagination-subtitle">
+                                Page {{ candidatures.getCurrentPageNumber }} sur {{ candidatures.getPageCount }}
+                            </p>
+                        </div>
+                        <div class="recruitment-pagination-badge">
+                            <i class="ti ti-files me-1"></i>
+                            {{ candidatures.getTotalItemCount }} candidature(s)
+                        </div>
+                    </div>
+                    <div class="recruitment-pagination">
+                        {{ knp_pagination_render(candidatures) }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ApexCharts === 'undefined') {
+        return;
+    }
+
+    const kpiCharts = {{ kpi_charts|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }};
+    const offersData = kpiCharts.offers || { labels: [], series: [] };
+    const applicationsData = kpiCharts.applications || { labels: [], series: [] };
+    const contractsData = kpiCharts.contracts || { labels: [], series: [] };
+    const statusesData = kpiCharts.statuses || { labels: [], series: [] };
+
+    const commonSparkline = {
+        chart: {
+            type: 'area',
+            height: 120,
+            toolbar: { show: false },
+            sparkline: { enabled: false },
+        },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 3 },
+        grid: { borderColor: '#eef2f7', strokeDashArray: 3 },
+        xaxis: {
+            labels: { show: true, style: { colors: '#94a3b8', fontSize: '10px' } },
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+        },
+        yaxis: { labels: { show: false } },
+        legend: { show: false },
+        tooltip: { theme: 'light' },
+    };
+
+    const offersChartElement = document.querySelector('#kpiOffersChart');
+    if (offersChartElement) {
+        const offersChartOptions = {
+            ...commonSparkline,
+            colors: ['#1a5f5f'],
+            series: [{ name: 'Offres', data: offersData.series }],
+            labels: offersData.labels,
+            fill: {
+                type: 'gradient',
+                gradient: { opacityFrom: 0.45, opacityTo: 0.06, stops: [0, 100] },
+            },
+        };
+        new ApexCharts(offersChartElement, offersChartOptions).render();
+    }
+
+    const applicationsChartElement = document.querySelector('#kpiApplicationsChart');
+    if (applicationsChartElement) {
+        const applicationsChartOptions = {
+            ...commonSparkline,
+            colors: ['#ff8a65'],
+            series: [{ name: 'Candidatures', data: applicationsData.series }],
+            labels: applicationsData.labels,
+            fill: {
+                type: 'gradient',
+                gradient: { opacityFrom: 0.45, opacityTo: 0.08, stops: [0, 100] },
+            },
+        };
+        new ApexCharts(applicationsChartElement, applicationsChartOptions).render();
+    }
+
+    const contractsChartElement = document.querySelector('#kpiContractsChart');
+    if (contractsChartElement) {
+        const contractsChartOptions = {
+            chart: {
+                type: 'bar',
+                height: 120,
+                toolbar: { show: false },
+            },
+            colors: ['#4ecdc4'],
+            series: [{ name: 'Postes', data: contractsData.series }],
+            xaxis: {
+                categories: contractsData.labels,
+                labels: { style: { colors: '#94a3b8', fontSize: '10px' } },
+                axisBorder: { show: false },
+                axisTicks: { show: false },
+            },
+            yaxis: { labels: { show: false } },
+            dataLabels: { enabled: false },
+            grid: { borderColor: '#eef2f7', strokeDashArray: 3 },
+            plotOptions: {
+                bar: {
+                    borderRadius: 6,
+                    columnWidth: '50%',
+                },
+            },
+            legend: { show: false },
+        };
+        new ApexCharts(contractsChartElement, contractsChartOptions).render();
+    }
+
+    const statusesChartElement = document.querySelector('#kpiStatusesChart');
+    if (statusesChartElement) {
+        const statusesChartOptions = {
+            chart: {
+                type: 'donut',
+                height: 140,
+            },
+            colors: ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444'],
+            series: statusesData.series,
+            labels: statusesData.labels,
+            legend: {
+                position: 'bottom',
+                fontSize: '10px',
+            },
+            dataLabels: { enabled: false },
+            stroke: { width: 0 },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '62%',
+                    },
+                },
+            },
+        };
+        new ApexCharts(statusesChartElement, statusesChartOptions).render();
+    }
+});
+</script>
+{% endblock %}

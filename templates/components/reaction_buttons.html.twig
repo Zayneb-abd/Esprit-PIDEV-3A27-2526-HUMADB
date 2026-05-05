@@ -1,0 +1,266 @@
+<div class="reaction-buttons" data-publication-id="{{ publication.id }}">
+    <div class="btn-group" role="group">
+        <!-- Bouton Like -->
+        <button type="button" 
+                class="btn btn-outline-success reaction-btn like-btn {% if userReaction and userReaction.type == 'like' %}active{% endif %}" 
+                data-type="like"
+                title="J'aime cette publication">
+            <span class="reaction-emoji">like</span>
+            <span class="reaction-count">{{ counts.like }}</span>
+        </button>
+        
+        <!-- Bouton Dislike -->
+        <button type="button" 
+                class="btn btn-outline-danger reaction-btn dislike-btn {% if userReaction and userReaction.type == 'dislike' %}active{% endif %}" 
+                data-type="dislike"
+                title="Je n'aime pas cette publication">
+            <span class="reaction-emoji">dislike</span>
+            <span class="reaction-count">{{ counts.dislike }}</span>
+        </button>
+    </div>
+    
+    <!-- Message de statut -->
+    <div class="reaction-status mt-2">
+        <small class="text-muted">
+            {% if userReaction %}
+                Vous avez réagi : {{ userReaction.emoji }} {{ userReaction.type|capitalize }}
+            {% else %}
+                Réagissez à cette publication
+            {% endif %}
+        </small>
+    </div>
+</div>
+
+<style>
+.reaction-buttons {
+    margin: 15px 0;
+}
+
+.reaction-btn {
+    position: relative;
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.reaction-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.reaction-btn.active {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.like-btn.active {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.dislike-btn.active {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.reaction-emoji {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.reaction-count {
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+}
+
+.reaction-status {
+    text-align: center;
+    font-style: italic;
+}
+
+/* Animation de clic */
+.reaction-btn:active {
+    transform: scale(0.95);
+}
+
+/* Animation de chargement */
+.reaction-btn.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.reaction-btn.loading .reaction-emoji::after {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    border-top-color: currentColor;
+    animation: spin 1s linear infinite;
+    margin-left: 4px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .reaction-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .reaction-emoji {
+        font-size: 14px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gérer les clics sur les boutons de réaction
+    document.querySelectorAll('.reaction-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const publicationId = this.closest('.reaction-buttons').dataset.publicationId;
+            const type = this.dataset.type;
+            
+            // Ajouter l'état de chargement
+            this.classList.add('loading');
+            
+            // Envoyer la requête AJAX
+            fetch(`/reaction/add/${publicationId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({
+                    'type': type
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Retirer l'état de chargement
+                this.classList.remove('loading');
+                
+                console.log('API Response:', data); // Debug
+                
+                if (data.success) {
+                    // Mettre à jour les compteurs
+                    updateReactionCounts(publicationId, data.counts);
+                    
+                    // Mettre à jour l'état des boutons
+                    updateReactionButtons(publicationId, data.userReaction);
+                    
+                    // Mettre à jour le message de statut
+                    updateReactionStatus(publicationId, data.userReaction);
+                    
+                    // Afficher un message de confirmation (optionnel)
+                    if (data.message) {
+                        showNotification(data.message, 'success');
+                    }
+                } else {
+                    // Afficher une erreur
+                    showNotification(data.error || 'Erreur lors de la réaction', 'error');
+                }
+            })
+            .catch(error => {
+                this.classList.remove('loading');
+                console.error('Erreur:', error);
+                showNotification('Erreur de connexion au serveur', 'error');
+            });
+        });
+    });
+    
+    // Fonction pour mettre à jour les compteurs
+    function updateReactionCounts(publicationId, counts) {
+        const container = document.querySelector(`.reaction-buttons[data-publication-id="${publicationId}"]`);
+        if (!container) return;
+        
+        const likeBtn = container.querySelector('.like-btn');
+        const dislikeBtn = container.querySelector('.dislike-btn');
+        
+        console.log('Counts received:', counts); // Debug
+        
+        if (likeBtn) {
+            const likeCount = counts.like || 0;
+            likeBtn.querySelector('.reaction-count').textContent = likeCount;
+        }
+        
+        if (dislikeBtn) {
+            const dislikeCount = counts.dislike || 0;
+            dislikeBtn.querySelector('.reaction-count').textContent = dislikeCount;
+        }
+    }
+    
+    // Fonction pour mettre à jour l'état des boutons
+    function updateReactionButtons(publicationId, userReaction) {
+        const container = document.querySelector(`.reaction-buttons[data-publication-id="${publicationId}"]`);
+        if (!container) return;
+        
+        const likeBtn = container.querySelector('.like-btn');
+        const dislikeBtn = container.querySelector('.dislike-btn');
+        
+        // Retirer toutes les classes actives
+        if (likeBtn) likeBtn.classList.remove('active');
+        if (dislikeBtn) dislikeBtn.classList.remove('active');
+        
+        // Ajouter la classe active au bon bouton
+        if (userReaction) {
+            if (userReaction.type === 'like' && likeBtn) {
+                likeBtn.classList.add('active');
+            } else if (userReaction.type === 'dislike' && dislikeBtn) {
+                dislikeBtn.classList.add('active');
+            }
+        }
+    }
+    
+    // Fonction pour mettre à jour le message de statut
+    function updateReactionStatus(publicationId, userReaction) {
+        const container = document.querySelector(`.reaction-buttons[data-publication-id="${publicationId}"]`);
+        if (!container) return;
+        
+        const statusElement = container.querySelector('.reaction-status small');
+        if (!statusElement) return;
+        
+        if (userReaction) {
+            statusElement.textContent = `Vous avez réagi : ${userReaction.emoji} ${userReaction.type.charAt(0).toUpperCase() + userReaction.type.slice(1)}`;
+        } else {
+            statusElement.textContent = 'Réagissez à cette publication';
+        }
+    }
+    
+    // Fonction pour afficher des notifications (optionnel)
+    function showNotification(message, type = 'info') {
+        // Créer une notification simple
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-suppression après 3 secondes
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 3000);
+    }
+});
+</script>

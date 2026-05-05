@@ -1,4 +1,4 @@
-{% extends 'employ/base_admin.html.twig' %}
+{% extends 'employ/base_employe.html.twig' %}
 
 {% block title %}Ajouter une Formation{% endblock %}
 
@@ -31,9 +31,27 @@
                     <div class="mb-3">
                         {{ form_row(form.duree) }}
                     </div>
-                    <div class="mb-3">
+                    {# Location field - hidden for map-based selection #}
+                    <div class="mb-3" style="display: none;">
                         {{ form_row(form.localisation) }}
                     </div>
+                    
+                    {# Location selection with map #}
+                    <div class="mb-3" id="locationSection" style="display: none;">
+                        <label class="form-label">Localisation de la formation</label>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="button" id="selectLocationBtn" class="btn btn-primary w-100">
+                                    <i class="ti ti-map-pin"></i> Sélectionner la localisation sur la carte
+                                </button>
+                                <small class="text-muted">Cliquez sur le bouton pour ouvrir la carte et sélectionner la localisation</small>
+                            </div>
+                        </div>
+                        <div id="selectedLocation" class="alert alert-info d-none mt-3">
+                            <strong>Localisation sélectionnée:</strong> <span id="selectedLocationText"></span>
+                        </div>
+                    </div>
+                    
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">Enregistrer</button>
                         <a href="{{ path('employ_formation_index') }}" class="btn btn-outline-secondary">Retour à la liste</a>
@@ -42,5 +60,258 @@
             </div>
         </div>
     </div>
+<!-- Location Selection Modal -->
+<div class="modal fade" id="locationModal" tabindex="-1" aria-labelledby="locationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="locationModalLabel">Sélectionner la localisation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <input type="text" id="addressInput" class="form-control" placeholder="Rechercher une adresse...">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" id="searchBtn" class="btn btn-outline-primary w-100">
+                                <i class="ti ti-search"></i> Rechercher
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" id="currentLocationBtn" class="btn btn-outline-secondary w-100">
+                                <i class="ti ti-map-pin"></i> Ma position
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="selectionMap" style="height: 400px; width: 100%; border: 1px solid #ddd; border-radius: 4px;"></div>
+                <div class="mt-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Latitude:</label>
+                            <input type="text" id="modalLatitude" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Longitude:</label>
+                            <input type="text" id="modalLongitude" class="form-control" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">Cliquez sur la carte pour sélectionner la localisation de la formation</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" id="confirmLocationBtn" class="btn btn-primary" onclick="confirmLocation()">Confirmer la localisation</button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+// Show/hide location section based on formation type
+function toggleLocationSection() {
+    const typeField = document.querySelector('select[name="formation[type]"]') || document.querySelector('#formation_type');
+    const locationSection = document.getElementById('locationSection');
+    
+    if (typeField && locationSection) {
+        const selectedType = typeField.value;
+        if (selectedType === 'Présentiel' || selectedType === 'Hybride') {
+            locationSection.style.display = 'block';
+        } else {
+            locationSection.style.display = 'none';
+        }
+    }
+}
+
+// Initialize OpenStreetMap for location selection
+let selectionMap;
+let selectionMarker;
+let selectedPlaceName = '';
+
+function initSelectionMap() {
+    if (selectionMap) return; // Already initialized
+    
+    // Default center (Tunis)
+    const center = [36.8065, 10.1815];
+    
+    selectionMap = L.map('selectionMap').setView(center, 12);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(selectionMap);
+    
+    // Add draggable marker
+    selectionMarker = L.marker(center, {
+        draggable: true
+    }).addTo(selectionMap);
+    
+    // Update coordinates when marker is dragged
+    selectionMarker.on('dragend', function(event) {
+        const position = event.target.getLatLng();
+        updateModalCoordinates(position.lat, position.lng);
+    });
+    
+    // Update coordinates when map is clicked
+    selectionMap.on('click', function(event) {
+        const position = event.latlng;
+        selectionMarker.setLatLng(position);
+        updateModalCoordinates(position.lat, position.lng);
+    });
+}
+
+function updateModalCoordinates(lat, lng) {
+    document.getElementById('modalLatitude').value = lat.toFixed(6);
+    document.getElementById('modalLongitude').value = lng.toFixed(6);
+    
+    // Get place name from coordinates using reverse geocoding
+    getPlaceName(lat, lng);
+}
+
+function getPlaceName(lat, lng) {
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.display_name) {
+                selectedPlaceName = data.display_name;
+                console.log('Place name found:', selectedPlaceName);
+            } else {
+                selectedPlaceName = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                console.log('Place name not found, using coordinates');
+            }
+        })
+        .catch(error => {
+            console.error('Reverse geocoding error:', error);
+            selectedPlaceName = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        });
+}
+
+// Search address using Nominatim
+document.getElementById('searchBtn')?.addEventListener('click', function() {
+    const address = document.getElementById('addressInput').value;
+    if (address && selectionMap) {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    const result = data[0];
+                    const lat = parseFloat(result.lat);
+                    const lng = parseFloat(result.lon);
+                    
+                    selectionMap.setView([lat, lng], 15);
+                    selectionMarker.setLatLng([lat, lng]);
+                    updateModalCoordinates(lat, lng);
+                } else {
+                    alert('Adresse non trouvée');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur de recherche:', error);
+                alert('Erreur lors de la recherche d\'adresse');
+            });
+    }
+});
+
+// Get current location
+document.getElementById('currentLocationBtn')?.addEventListener('click', function() {
+    if (navigator.geolocation && selectionMap) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            selectionMap.setView([lat, lng], 15);
+            selectionMarker.setLatLng([lat, lng]);
+            updateModalCoordinates(lat, lng);
+        }, function(error) {
+            alert('Impossible d\'obtenir votre position: ' + error.message);
+        });
+    }
+});
+
+// Open location modal
+document.getElementById('selectLocationBtn')?.addEventListener('click', function() {
+    const modal = new bootstrap.Modal(document.getElementById('locationModal'));
+    modal.show();
+    
+    // Initialize map if not already done
+    setTimeout(function() {
+        if (typeof L !== 'undefined') {
+            initSelectionMap();
+        }
+    }, 600);
+});
+
+// Confirm location with place name
+function confirmLocation() {
+    const lat = document.getElementById('modalLatitude').value;
+    const lng = document.getElementById('modalLongitude').value;
+    
+    if (lat && lng) {
+        // Wait a moment for reverse geocoding to complete, then save and display
+        setTimeout(function() {
+            // Use place name for both database and display
+            const placeName = selectedPlaceName || `${lat}, ${lng}`;
+            
+            // Update the hidden localisation field with place name (for database)
+            const formField = document.querySelector('#{{ form.localisation.vars.id }}');
+            if (formField) {
+                formField.value = placeName;
+                console.log('Saving place name to database:', placeName);
+            }
+            
+            // Update the display with place name (for user)
+            document.getElementById('selectedLocation').classList.remove('d-none');
+            document.getElementById('selectedLocationText').textContent = placeName;
+            console.log('Displaying location:', placeName);
+        }, 800); // Increased delay to ensure geocoding completes
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('locationModal'));
+        if (modal) {
+            modal.hide();
+        }
+    } else {
+        alert('Veuillez sélectionner une localisation sur la carte');
+    }
+}
+
+// Listen for type field changes
+document.addEventListener('DOMContentLoaded', function() {
+    const typeField = document.querySelector('#{{ form.type.vars.id }}');
+    if (typeField) {
+        typeField.addEventListener('change', toggleLocationSection);
+    }
+    
+    // Initialize on page load
+    toggleLocationSection();
+});
+
+// Load Leaflet CSS and JS
+function loadLeaflet() {
+    // Load CSS
+    const leafletCSS = document.createElement('link');
+    leafletCSS.rel = 'stylesheet';
+    leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(leafletCSS);
+    
+    // Load JS
+    const leafletJS = document.createElement('script');
+    leafletJS.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    leafletJS.onload = function() {
+        // Map will be initialized when modal is opened
+    };
+    document.head.appendChild(leafletJS);
+}
+
+// Load Leaflet when needed
+window.addEventListener('load', function() {
+    setTimeout(loadLeaflet, 100);
+});
+</script>
+</div>
+
 {% endblock %}

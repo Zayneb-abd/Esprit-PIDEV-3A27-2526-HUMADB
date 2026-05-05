@@ -151,6 +151,23 @@
             width: 20px;
             text-align: center;
         }
+
+        .sidebar-menu li ul li a {
+            padding: 8px 20px 8px 52px;
+            font-size: 13px;
+        }
+
+        .sidebar-menu li a[data-bs-toggle="collapse"]::after {
+            content: "\eb2e";
+            font-family: 'tabler-icons';
+            margin-left: auto;
+            transition: transform 0.3s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a[data-bs-toggle="collapse"]:not(.collapsed)::after {
+            transform: rotate(90deg);
+        }
         
         /* ==========================================
            TOPBAR
@@ -396,15 +413,15 @@
                 </a>
             </li>
             <li>
-                <a href="{{ path('employ_inventory') }}" class="{% if app.request.attributes.get('_route') == 'employ_inventory' %}active{% endif %}">
-                    <i class="ti ti-box-seam"></i>
-                    <span>Gestion de recrutement</span>
+                <a href="{{ path('employ_feedback_index') }}" class="{% if 'employ_feedback' in app.request.attributes.get('_route') %}active{% endif %}">
+                    <i class="ti ti-message-report"></i>
+                    <span>Mes Feedbacks</span>
                 </a>
             </li>
             <li>
-                <a href="{{ path('employ_product_create') }}" class="{% if app.request.attributes.get('_route') == 'employ_product_create' %}active{% endif %}">
-                    <i class="ti ti-plus"></i>
-                    <span>Add Product</span>
+                <a href="{{ path('employ_inventory') }}" class="{% if app.request.attributes.get('_route') == 'employ_inventory' %}active{% endif %}">
+                    <i class="ti ti-box-seam"></i>
+                    <span>Gestion de recrutement</span>
                 </a>
             </li>
             <li>
@@ -414,10 +431,27 @@
                 </a>
             </li>
             <li>
-                <a href="{{ path('employ_formation_index') }}" class="{% if app.request.attributes.get('_route') in ['employ_formation_index', 'employ_formation_new', 'employ_formation_show', 'employ_formation_edit'] %}active{% endif %}">
+                <a href="#formationSubmenu" data-bs-toggle="collapse" class="{% if app.request.attributes.get('_route') starts with 'employ_formation' or app.request.attributes.get('_route') starts with 'employ_participation' %}active{% else %}collapsed{% endif %}">
                     <i class="ti ti-school"></i>
-                    <span>Formation</span>
+                    <span>Formations</span>
                 </a>
+                <ul class="collapse list-unstyled {% if app.request.attributes.get('_route') starts with 'employ_formation' or app.request.attributes.get('_route') starts with 'employ_participation' %}show{% endif %}" id="formationSubmenu">
+                    <li>
+                        <a href="{{ path('employ_formation_index') }}" class="{% if app.request.attributes.get('_route') starts with 'employ_formation' %}active{% endif %}">
+                            Gestion des formations
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('employ_participation_formations') }}" class="{% if app.request.attributes.get('_route') == 'employ_participation_formations' %}active{% endif %}">
+                            S'inscrire aux formations
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('employ_participation_index') }}" class="{% if app.request.attributes.get('_route') == 'employ_participation_index' %}active{% endif %}">
+                            Mes participations
+                        </a>
+                    </li>
+                </ul>
             </li>
             <li>
                 <a href="{{ path('employ_docs') }}">
@@ -433,6 +467,24 @@
             </li>
             
             <li class="menu-label">Account</li>
+            <li>
+                <a href="{{ path('user_profile') }}" class="{% if app.request.attributes.get('_route') == 'user_profile' %}active{% endif %}">
+                    <i class="ti ti-user-circle"></i>
+                    <span>Mon profil</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('user_edit_profile') }}" class="{% if app.request.attributes.get('_route') == 'user_edit_profile' %}active{% endif %}">
+                    <i class="ti ti-user-edit"></i>
+                    <span>Modifier profil</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('user_change_password') }}" class="{% if app.request.attributes.get('_route') == 'user_change_password' %}active{% endif %}">
+                    <i class="ti ti-lock"></i>
+                    <span>Changer mot de passe</span>
+                </a>
+            </li>
             <li>
                 <a href="{{ path('app_logout') }}">
                     <i class="ti ti-logout"></i>
@@ -511,32 +563,34 @@
                 <!-- User Dropdown -->
                 <li class="ms-3 dropdown">
                     <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="" class="avatar avatar-sm rounded-circle" />
+                        {% if app.user and app.user.faceImage %}
+                            <img src="{{ asset('uploads/faces/' ~ app.user.faceImage) }}" alt="Avatar" class="avatar avatar-sm rounded-circle" />
+                        {% else %}
+                            <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="Avatar" class="avatar avatar-sm rounded-circle" />
+                        {% endif %}
                     </a>
                     <div class="dropdown-menu dropdown-menu-end p-0" style="min-width: 200px;">
                         <div>
                             <div class="d-flex gap-3 align-items-center border-dashed border-bottom px-3 py-3">
-                                <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="" class="avatar avatar-md rounded-circle" />
+                                {% if app.user and app.user.faceImage %}
+                                    <img src="{{ asset('uploads/faces/' ~ app.user.faceImage) }}" alt="Avatar" class="avatar avatar-md rounded-circle" />
+                                {% else %}
+                                    <img src="{{ asset('admin/images/avatar/avatar-1.jpg') }}" alt="Avatar" class="avatar avatar-md rounded-circle" />
+                                {% endif %}
                                 <div>
-                                    <h4 class="mb-0 small">Shrina Tesla</h4>
-                                    <p class="mb-0 small">@imshrina</p>
+                                    <h4 class="mb-0 small">{{ app.user and app.user.prenom is defined ? app.user.prenom ~ ' ' ~ app.user.nom : 'Utilisateur' }}</h4>
+                                    <p class="mb-0 small">{{ app.user and app.user.email is defined ? app.user.email : '' }}</p>
                                 </div>
                             </div>
                             <div class="p-3 d-flex flex-column gap-1 small lh-lg">
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Home</span>
+                                <a href="{{ path('user_profile') }}" class="text-decoration-none text-dark">
+                                    <span>Mon profil</span>
                                 </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Inbox</span>
+                                <a href="{{ path('user_edit_profile') }}" class="text-decoration-none text-dark">
+                                    <span>Modifier profil</span>
                                 </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Chat</span>
-                                </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Activity</span>
-                                </a>
-                                <a href="#!" class="text-decoration-none text-dark">
-                                    <span>Account Settings</span>
+                                <a href="{{ path('user_change_password') }}" class="text-decoration-none text-dark">
+                                    <span>Changer mot de passe</span>
                                 </a>
                             </div>
                         </div>
@@ -550,6 +604,14 @@
        MAIN CONTENT
        ========================================== #}
     <main class="main-content">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
         {% block body %}{% endblock %}
     </main>
     

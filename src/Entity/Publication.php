@@ -6,6 +6,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\PublicationRepository;
 
@@ -30,6 +31,13 @@ class Publication
     }
 
     #[ORM\Column(type: 'text', nullable: false)]
+    #[Assert\NotBlank(message: 'Le contenu de la publication ne peut pas etre vide.')]
+    #[Assert\Length(
+        min: 10,
+        max: 5000,
+        minMessage: 'Le contenu doit contenir au moins {{ limit }} caracteres.',
+        maxMessage: 'Le contenu ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private ?string $contenu = null;
 
     public function getContenu(): ?string
@@ -44,6 +52,7 @@ class Publication
     }
 
     #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Assert\Type(type: \DateTimeInterface::class, message: 'La date de publication doit etre valide.')]
     private ?\DateTimeInterface $date_publication = null;
 
     public function getDate_publication(): ?\DateTimeInterface
@@ -58,6 +67,7 @@ class Publication
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Length(max: 100, maxMessage: 'Le type ne peut pas depasser {{ limit }} caracteres.')]
     private ?string $type = null;
 
     public function getType(): ?string
@@ -142,7 +152,7 @@ class Publication
         return $this;
     }
 
-    #[ORM\OneToOne(targetEntity: ReactionPublication::class, mappedBy: 'publication')]
+    #[ORM\OneToOne(targetEntity: ReactionPublication::class, mappedBy: 'publication', fetch: 'LAZY')]
     private ?ReactionPublication $reactionPublication = null;
 
     public function __construct()

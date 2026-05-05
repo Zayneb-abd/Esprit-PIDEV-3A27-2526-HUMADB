@@ -1,0 +1,102 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Nouvelle Absence{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            <div class="mb-4">
+                <h1 class="fs-3 mb-1">Nouvelle Absence</h1>
+                <p class="mb-0">Créer une nouvelle absence pour un employé</p>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ path('admin_absence_new') }}" method="POST" id="absenceForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="employe_id" class="form-label">Employé <span class="text-danger">*</span></label>
+                                <select name="employe_id" id="employe_id" class="form-select">
+                                    <option value="">-- Sélectionner un employé --</option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.nom|default('') }} {{ user.prenom|default('') }} ({{ user.email|default('') }})</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback" id="employe_error">Veuillez sélectionner un employé.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="type_absence" class="form-label">Type d'absence <span class="text-danger">*</span></label>
+                                <select name="type_absence" id="type_absence" class="form-select">
+                                    <option value="">-- Sélectionner un type --</option>
+                                    <option value="maladie">Maladie</option>
+                                    <option value="accident">Accident</option>
+                                    <option value="absence_injustifiee">Absence injustifiée</option>
+                                    <option value="retard">Retard</option>
+                                    <option value="formation">Formation</option>
+                                    <option value="autre">Autre</option>
+                                </select>
+                                <div class="invalid-feedback" id="type_error">Veuillez sélectionner un type d'absence.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_debut" class="form-label">Date de début <span class="text-danger">*</span></label>
+                                <input type="date" name="date_debut" id="date_debut" class="form-control">
+                                <div class="form-text text-muted">
+                                    <i class="ti ti-info-circle"></i> La date de début doit être aujourd'hui ou dans le futur.
+                                </div>
+                                <div class="invalid-feedback" id="date_debut_error">La date de début est obligatoire et doit être aujourd'hui ou dans le futur.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="date_fin" class="form-label">Date de fin <span class="text-danger">*</span></label>
+                                <input type="date" name="date_fin" id="date_fin" class="form-control">
+                                <div class="form-text text-muted">
+                                    <i class="ti ti-info-circle"></i> La date de fin doit être après la date de début.
+                                </div>
+                                <div class="invalid-feedback" id="date_fin_error">La date de fin doit être après la date de début.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="statut" class="form-label">Statut <span class="text-danger">*</span></label>
+                                <select name="statut" id="statut" class="form-select">
+                                    <option value="en_attente" selected>En attente</option>
+                                    <option value="approuve">Approuvé</option>
+                                    <option value="refuse">Refusé</option>
+                                </select>
+                                <div class="invalid-feedback" id="statut_error">Veuillez sélectionner un statut.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="motif" class="form-label">Motif / Justification</label>
+                                <textarea name="motif" id="motif" class="form-control" rows="3" placeholder="Décrivez le motif de l'absence (obligatoire pour maladie > 3 jours)"></textarea>
+                                <div class="form-text text-muted" id="motif_help">
+                                    <i class="ti ti-alert-circle text-warning"></i> Obligatoire pour les absences maladie de plus de 3 jours.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('admin_absence') }}" class="btn btn-secondary">
+                                <i class="ti ti-arrow-left"></i> Retour
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="ti ti-check"></i> Créer l'absence
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

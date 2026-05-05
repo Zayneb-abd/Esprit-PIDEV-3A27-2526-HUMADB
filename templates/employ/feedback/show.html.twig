@@ -1,0 +1,127 @@
+{% extends 'employ/base_employe.html.twig' %}
+
+{% block title %}Détails du Feedback{% endblock %}
+
+{% block body %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="fs-4 fw-bold mb-1">Détails du Feedback</h1>
+        <p class="text-muted mb-0">Consultez votre message envoyé.</p>
+    </div>
+    <a href="{{ path('employ_feedback_index') }}" class="btn btn-outline-secondary">
+        <i class="ti ti-arrow-left me-2"></i>Retour
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm p-4">
+    <div class="card-body">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold mb-1 text-primary"><i class="ti ti-tag me-2"></i>{{ feedback.category }}</h5>
+                <div class="small text-muted">
+                    Priorité (RH) :
+                    {% set p = feedback.priority %}
+                    {% if p == 'urgente' %}
+                        <span class="badge bg-danger">Urgente</span>
+                    {% elseif p == 'haute' %}
+                        <span class="badge bg-warning text-dark">Haute</span>
+                    {% elseif p == 'bas' %}
+                        <span class="badge bg-secondary">Basse</span>
+                    {% else %}
+                        <span class="badge bg-info text-dark">Normale</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if feedback.status == 'nouveau' %}
+                <span class="badge bg-danger rounded-pill px-3 py-2 fs-6 shadow-sm"><i class="ti ti-sparkles me-1 text-white"></i> Nouveau</span>
+            {% elseif feedback.status == 'en_cours' %}
+                <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fs-6 shadow-sm"><i class="ti ti-clock me-1"></i> En cours de traitement</span>
+            {% elseif feedback.status == 'traite' %}
+                <span class="badge bg-success rounded-pill px-3 py-2 fs-6 shadow-sm"><i class="ti ti-check me-1 text-white"></i> Traité</span>
+            {% else %}
+                <span class="badge bg-secondary rounded-pill px-3 py-2 fs-6 shadow-sm">{{ feedback.status }}</span>
+            {% endif %}
+        </div>
+
+        <div class="mb-5 bg-light p-4 rounded-3 border-start border-4 border-primary">
+            <p class="mb-0 fs-5" style="white-space: pre-wrap;">{{ feedback.contenu }}</p>
+        </div>
+
+        <div class="mb-4 p-4 rounded-3 border bg-white shadow-sm">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                <h6 class="fw-bold mb-0 text-primary"><i class="ti ti-mood-smile me-2"></i>Sentiment détecté par MeaningCloud</h6>
+                {% if sentiment.success %}
+                    <span class="badge bg-primary bg-opacity-10 text-primary">{{ sentiment.label }}</span>
+                {% endif %}
+            </div>
+
+            {% if sentiment.success %}
+                <p class="mb-3 text-muted">{{ sentiment.description }}</p>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-light h-100">
+                            <div class="text-muted small mb-1">Confiance</div>
+                            <div class="fw-semibold">{{ sentiment.confidence }}%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-light h-100">
+                            <div class="text-muted small mb-1">Subjectivité</div>
+                            <div class="fw-semibold">{{ sentiment.subjectivity }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-light h-100">
+                            <div class="text-muted small mb-1">Ironie</div>
+                            <div class="fw-semibold">{{ sentiment.irony }}</div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-warning mb-0">
+                    {{ sentiment.error|default('Analyse indisponible.') }}
+                </div>
+            {% endif %}
+        </div>
+
+        {% if feedback.autoResponse and feedback.autoResponseSentAt %}
+            <div class="mb-4 p-4 rounded-3 border-start border-4 border-success bg-white shadow-sm">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="fw-bold mb-0 text-success"><i class="ti ti-message-check me-2"></i>Réponse (RH)</h6>
+                    <small class="text-muted">
+                        {{ feedback.autoResponseSentAt ? feedback.autoResponseSentAt|date('d/m/Y H:i') : '' }}
+                    </small>
+                </div>
+                <div style="white-space: pre-wrap;">{{ feedback.autoResponse }}</div>
+            </div>
+        {% endif %}
+
+        <div class="row text-muted small border-top pt-3">
+            <div class="col-md-6">
+                <p class="mb-0"><i class="ti ti-calendar me-2"></i><strong>Date d'envoi :</strong> {{ feedback.dateEnvoi ? feedback.dateEnvoi|date('d/m/Y à H:i') : '' }}</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="mb-0"><i class="ti ti-spy me-2"></i><strong>Confidentialité :</strong> {{ feedback.estAnonyme ? 'Envoyé anonymement' : 'Non anonyme' }}</p>
+            </div>
+        </div>
+
+    </div>
+    <div class="card-footer bg-white border-top-0 pt-0 text-end">
+        {% if feedback.status == 'nouveau' %}
+            <a href="{{ path('employ_feedback_edit', {'id': feedback.id}) }}" class="btn btn-outline-secondary shadow-sm px-4 me-2">
+                <i class="ti ti-edit me-2"></i>Modifier
+            </a>
+            <form method="post" action="{{ path('employ_feedback_delete', {'id': feedback.id}) }}" class="d-inline-block" onsubmit="return confirm('Voulez-vous vraiment annuler et supprimer ce feedback ?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ feedback.id) }}">
+                <button type="submit" class="btn btn-outline-danger shadow-sm px-4">
+                    <i class="ti ti-trash me-2"></i>Supprimer ce feedback
+                </button>
+            </form>
+        {% else %}
+            <p class="text-muted small fst-italic mb-0">Ce feedback est déjà traité ou en cours, il ne peut plus être supprimé.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

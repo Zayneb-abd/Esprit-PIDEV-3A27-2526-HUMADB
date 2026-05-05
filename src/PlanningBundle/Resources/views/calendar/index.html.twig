@@ -1,0 +1,132 @@
+{% extends app.user.role == 'MANAGER' ? 'manager/base_manager.html.twig' : 'employ/base_employe.html.twig' %}
+
+{% block title %}Calendrier d'équipe{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="fs-3 mb-1">Calendrier d'équipe</h1>
+                    <p class="mb-0 text-muted">Vue mensuelle des congés et absences</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ path('manager_conges') }}" class="btn btn-outline-primary">
+                        <i class="ti ti-list me-1"></i> Liste des congés
+                    </a>
+                </div>
+            </div>
+
+            {# Conflict Alerts #}
+            {% if conflicts|length > 0 %}
+                <div class="alert alert-warning mb-4">
+                    <h5 class="alert-heading"><i class="ti ti-alert-triangle me-2"></i>Alertes de conflits détectés</h5>
+                    <ul class="mb-0">
+                        {% for conflict in conflicts %}
+                            <li>
+                                <strong>{{ conflict.date|date('d/m/Y') }}</strong>:
+                                {{ conflict.absent_count }}/{{ conflict.team_size }} absents ({{ conflict.percentage }}%)
+                                {% if conflict.severity == 'high' %}
+                                    <span class="badge bg-danger">CRITIQUE</span>
+                                {% else %}
+                                    <span class="badge bg-warning">ATTENTION</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {# Legend #}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h6 class="mb-3">Légende</h6>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <span class="badge" style="background-color: #28a745;">Congé approuvé</span>
+                        <span class="badge" style="background-color: #ffc107; color: #000;">Congé en attente</span>
+                        <span class="badge" style="background-color: #fd7e14;">Absence approuvée</span>
+                        <span class="badge" style="background-color: #6f42c1;">Absence en attente</span>
+                        <span class="badge" style="background-color: #dc3545;">Refusé</span>
+                    </div>
+                </div>
+            </div>
+
+            {# Team Members List #}
+            {% if teamMembers|length > 0 %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Membres de l'équipe ({{ teamMembers|length }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            {% for member in teamMembers %}
+                                <div class="col-auto">
+                                    <span class="badge bg-light text-dark border">
+                                        {{ member.prenom }} {{ member.nom }}
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            {# Calendar Container #}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div id="calendar" style="height: 600px;"></div>
+                    {% if events|length == 0 %}
+                        <div class="text-center text-muted mt-4">
+                            <i class="ti ti-calendar-off fs-1"></i>
+                            <p class="mt-2">Aucun congé ou absence enregistré pour le moment.</p>
+                            <p>Les demandes approuvées apparaîtront ici.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    if (!calendarEl) {
+        console.error('Calendar element not found');
+        return;
+    }
+    
+    var events = {{ events|json_encode|raw }};
+    console.log('Events:', events);
+    
+    try {
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listMonth'
+            },
+            locale: 'fr',
+            height: 'auto',
+            events: events,
+            eventClick: function(info) {
+                alert(info.event.title + '\n' + 
+                      'Du: ' + info.event.start.toLocaleDateString('fr-FR') + '\n' +
+                      'Au: ' + (info.event.end ? info.event.end.toLocaleDateString('fr-FR') : info.event.start.toLocaleDateString('fr-FR')));
+            }
+        });
+        
+        calendar.render();
+        console.log('Calendar rendered successfully');
+    } catch (e) {
+        console.error('Calendar error:', e);
+    }
+});
+</script>
+{% endblock %}
