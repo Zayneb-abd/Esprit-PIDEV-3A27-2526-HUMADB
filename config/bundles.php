@@ -18,4 +18,5 @@ return [
     App\WorkflowBundle\WorkflowBundle::class => ['all' => true],
     App\PlanningBundle\PlanningBundle::class => ['all' => true],
     AhmedBhs\DoctrineDoctor\DoctrineDoctorBundle::class => ['dev' => true],
+    Vich\UploaderBundle\VichUploaderBundle::class => ['all' => true],
 ];
