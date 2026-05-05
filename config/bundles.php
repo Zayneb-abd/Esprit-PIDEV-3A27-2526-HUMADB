@@ -18,4 +18,5 @@ return [
     App\ReportBundle\ReportBundle::class => ['all' => true],
     App\WorkflowBundle\WorkflowBundle::class => ['all' => true],
     App\PlanningBundle\PlanningBundle::class => ['all' => true],
+    AhmedBhs\DoctrineDoctor\DoctrineDoctorBundle::class => ['dev' => true, 'test' => true],
 ];

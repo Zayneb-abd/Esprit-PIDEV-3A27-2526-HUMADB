@@ -148,23 +148,38 @@ class Publication
         return $this;
     }
 
-    #[ORM\OneToOne(targetEntity: ReactionPublication::class, mappedBy: 'publication', fetch: 'LAZY')]
-    private ?ReactionPublication $reactionPublication = null;
+    /** @var Collection<int, ReactionPublication> */
+    #[ORM\OneToMany(targetEntity: ReactionPublication::class, mappedBy: 'publication')]
+    private Collection $reactionPublications;
 
     public function __construct()
     {
         $this->commentaires = new ArrayCollection();
         $this->publicationMedias = new ArrayCollection();
+        $this->reactionPublications = new ArrayCollection();
     }
 
-    public function getReactionPublication(): ?ReactionPublication
+    public function getReactionPublications(): Collection
     {
-        return $this->reactionPublication;
+        return $this->reactionPublications;
     }
 
-    public function setReactionPublication(?ReactionPublication $reactionPublication): self
+    public function addReactionPublication(ReactionPublication $reactionPublication): self
     {
-        $this->reactionPublication = $reactionPublication;
+        if (!$this->reactionPublications->contains($reactionPublication)) {
+            $this->reactionPublications->add($reactionPublication);
+            $reactionPublication->setPublication($this);
+        }
+        return $this;
+    }
+
+    public function removeReactionPublication(ReactionPublication $reactionPublication): self
+    {
+        if ($this->reactionPublications->removeElement($reactionPublication)) {
+            if ($reactionPublication->getPublication() === $this) {
+                $reactionPublication->setPublication(null);
+            }
+        }
         return $this;
     }
 

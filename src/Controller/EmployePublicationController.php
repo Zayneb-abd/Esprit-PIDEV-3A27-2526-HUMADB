@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Entity\Publication;
 use App\Entity\Commentaire;
 use App\Repository\PublicationRepository;
+use App\Repository\ReactionPublicationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,7 +21,7 @@ use App\Service\CommentValidatorService;
 class EmployePublicationController extends AbstractController
 {
     #[Route('/', name: 'employ_publication_index', methods: ['GET'])]
-    public function index(Request $request, PublicationRepository $publicationRepository, PaginatorInterface $paginator): Response
+    public function index(Request $request, PublicationRepository $publicationRepository, ReactionPublicationRepository $reactionRepository, PaginatorInterface $paginator): Response
     {
         $page = max(1, (int) $request->query->get('page', 1));
         $limit = 6;
@@ -31,8 +32,18 @@ class EmployePublicationController extends AbstractController
             $limit
         );
 
+        // Get all publication IDs
+        $publicationIds = [];
+        foreach ($publications as $publication) {
+            $publicationIds[] = $publication->getId();
+        }
+
+        // Load all reaction counts in ONE query
+        $reactionsCounts = $reactionRepository->getReactionsCountForMultiplePublications($publicationIds);
+
         return $this->render('employ/publication/index.html.twig', [
             'publications' => $publications,
+            'reactions_counts' => $reactionsCounts,
         ]);
     }
 

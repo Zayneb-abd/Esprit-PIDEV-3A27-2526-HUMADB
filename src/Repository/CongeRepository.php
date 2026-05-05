@@ -60,9 +60,13 @@ class CongeRepository extends ServiceEntityRepository
             ->setParameter('query', '%' . $query . '%');
         }
 
-        $allowedSortFields = ['date_demande', 'statut', 'commentaire_validation'];
-        if ($sortField && in_array($sortField, $allowedSortFields, true)) {
-            $qb->orderBy('c.' . $sortField, $sortOrder === 'DESC' ? 'DESC' : 'ASC');
+        $allowedSortFields = [
+            'date_demande' => 'c.date_demande',
+            'statut' => 'c.statut',
+            'commentaire_validation' => 'c.commentaire_validation'
+        ];
+        if ($sortField && isset($allowedSortFields[$sortField])) {
+            $qb->orderBy($allowedSortFields[$sortField], $sortOrder === 'DESC' ? 'DESC' : 'ASC');
         } else {
             $qb->orderBy('c.date_demande', 'DESC');
         }
