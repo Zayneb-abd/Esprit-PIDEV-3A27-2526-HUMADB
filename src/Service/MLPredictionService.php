@@ -148,4 +148,163 @@ class MLPredictionService
         ];
         return $months[$month] ?? 'Inconnu';
     }
+
+    /**
+     * 🔮 Prédiction d'engagement pour une publication
+     * Prédit le nombre de likes et commentaires
+     */
+    public function predictPublicationEngagement(string $content, string $type = ''): array
+    {
+        $scriptPath = $this->projectDir . '/ml/predict_engagement.py';
+        
+        // Échapper le contenu pour la ligne de commande
+        $escapedContent = escapeshellarg($content);
+        $escapedType = escapeshellarg($type);
+        
+        $command = sprintf(
+            '%s %s %s %s 2>&1',
+            $this->pythonPath,
+            escapeshellcmd($scriptPath),
+            $escapedContent,
+            $escapedType
+        );
+        
+        $output = shell_exec($command);
+        
+        if ($output === null) {
+            return [
+                'success' => false,
+                'error' => 'Erreur d\'exécution du script ML',
+                'fallback' => $this->getBasicEngagementPrediction($content)
+            ];
+        }
+        
+        // Nettoyer la sortie
+        $output = preg_replace('/^\xEF\xBB\xBF/', '', $output);
+        $output = mb_convert_encoding($output, 'UTF-8', 'UTF-8');
+        
+        $result = json_decode($output, true);
+        
+        if ($result === null) {
+            return [
+                'success' => false,
+                'error' => 'Erreur de parsing JSON: ' . json_last_error_msg(),
+                'fallback' => $this->getBasicEngagementPrediction($content)
+            ];
+        }
+        
+        if (isset($result['error'])) {
+            return [
+                'success' => false,
+                'error' => $result['error'],
+                'fallback' => $this->getBasicEngagementPrediction($content)
+            ];
+        }
+        
+        return [
+            'success' => true,
+            'data' => $result
+        ];
+    }
+
+    /**
+     * 📊 Prédiction basique d'engagement (fallback)
+     */
+    private function getBasicEngagementPrediction(string $content): array
+    {
+        $length = strlen($content);
+        $hasQuestion = strpos($content, '?') !== false;
+        $hasMedia = strpos(strtolower($content), 'image') !== false || 
+                    strpos(strtolower($content), 'photo') !== false ||
+                    strpos(strtolower($content), 'video') !== false;
+        
+        $score = 5.0;
+        if ($hasMedia) $score += 2.0;
+        if ($hasQuestion) $score += 1.0;
+        if ($length >= 100 && $length <= 500) $score += 1.0;
+        
+        return [
+            'engagement_score' => min(10, max(1, $score)),
+            'estimated_likes' => (int)($score * 8),
+            'estimated_comments' => (int)($score * 2),
+            'method' => 'basic_php_fallback'
+        ];
+    }
+
+    /**
+     * 💬 Prédiction d'engagement pour un commentaire
+     * Prédit les réactions et réponses
+     */
+    public function predictCommentEngagement(string $content): array
+    {
+        $scriptPath = $this->projectDir . '/ml/predict_comment_engagement.py';
+        
+        $escapedContent = escapeshellarg($content);
+        
+        $command = sprintf(
+            '%s %s %s 2>&1',
+            $this->pythonPath,
+            escapeshellcmd($scriptPath),
+            $escapedContent
+        );
+        
+        $output = shell_exec($command);
+        
+        if ($output === null) {
+            return [
+                'success' => false,
+                'error' => 'Erreur d\'exécution du script ML',
+                'fallback' => $this->getBasicCommentEngagementPrediction($content)
+            ];
+        }
+        
+        // Nettoyer la sortie
+        $output = preg_replace('/^\xEF\xBB\xBF/', '', $output);
+        $output = mb_convert_encoding($output, 'UTF-8', 'UTF-8');
+        
+        $result = json_decode($output, true);
+        
+        if ($result === null) {
+            return [
+                'success' => false,
+                'error' => 'Erreur de parsing JSON: ' . json_last_error_msg(),
+                'fallback' => $this->getBasicCommentEngagementPrediction($content)
+            ];
+        }
+        
+        if (isset($result['error'])) {
+            return [
+                'success' => false,
+                'error' => $result['error'],
+                'fallback' => $this->getBasicCommentEngagementPrediction($content)
+            ];
+        }
+        
+        return [
+            'success' => true,
+            'data' => $result
+        ];
+    }
+
+    /**
+     * 💬 Prédiction basique d'engagement pour commentaire (fallback)
+     */
+    private function getBasicCommentEngagementPrediction(string $content): array
+    {
+        $length = strlen($content);
+        $hasQuestion = strpos($content, '?') !== false;
+        $hasEmoji = preg_match('/[^\x00-\x7F]/', $content);
+        
+        $score = 5.0;
+        if ($hasEmoji) $score += 1.0;
+        if ($hasQuestion) $score += 1.5;
+        if ($length >= 20 && $length <= 200) $score += 1.0;
+        
+        return [
+            'engagement_score' => min(10, max(1, $score)),
+            'estimated_reactions' => (int)($score * 1.5),
+            'estimated_responses' => (int)($score * 0.5),
+            'method' => 'basic_php_fallback'
+        ];
+    }
 }
