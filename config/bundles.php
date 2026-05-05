@@ -17,6 +17,6 @@ return [
     App\ReportBundle\ReportBundle::class => ['all' => true],
     App\WorkflowBundle\WorkflowBundle::class => ['all' => true],
     App\PlanningBundle\PlanningBundle::class => ['all' => true],
-    AhmedBhs\DoctrineDoctor\DoctrineDoctorBundle::class => ['dev' => true],
+    // AhmedBhs\DoctrineDoctor\DoctrineDoctorBundle::class => ['dev' => true], // Not installed - requires PHP 8.4
     Vich\UploaderBundle\VichUploaderBundle::class => ['all' => true],
 ];
