@@ -36,13 +36,14 @@ class ReactionPublicationRepository extends ServiceEntityRepository
 
     /**
      * Compter les likes et dislikes pour une publication
+     * @return array<string, int>
      */
     public function getReactionsCountForPublication(int $publicationId): array
     {
         $qb = $this->createQueryBuilder('rp')
-            ->select('LOWER(rp.type) AS reactionType, COUNT(rp.id) AS count')
+            ->select('rp.type as reactionType, COUNT(rp.id) as count')
             ->where('rp.publication = :publicationId')
-            ->groupBy('reactionType')
+            ->groupBy('rp.type')
             ->setParameter('publicationId', $publicationId);
 
         $results = $qb->getQuery()->getResult();
@@ -53,7 +54,7 @@ class ReactionPublicationRepository extends ServiceEntityRepository
         ];
         
         foreach ($results as $result) {
-            $type = strtolower((string) ($result['reactionType'] ?? $result['type'] ?? ''));
+            $type = strtolower((string) ($result['reactionType'] ?? ''));
             if (isset($counts[$type])) {
                 $counts[$type] = (int) $result['count'];
             }
@@ -127,12 +128,13 @@ class ReactionPublicationRepository extends ServiceEntityRepository
 
     /**
      * Obtenir les publications les plus aimées
+     * @return array<int, \App\DTO\MostLikedPublicationDTO>
      */
     public function getMostLikedPublications(int $limit = 10): array
     {
         return $this->createQueryBuilder('rp')
-            ->select('p.id, p.contenu, COUNT(rp.id) as likeCount')
-            ->leftJoin('rp.publication', 'p')
+            ->select('NEW App\DTO\MostLikedPublicationDTO(p.id, p.contenu, COUNT(rp.id))')
+            ->innerJoin('rp.publication', 'p')
             ->where('rp.type = :type')
             ->groupBy('p.id')
             ->orderBy('likeCount', 'DESC')
@@ -140,5 +142,41 @@ class ReactionPublicationRepository extends ServiceEntityRepository
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Compter les likes et dislikes pour plusieurs publications en une requête
+     * @param array<int> $publicationIds
+     * @return array<int, array<string, int>>
+     */
+    public function getReactionsCountForMultiplePublications(array $publicationIds): array
+    {
+        if (empty($publicationIds)) {
+            return [];
+        }
+
+        $results = $this->createQueryBuilder('rp')
+            ->select('p.id as publicationId, rp.type as reactionType, COUNT(rp.id) as count')
+            ->innerJoin('rp.publication', 'p')
+            ->where('p.id IN (:publicationIds)')
+            ->groupBy('p.id, rp.type')
+            ->setParameter('publicationIds', $publicationIds)
+            ->getQuery()
+            ->getResult();
+
+        $counts = [];
+        foreach ($publicationIds as $id) {
+            $counts[$id] = ['like' => 0, 'dislike' => 0];
+        }
+
+        foreach ($results as $result) {
+            $pubId = (int) $result['publicationId'];
+            $type = strtolower((string) $result['reactionType']);
+            if (isset($counts[$pubId][$type])) {
+                $counts[$pubId][$type] = (int) $result['count'];
+            }
+        }
+
+        return $counts;
     }
 }

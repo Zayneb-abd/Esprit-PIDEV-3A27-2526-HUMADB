@@ -26,8 +26,8 @@ class ChatbotController extends AbstractController
     #[Route('/suggest', name: 'chatbot_suggest', methods: ['POST'])]
     public function suggestPublication(Request $request): JsonResponse
     {
-        $subject = $request->request->get('subject');
-        $context = $request->request->get('context', '');
+        $subject = (string) $request->request->get('subject');
+        $context = (string) $request->request->get('context', '');
 
         if (empty($subject)) {
             return new JsonResponse([

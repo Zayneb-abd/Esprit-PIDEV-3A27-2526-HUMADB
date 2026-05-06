@@ -62,16 +62,17 @@ class FeedbackRepository extends ServiceEntityRepository
      */
     public function countByStatus(): array
     {
+        /** @var \App\DTO\CountByFieldDTO[] $rows */
         $rows = $this->createQueryBuilder('f')
-            ->select('f.status AS k', 'COUNT(f.id) AS c')
+            ->select('NEW App\DTO\CountByFieldDTO(f.status, COUNT(f.id))')
             ->groupBy('f.status')
             ->getQuery()
             ->getResult();
 
         $out = [];
-        foreach ($rows as $row) {
-            $key = (string) ($row['k'] ?? '');
-            $out[$key] = (int) $row['c'];
+        foreach ($rows as $dto) {
+            $key = $dto->key;
+            $out[$key] = $dto->count;
         }
 
         return $out;
@@ -82,16 +83,16 @@ class FeedbackRepository extends ServiceEntityRepository
      */
     public function countByCategory(): array
     {
+        /** @var \App\DTO\CountByFieldDTO[] $rows */
         $rows = $this->createQueryBuilder('f')
-            ->select('f.category AS k', 'COUNT(f.id) AS c')
+            ->select('NEW App\DTO\CountByFieldDTO(COALESCE(f.category, \'-\'), COUNT(f.id))')
             ->groupBy('f.category')
             ->getQuery()
             ->getResult();
 
         $out = [];
-        foreach ($rows as $row) {
-            $key = (string) ($row['k'] ?? '—');
-            $out[$key] = (int) $row['c'];
+        foreach ($rows as $dto) {
+            $out[$dto->key] = $dto->count;
         }
 
         return $out;
@@ -102,16 +103,16 @@ class FeedbackRepository extends ServiceEntityRepository
      */
     public function countByPriority(): array
     {
+        /** @var \App\DTO\CountByFieldDTO[] $rows */
         $rows = $this->createQueryBuilder('f')
-            ->select('f.priority AS k', 'COUNT(f.id) AS c')
+            ->select('NEW App\DTO\CountByFieldDTO(COALESCE(f.priority, \'normal\'), COUNT(f.id))')
             ->groupBy('f.priority')
             ->getQuery()
             ->getResult();
 
         $out = [];
-        foreach ($rows as $row) {
-            $key = (string) ($row['k'] ?? 'normal');
-            $out[$key] = (int) $row['c'];
+        foreach ($rows as $dto) {
+            $out[$dto->key] = $dto->count;
         }
 
         return $out;

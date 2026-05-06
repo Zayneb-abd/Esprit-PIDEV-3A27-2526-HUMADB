@@ -84,15 +84,16 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      */
     public function countByRole(): array
     {
+        /** @var \App\DTO\CountByFieldDTO[] $results */
         $results = $this->createQueryBuilder('u')
-            ->select('u.role, COUNT(u.id) as cnt')
+            ->select('NEW App\DTO\CountByFieldDTO(COALESCE(u.role, \'UNKNOWN\'), COUNT(u.id))')
             ->groupBy('u.role')
             ->getQuery()
             ->getResult();
 
         $counts = [];
-        foreach ($results as $row) {
-            $counts[$row['role'] ?? 'UNKNOWN'] = (int) $row['cnt'];
+        foreach ($results as $dto) {
+            $counts[$dto->key] = $dto->count;
         }
 
         return $counts;

@@ -58,9 +58,14 @@ class AbsenceRepository extends ServiceEntityRepository
             ->setParameter('query', '%' . $query . '%');
         }
 
-        $allowedSortFields = ['date_debut', 'date_fin', 'type_absence', 'statut'];
-        if ($sortField && in_array($sortField, $allowedSortFields, true)) {
-            $qb->orderBy('a.' . $sortField, $sortOrder === 'DESC' ? 'DESC' : 'ASC');
+        $allowedSortFields = [
+            'date_debut' => 'a.date_debut',
+            'date_fin' => 'a.date_fin',
+            'type_absence' => 'a.type_absence',
+            'statut' => 'a.statut'
+        ];
+        if ($sortField && isset($allowedSortFields[$sortField])) {
+            $qb->orderBy($allowedSortFields[$sortField], $sortOrder === 'DESC' ? 'DESC' : 'ASC');
         } else {
             $qb->orderBy('a.date_debut', 'DESC');
         }

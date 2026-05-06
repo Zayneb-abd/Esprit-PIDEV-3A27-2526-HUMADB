@@ -43,20 +43,27 @@ class ParticipationRepository extends ServiceEntityRepository
         }
 
         if ($query) {
-            $qb->andWhere('u.nom LIKE :query OR u.prenom LIKE :query OR f.sujet LIKE :query OR p.statut LIKE :query OR p.resultat LIKE :query')
-                ->setParameter('query', '%' . $query . '%');
+            $qb->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->like('u.nom', ':query'),
+                    $qb->expr()->like('u.prenom', ':query'),
+                    $qb->expr()->like('f.sujet', ':query'),
+                    $qb->expr()->like('p.statut', ':query'),
+                    $qb->expr()->like('p.resultat', ':query')
+                )
+            )
+            ->setParameter('query', '%' . $query . '%');
         }
 
-        if ($sortField) {
-            if ($sortField === 'user') {
-                $qb->orderBy('u.nom', $sortOrder ?: 'ASC');
-            } elseif ($sortField === 'formation') {
-                $qb->orderBy('f.sujet', $sortOrder ?: 'ASC');
-            } elseif ($sortField === 'statut') {
-                $qb->orderBy('p.statut', $sortOrder ?: 'ASC');
-            } else {
-                $qb->orderBy('p.' . $sortField, $sortOrder ?: 'ASC');
-            }
+        $allowedSortFields = [
+            'user' => 'u.nom',
+            'formation' => 'f.sujet',
+            'statut' => 'p.statut',
+            'id' => 'p.id',
+            'dateInscription' => 'p.dateInscription'
+        ];
+        if ($sortField && isset($allowedSortFields[$sortField])) {
+            $qb->orderBy($allowedSortFields[$sortField], $sortOrder === 'DESC' ? 'DESC' : 'ASC');
         } else {
             $qb->orderBy('p.id', 'DESC');
         }
