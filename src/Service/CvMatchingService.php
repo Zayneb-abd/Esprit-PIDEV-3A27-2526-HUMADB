@@ -21,6 +21,7 @@ class CvMatchingService
     public function __construct(
         private readonly CandidateCvManager $candidateCvManager,
         private readonly PdfCvPreviewService $pdfCvPreviewService,
+        private readonly PythonCvRankingService $pythonCvRankingService,
         private readonly ResultatQuizRepository $resultatQuizRepository,
         private readonly ExternalAiRecruitmentAnalyzer $externalAiRecruitmentAnalyzer,
         private readonly int $advancedAiMaxCandidates = 3,
@@ -51,6 +52,7 @@ class CvMatchingService
         $keywords = $this->extractKeywords($offreEmploi);
         $quiz = $this->findQuizForOffer($offreEmploi);
         $ranked = [];
+        $candidatePreviews = [];
 
         foreach ($candidatures as $candidature) {
             if (!$candidature instanceof Candidature) {
@@ -62,10 +64,25 @@ class CvMatchingService
                 2200
             );
 
-            $cvKeywords = $this->extractKeywordsFromText($cvPreview ?? '');
-            $matched = array_values(array_intersect($keywords, $cvKeywords));
-            $missing = array_values(array_diff($keywords, $matched));
-            $baseScore = $keywords === [] ? 0 : (int) round((count($matched) / count($keywords)) * 100);
+            $candidatePreviews[] = [
+                'candidature' => $candidature,
+                'cv_preview' => $cvPreview,
+            ];
+        }
+
+        $pythonRankings = $this->pythonCvRankingService->rankOfferCandidates(
+            $offreEmploi,
+            array_map(static fn (array $candidateData): string => (string) ($candidateData['cv_preview'] ?? ''), $candidatePreviews)
+        );
+
+        foreach ($candidatePreviews as $index => $candidateData) {
+            $candidature = $candidateData['candidature'];
+            $cvPreview = $candidateData['cv_preview'];
+            $pythonAnalysis = $pythonRankings[$index] ?? null;
+
+            $matched = $pythonAnalysis['matched_terms'] ?? $this->extractKeywordsFromText($cvPreview ?? '');
+            $missing = $pythonAnalysis['missing_terms'] ?? array_values(array_diff($keywords, $matched));
+            $baseScore = isset($pythonAnalysis['score']) ? (int) $pythonAnalysis['score'] : ($keywords === [] ? 0 : (int) round((count($matched) / max(1, count($keywords))) * 100));
 
             $quizScore = null;
             if ($quiz instanceof Quiz && $candidature->getUser() !== null) {
@@ -81,18 +98,18 @@ class CvMatchingService
 
             $finalScore = $baseScore;
             if ($quizScore !== null) {
-                $finalScore = (int) round(($baseScore * 0.7) + ($quizScore * 0.3));
+                $finalScore = (int) round(($baseScore * 0.8) + ($quizScore * 0.2));
             }
 
             $ranked[] = [
                 'candidature' => $candidature,
                 'score' => max(0, min(100, $finalScore)),
-                'matched_keywords' => array_slice($matched, 0, 8),
-                'missing_keywords' => array_slice($missing, 0, 8),
+                'matched_keywords' => array_slice(array_values(array_unique($matched)), 0, 8),
+                'missing_keywords' => array_slice(array_values(array_unique($missing)), 0, 8),
                 'quiz_score' => $quizScore,
                 'cv_preview' => $cvPreview,
                 'advanced_analysis' => null,
-                'analysis_mode' => 'local',
+                'analysis_mode' => 'python_ml',
             ];
         }
 
@@ -116,10 +133,10 @@ class CvMatchingService
                     ]);
 
                     $ranked[$index]['advanced_analysis'] = $advanced;
-                    $ranked[$index]['analysis_mode'] = 'external_ai';
+                    $ranked[$index]['analysis_mode'] = 'python_ml_external_ai';
                     $ranked[$index]['score'] = $advanced['score'];
                 } catch (\Throwable) {
-                    $ranked[$index]['analysis_mode'] = 'local_fallback';
+                    $ranked[$index]['analysis_mode'] = 'python_ml_fallback';
                 }
             }
 

@@ -6,6 +6,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\OffreEmploiRepository;
 
@@ -30,6 +31,13 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: "Le titre de l'offre est obligatoire.")]
+    #[Assert\Length(
+        min: 3,
+        max: 255,
+        minMessage: "Le titre doit contenir au moins {{ limit }} caracteres.",
+        maxMessage: "Le titre ne peut pas depasser {{ limit }} caracteres."
+    )]
     private ?string $titre = null;
 
     public function getTitre(): ?string
@@ -44,6 +52,13 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Assert\NotBlank(message: "La description de l'offre est obligatoire.")]
+    #[Assert\Length(
+        min: 20,
+        max: 5000,
+        minMessage: "La description doit contenir au moins {{ limit }} caracteres.",
+        maxMessage: "La description ne peut pas depasser {{ limit }} caracteres."
+    )]
     private ?string $description = null;
 
     public function getDescription(): ?string
@@ -58,6 +73,13 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: "Le departement est obligatoire.")]
+    #[Assert\Length(
+        min: 2,
+        max: 120,
+        minMessage: "Le departement doit contenir au moins {{ limit }} caracteres.",
+        maxMessage: "Le departement ne peut pas depasser {{ limit }} caracteres."
+    )]
     private ?string $departement = null;
 
     public function getDepartement(): ?string
@@ -72,6 +94,8 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'date', nullable: true)]
+    #[Assert\NotNull(message: "La date de publication est obligatoire.")]
+    #[Assert\Type(type: \DateTimeInterface::class, message: "La date de publication doit etre valide.")]
     private ?\DateTimeInterface $date_publication = null;
 
     public function getDate_publication(): ?\DateTimeInterface
@@ -86,6 +110,11 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: "Le type de contrat est obligatoire.")]
+    #[Assert\Choice(
+        choices: ['CDI', 'CDD', 'Stage', 'Freelance', 'Alternance'],
+        message: "Le type de contrat n'est pas valide."
+    )]
     private ?string $type_contrat = null;
 
     public function getType_contrat(): ?string
@@ -100,6 +129,8 @@ class OffreEmploi
     }
 
     #[ORM\Column(type: 'integer', nullable: true)]
+    #[Assert\NotNull(message: "Le nombre de postes est obligatoire.")]
+    #[Assert\Positive(message: "Le nombre de postes doit etre strictement positif.")]
     private ?int $nombre_postes = null;
 
     public function getNombre_postes(): ?int
@@ -128,6 +159,9 @@ class OffreEmploi
         return $this;
     }
 
+    /**
+     * @var Collection<int, Candidature>
+     */
     #[ORM\OneToMany(targetEntity: Candidature::class, mappedBy: 'offreEmploi')]
     private Collection $candidatures;
 
@@ -146,16 +180,22 @@ class OffreEmploi
     {
         if (!$this->getCandidatures()->contains($candidature)) {
             $this->getCandidatures()->add($candidature);
+            $candidature->setOffreEmploi($this);
         }
         return $this;
     }
 
     public function removeCandidature(Candidature $candidature): self
     {
-        $this->getCandidatures()->removeElement($candidature);
+        if ($this->getCandidatures()->removeElement($candidature) && $candidature->getOffreEmploi() === $this) {
+            $candidature->setOffreEmploi(null);
+        }
         return $this;
     }
 
+    /**
+     * @var Collection<int, Quiz>
+     */
     #[ORM\OneToMany(targetEntity: Quiz::class, mappedBy: 'offreEmploi')]
     private Collection $quizs;
 
@@ -180,22 +220,25 @@ class OffreEmploi
     {
         if (!$this->getQuizs()->contains($quiz)) {
             $this->getQuizs()->add($quiz);
+            $quiz->setOffreEmploi($this);
         }
         return $this;
     }
 
     public function removeQuiz(Quiz $quiz): self
     {
-        $this->getQuizs()->removeElement($quiz);
+        if ($this->getQuizs()->removeElement($quiz) && $quiz->getOffreEmploi() === $this) {
+            $quiz->setOffreEmploi(null);
+        }
         return $this;
     }
 
-    public function getDatePublication(): ?\DateTime
+    public function getDatePublication(): ?\DateTimeInterface
     {
         return $this->date_publication;
     }
 
-    public function setDatePublication(?\DateTime $date_publication): static
+    public function setDatePublication(?\DateTimeInterface $date_publication): static
     {
         $this->date_publication = $date_publication;
 

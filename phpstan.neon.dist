@@ -1,0 +1,9 @@
+parameters:
+    level: 6
+    paths:
+        - src/Entity/OffreEmploi.php
+        - src/Entity/Candidature.php
+        - src/Service/OfferDeletionService.php
+    parallel:
+        maximumNumberOfProcesses: 0
+    reportUnmatchedIgnoredErrors: false

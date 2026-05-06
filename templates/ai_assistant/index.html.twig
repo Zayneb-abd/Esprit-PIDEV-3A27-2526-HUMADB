@@ -1,284 +1,788 @@
-{% extends user.role == 'MANAGER' ? 'manager/base_manager.html.twig' : 'employ/base_employe.html.twig' %}
+{% extends role == 'MANAGER' ? 'manager/base_manager.html.twig' : 'employ/base_employe.html.twig' %}
 
-{% block title %}🤖 Assistant IA - Demande de Congés{% endblock %}
+{% block title %}Assistant IA - Demande de Congés{% endblock %}
 
-{% block stylesheets %}
-    {{ parent() }}
-    <style>
-        .chat-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            min-height: 500px;
+{% block css %}
+<style>
+    :root {
+        --ai-primary: #1a7f7a;
+        --ai-primary-dark: #11534f;
+        --ai-accent: #53d1c8;
+        --ai-accent-soft: rgba(83, 209, 200, 0.12);
+        --ai-surface: rgba(255, 255, 255, 0.82);
+        --ai-border: rgba(18, 38, 63, 0.08);
+        --ai-text: #243447;
+        --ai-muted: #6b7a90;
+        --ai-shadow: 0 22px 60px rgba(16, 24, 40, 0.08);
+    }
+
+    body {
+        background:
+            radial-gradient(circle at top left, rgba(83, 209, 200, 0.12), transparent 30%),
+            radial-gradient(circle at top right, rgba(26, 127, 122, 0.10), transparent 26%),
+            linear-gradient(180deg, #f8fbfc 0%, #f3f8fb 100%);
+    }
+
+    .assistant-shell {
+        position: relative;
+        overflow: hidden;
+        padding: 24px 0 40px;
+    }
+
+    .assistant-shell::before,
+    .assistant-shell::after {
+        content: "";
+        position: absolute;
+        border-radius: 999px;
+        filter: blur(24px);
+        pointer-events: none;
+        opacity: 0.65;
+    }
+
+    .assistant-shell::before {
+        width: 220px;
+        height: 220px;
+        background: rgba(83, 209, 200, 0.18);
+        top: -60px;
+        right: -70px;
+    }
+
+    .assistant-shell::after {
+        width: 260px;
+        height: 260px;
+        background: rgba(26, 127, 122, 0.08);
+        left: -80px;
+        bottom: 40px;
+    }
+
+    .ai-hero {
+        background: linear-gradient(135deg, rgba(26, 127, 122, 0.98), rgba(31, 153, 146, 0.90));
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 30px;
+        box-shadow: var(--ai-shadow);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ai-hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 28%),
+            radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.10), transparent 24%);
+        pointer-events: none;
+    }
+
+    .ai-hero .badge-soft {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.5rem 0.85rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.20);
+        backdrop-filter: blur(12px);
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+
+    .ai-title {
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+        margin: 0;
+    }
+
+    .ai-subtitle {
+        max-width: 760px;
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 1.02rem;
+    }
+
+    .ai-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        border-radius: 16px;
+        padding: 0.9rem 1.15rem;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.13);
+        color: #fff;
+        text-decoration: none;
+        transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .ai-action:hover {
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.18);
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .assistant-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.75fr) minmax(280px, 0.85fr);
+        gap: 1.25rem;
+        margin-top: 1.5rem;
+    }
+
+    .panel {
+        background: var(--ai-surface);
+        border: 1px solid var(--ai-border);
+        border-radius: 24px;
+        box-shadow: var(--ai-shadow);
+        backdrop-filter: blur(18px);
+    }
+
+    .panel-header {
+        padding: 1rem 1.2rem 0;
+    }
+
+    .panel-body {
+        padding: 1.2rem;
+    }
+
+    .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .quick-chip {
+        border: 1px solid rgba(26, 127, 122, 0.12);
+        background: #fff;
+        color: var(--ai-text);
+        border-radius: 999px;
+        padding: 0.7rem 0.95rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .quick-chip:hover {
+        transform: translateY(-1px);
+        border-color: rgba(26, 127, 122, 0.28);
+        box-shadow: 0 10px 24px rgba(26, 127, 122, 0.10);
+    }
+
+    .chat-frame {
+        min-height: 520px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-stream {
+        flex: 1;
+        min-height: 360px;
+        max-height: 600px;
+        overflow-y: auto;
+        padding: 0.25rem 0.25rem 1rem;
+    }
+
+    .message {
+        display: flex;
+        gap: 0.85rem;
+        margin-bottom: 1rem;
+        align-items: flex-start;
+    }
+
+    .message.user {
+        flex-direction: row-reverse;
+    }
+
+    .message-bubble {
+        max-width: min(82%, 760px);
+        border-radius: 22px;
+        padding: 1rem 1.1rem;
+        font-size: 0.98rem;
+        line-height: 1.55;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+    }
+
+    .message.user .message-bubble {
+        background: linear-gradient(135deg, var(--ai-primary), #2b9a95);
+        color: #fff;
+        border-bottom-right-radius: 8px;
+    }
+
+    .message.assistant .message-bubble {
+        background: #fff;
+        color: var(--ai-text);
+        border: 1px solid rgba(26, 127, 122, 0.10);
+        border-bottom-left-radius: 8px;
+    }
+
+    .message-meta {
+        font-size: 0.8rem;
+        color: var(--ai-muted);
+        margin-top: 0.45rem;
+    }
+
+    .avatar-pill {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        font-size: 1.1rem;
+        background: linear-gradient(135deg, rgba(26, 127, 122, 0.14), rgba(83, 209, 200, 0.24));
+        color: var(--ai-primary);
+        border: 1px solid rgba(26, 127, 122, 0.08);
+    }
+
+    .message.user .avatar-pill {
+        background: linear-gradient(135deg, rgba(26, 127, 122, 0.98), rgba(46, 167, 160, 0.90));
+        color: #fff;
+    }
+
+    .assistant-hint {
+        background: linear-gradient(135deg, rgba(83, 209, 200, 0.12), rgba(26, 127, 122, 0.06));
+        border: 1px dashed rgba(26, 127, 122, 0.18);
+        color: var(--ai-text);
+        border-radius: 18px;
+        padding: 0.95rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .composer {
+        margin-top: 1rem;
+        background: #fff;
+        border: 1px solid rgba(26, 127, 122, 0.12);
+        border-radius: 22px;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+        padding: 0.75rem;
+    }
+
+    .composer .form-control {
+        border: 0;
+        box-shadow: none !important;
+        background: transparent;
+        padding: 0.95rem 1rem;
+        font-size: 1rem;
+        color: var(--ai-text);
+    }
+
+    .composer .form-control::placeholder {
+        color: #8a96a8;
+    }
+
+    .composer .btn-send {
+        min-width: 132px;
+        border: 0;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--ai-primary), var(--ai-accent));
+        color: #fff;
+        font-weight: 700;
+        padding: 0.95rem 1.2rem;
+    }
+
+    .composer .btn-send:hover {
+        filter: brightness(1.03);
+    }
+
+    .assistant-panel-card {
+        border-radius: 20px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 252, 252, 0.96));
+        border: 1px solid rgba(26, 127, 122, 0.10);
+        padding: 1rem;
+        box-shadow: 0 14px 32px rgba(15, 23, 42, 0.05);
+    }
+
+    .info-list {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        padding: 0.85rem 0.9rem;
+        border-radius: 16px;
+        background: #fff;
+        border: 1px solid rgba(26, 127, 122, 0.08);
+    }
+
+    .info-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--ai-accent-soft);
+        color: var(--ai-primary);
+        flex: 0 0 auto;
+    }
+
+    .summary-box {
+        border-radius: 18px;
+        padding: 1rem;
+        background: linear-gradient(135deg, rgba(26, 127, 122, 0.08), rgba(83, 209, 200, 0.12));
+        border: 1px solid rgba(26, 127, 122, 0.10);
+    }
+
+    .summary-row {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        gap: 0.75rem;
+        padding: 0.55rem 0;
+        border-bottom: 1px solid rgba(26, 127, 122, 0.10);
+    }
+
+    .summary-row:last-child {
+        border-bottom: 0;
+    }
+
+    .summary-label {
+        color: var(--ai-muted);
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .summary-value {
+        font-weight: 600;
+        color: var(--ai-text);
+    }
+
+    .validation-panel {
+        display: none;
+        margin-top: 1rem;
+        border-radius: 20px;
+        padding: 1rem;
+        border: 1px solid rgba(26, 127, 122, 0.12);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 250, 250, 0.98));
+        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
+    }
+
+    .validation-panel.is-visible {
+        display: block;
+    }
+
+    .typing-indicator {
+        display: none;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--ai-muted);
+        padding: 0.5rem 0.2rem 0.9rem;
+    }
+
+    .typing-dots {
+        display: inline-flex;
+        gap: 0.3rem;
+    }
+
+    .typing-dots span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--ai-primary);
+        opacity: 0.6;
+        animation: typingPulse 1.2s infinite ease-in-out;
+    }
+
+    .typing-dots span:nth-child(2) {
+        animation-delay: 0.15s;
+    }
+
+    .typing-dots span:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    @keyframes typingPulse {
+        0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
+        40% { transform: translateY(-4px); opacity: 1; }
+    }
+
+    @media (max-width: 991.98px) {
+        .assistant-grid {
+            grid-template-columns: 1fr;
         }
-        .chat-message {
-            margin-bottom: 15px;
-            padding: 12px 15px;
-            border-radius: 10px;
-            max-width: 80%;
+
+        .chat-stream {
+            max-height: none;
         }
-        .chat-message.user {
-            background: #007bff;
-            color: white;
-            margin-left: auto;
-            text-align: right;
-        }
-        .chat-message.ai {
-            background: white;
-            border: 1px solid #dee2e6;
-            color: #333;
-        }
-        .chat-message.ai .suggestion-box {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-        }
-        .chat-input {
-            position: sticky;
-            bottom: 0;
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        }
-        .suggestion-pills {
-            margin-bottom: 15px;
-        }
-        .suggestion-pill {
-            display: inline-block;
-            padding: 8px 15px;
-            margin: 5px;
-            background: #e9ecef;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-        .suggestion-pill:hover {
-            background: #007bff;
-            color: white;
-        }
-        .typing-indicator {
-            display: none;
-            padding: 10px;
-            color: #6c757d;
-            font-style: italic;
-        }
-        .typing-indicator.active {
-            display: block;
-        }
-        .confirmation-buttons {
-            margin-top: 15px;
-        }
-        .date-highlight {
-            background: #fff3cd;
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-weight: bold;
-        }
-        .conflict-warning {
-            color: #dc3545;
-            font-weight: bold;
-        }
-        .conflict-critical {
-            color: #721c24;
-            background: #f8d7da;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 5px 0;
-        }
-    </style>
+    }
+</style>
 {% endblock %}
 
 {% block body %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1><span class="text-primary">🤖</span> Assistant IA - Demande de Congés</h1>
-                <a href="{{ path(role == 'MANAGER' ? 'manager_conges' : 'employ_conges') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left"></i> Retour
-                </a>
-            </div>
-
-            <div class="suggestion-pills text-center">
-                <span class="suggestion-pill" onclick="setMessage('Je veux 3 jours de congé la semaine prochaine')">
-                    📅 3 jours semaine prochaine
-                </span>
-                <span class="suggestion-pill" onclick="setMessage('Congé maladie demain')">
-                    🤒 Maladie demain
-                </span>
-                <span class="suggestion-pill" onclick="setMessage('Je pars du 15/04 au 20/04')">
-                    🗓️ Du 15/04 au 20/04
-                </span>
-                <span class="suggestion-pill" onclick="setMessage('5 jours à partir du 1er mai')">
-                    🌸 5 jours en mai
-                </span>
-                <span class="suggestion-pill" onclick="setMessage('Congé familial naissance du 10/05 au 12/05')">
-                    👶 Naissance 10-12/05
-                </span>
-            </div>
-
-            <div class="chat-container" id="chatContainer">
-                <!-- Message de bienvenue -->
-                <div class="chat-message ai">
-                    <strong>🤖 Assistant IA</strong><br>
-                    Bonjour {{ user.prenom }} ! Je suis là pour vous aider à créer votre demande de congé.
-                    <br><br>
-                    <strong>Exemples de ce que vous pouvez me demander :</strong>
-                    <ul class="mb-0 mt-2">
-                        <li>"Je veux 5 jours de congé la semaine prochaine"</li>
-                        <li>"Demain je suis malade"</li>
-                        <li>"Du 15/04 au 20/04 en congé annuel"</li>
-                        <li>"3 jours à partir de lundi prochain"</li>
-                    </ul>
-                    <br>
-                    <small class="text-muted">💡 Je vérifie automatiquement votre solde et les conflits d'équipe !</small>
+<div class="assistant-shell">
+    <div class="container-fluid px-3 px-lg-4">
+        <div class="ai-hero p-4 p-lg-5 mb-4">
+            <div class="d-flex flex-column flex-lg-row align-items-lg-start justify-content-between gap-3 position-relative" style="z-index: 1;">
+                <div class="pe-lg-4">
+                    <div class="badge-soft mb-3">
+                        <span>🤖</span>
+                        <span>Assistant IA</span>
+                        <span class="opacity-75">•</span>
+                        <span>Demande de congés</span>
+                    </div>
+                    <h1 class="ai-title mb-3">Simplifiez votre demande de congé en langage naturel.</h1>
+                    <p class="ai-subtitle mb-0">
+                        Décrivez vos dates, votre motif ou votre période souhaitée, et l’assistant prépare la demande
+                        pour vous tout en vérifiant le solde et les conflits d’équipe.
+                    </p>
+                </div>
+                <div class="d-flex flex-column align-items-start align-items-lg-end gap-3">
+                    <a href="{{ app.request.headers.get('referer') ?: (role == 'MANAGER' ? path('manager_conges') : path('employ_conges')) }}" class="ai-action">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Retour</span>
+                    </a>
+                    {% if role == 'MANAGER' %}
+                        <a href="{{ path('ai_assistant_suggestions') }}" class="ai-action">
+                            <i class="bi bi-lightbulb"></i>
+                            <span>Voir les suggestions équipe</span>
+                        </a>
+                    {% endif %}
                 </div>
             </div>
+        </div>
 
-            <div class="typing-indicator" id="typingIndicator">
-                🤖 L'assistant réfléchit...
-            </div>
-
-            <div class="chat-input mt-3">
-                <form id="chatForm" onsubmit="handleSubmit(event)">
-                    <div class="input-group">
-                        <input type="text" 
-                               id="messageInput" 
-                               class="form-control" 
-                               placeholder="Décrivez votre demande de congé..."
-                               autocomplete="off">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i> Envoyer
-                        </button>
+        <div class="assistant-grid">
+            <section class="panel chat-frame">
+                <div class="panel-header">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                        <div>
+                            <h2 class="h4 fw-bold mb-1">Conversation</h2>
+                            <p class="text-muted mb-0">Écrivez votre besoin comme si vous parliez à un collègue.</p>
+                        </div>
+                        <div class="assistant-hint">
+                            <i class="bi bi-shield-check me-1"></i>
+                            Je vérifie automatiquement le solde, les dates et les conflits.
+                        </div>
                     </div>
-                </form>
-            </div>
+
+                    <div class="chip-row mb-3">
+                        <button type="button" class="quick-chip" onclick="setMessage('Je veux 5 jours de congé la semaine prochaine')">📅 5 jours semaine prochaine</button>
+                        <button type="button" class="quick-chip" onclick="setMessage('Demain je suis malade')">🤒 Demain je suis malade</button>
+                        <button type="button" class="quick-chip" onclick="setMessage('Du 15/04 au 20/04 en congé annuel')">🗓️ Du 15/04 au 20/04</button>
+                        <button type="button" class="quick-chip" onclick="setMessage('3 jours à partir de lundi prochain')">✨ 3 jours à partir de lundi</button>
+                    </div>
+                </div>
+
+                <div class="panel-body pt-0">
+                    <div id="chatContainer" class="chat-stream">
+                        <div class="message assistant">
+                            <div class="avatar-pill">🤖</div>
+                            <div class="message-bubble">
+                                <strong>Assistant IA</strong><br>
+                                Bonjour {{ app.user.prenom|default('') }} ! Je suis là pour vous aider à créer votre demande de congé.
+                                <div class="message-meta mt-2">Essayez une phrase simple, par exemple “je veux 3 jours la semaine prochaine”.</div>
+                            </div>
+                        </div>
+
+                        <div class="message assistant">
+                            <div class="avatar-pill">💡</div>
+                            <div class="message-bubble">
+                                <strong>Exemples rapides</strong>
+                                <div class="mt-2">
+                                    <div>• "Je veux 5 jours de congé la semaine prochaine"</div>
+                                    <div>• "Demain je suis malade"</div>
+                                    <div>• "Du 15/04 au 20/04 en congé annuel"</div>
+                                    <div>• "3 jours à partir de lundi prochain"</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="typingIndicator" class="typing-indicator">
+                        <span class="avatar-pill">🤖</span>
+                        <div>
+                            <div class="fw-semibold">L'assistant réfléchit...</div>
+                            <div class="typing-dots mt-2">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="validation-panel" id="validationPanel">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="avatar-pill">📝</div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold mb-2">Demande prête à être créée</div>
+                                <div class="summary-box mb-3">
+                                    <div class="summary-row">
+                                        <div class="summary-label">Type</div>
+                                        <div class="summary-value" id="summaryType">-</div>
+                                    </div>
+                                    <div class="summary-row">
+                                        <div class="summary-label">Dates</div>
+                                        <div class="summary-value" id="summaryDates">-</div>
+                                    </div>
+                                    <div class="summary-row">
+                                        <div class="summary-label">Jours</div>
+                                        <div class="summary-value" id="summaryDays">-</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-success btn-lg" onclick="createRequest()">
+                                        <i class="bi bi-check2-circle me-1"></i>Confirmer et créer la demande
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-lg" onclick="modifyRequest()">
+                                        <i class="bi bi-pencil-square me-1"></i>Modifier
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-3 pb-3">
+                    <form onsubmit="handleSubmit(event)" class="composer">
+                        <div class="d-flex align-items-end gap-2">
+                            <textarea
+                                id="messageInput"
+                                class="form-control"
+                                rows="2"
+                                placeholder="Décrivez votre demande de congé..."
+                                autocomplete="off"
+                                spellcheck="true"
+                            ></textarea>
+                            <button type="submit" class="btn btn-send">
+                                <i class="bi bi-send-fill me-1"></i>Envoyer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <aside class="panel">
+                <div class="panel-header">
+                    <h2 class="h5 fw-bold mb-1">Guide express</h2>
+                    <p class="text-muted mb-0">Quelques repères pour obtenir une réponse plus précise.</p>
+                </div>
+                <div class="panel-body">
+                    <div class="info-list mb-4">
+                        <div class="info-item">
+                            <div class="info-icon"><i class="bi bi-calendar2-check"></i></div>
+                            <div>
+                                <div class="fw-semibold">Dates claires</div>
+                                <div class="text-muted small">Indiquez une date exacte, une durée ou une période.</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon"><i class="bi bi-heart-pulse"></i></div>
+                            <div>
+                                <div class="fw-semibold">Motif simple</div>
+                                <div class="text-muted small">Maladie, congé annuel, événement familial, etc.</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon"><i class="bi bi-people"></i></div>
+                            <div>
+                                <div class="fw-semibold">Conflits d’équipe</div>
+                                <div class="text-muted small">L’assistant vérifie automatiquement les absences déjà prévues.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="assistant-panel-card mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="badge rounded-pill text-bg-info-subtle text-info border border-info-subtle">Astuce</span>
+                            <span class="fw-semibold">Plus vous êtes précis, plus le résultat est fiable.</span>
+                        </div>
+                        <div class="text-muted small">
+                            Exemple : “Du 15/04 au 20/04 en congé annuel” donnera un calcul plus rapide qu’une phrase vague.
+                        </div>
+                    </div>
+
+                    <div class="assistant-panel-card">
+                        <div class="fw-bold mb-3">Ce que fait l’assistant</div>
+                        <div class="text-muted small d-grid gap-2">
+                            <div><i class="bi bi-check2-circle text-success me-2"></i>Détecte le type de congé</div>
+                            <div><i class="bi bi-check2-circle text-success me-2"></i>Calcule le nombre de jours</div>
+                            <div><i class="bi bi-check2-circle text-success me-2"></i>Valide votre solde</div>
+                            <div><i class="bi bi-check2-circle text-success me-2"></i>Signale les conflits d’équipe</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
         </div>
     </div>
 </div>
 
-{% block javascripts %}
 <script>
     let currentParsedRequest = null;
 
-    function setMessage(text) {
-        document.getElementById('messageInput').value = text;
-        document.getElementById('messageInput').focus();
+    const chatContainer = document.getElementById('chatContainer');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const validationPanel = document.getElementById('validationPanel');
+    const messageInput = document.getElementById('messageInput');
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text ?? '';
+        return div.innerHTML;
     }
 
-    function addMessage(text, isUser = false) {
-        const container = document.getElementById('chatContainer');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `chat-message ${isUser ? 'user' : 'ai'}`;
-        messageDiv.innerHTML = isUser ? text : `<strong>🤖 Assistant IA</strong><br>${text}`;
-        container.appendChild(messageDiv);
-        container.scrollTop = container.scrollHeight;
+    function formatAssistantText(text) {
+        return escapeHtml(text)
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
+    }
+
+    function setMessage(text) {
+        messageInput.value = text;
+        messageInput.focus();
+    }
+
+    function scrollToBottom() {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function addMessage(text, isUser = false, icon = isUser ? '🙂' : '🤖') {
+        const message = document.createElement('div');
+        message.className = 'message ' + (isUser ? 'user' : 'assistant');
+
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar-pill';
+        avatar.textContent = icon;
+
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        bubble.innerHTML = isUser ? escapeHtml(text) : formatAssistantText(text);
+
+        message.appendChild(avatar);
+        message.appendChild(bubble);
+        chatContainer.appendChild(message);
+        scrollToBottom();
     }
 
     function showTyping() {
-        document.getElementById('typingIndicator').classList.add('active');
+        typingIndicator.style.display = 'flex';
+        scrollToBottom();
     }
 
     function hideTyping() {
-        document.getElementById('typingIndicator').classList.remove('active');
+        typingIndicator.style.display = 'none';
+    }
+
+    function setValidationSummary(data) {
+        document.getElementById('summaryType').textContent = data.suggestion || data.type || '-';
+
+        if (data.dates && data.dates.debut && data.dates.fin) {
+            const start = formatDate(data.dates.debut);
+            const end = formatDate(data.dates.fin);
+            document.getElementById('summaryDates').textContent = start === end ? start : `${start} → ${end}`;
+        } else {
+            document.getElementById('summaryDates').textContent = '-';
+        }
+
+        document.getElementById('summaryDays').textContent = data.nb_jours ? `${data.nb_jours} jour(s)` : '-';
     }
 
     async function handleSubmit(event) {
         event.preventDefault();
-        
-        const input = document.getElementById('messageInput');
-        const message = input.value.trim();
-        
-        if (!message) return;
-        
-        // Afficher le message de l'utilisateur
-        addMessage(message, true);
-        input.value = '';
-        
-        // Montrer l'indicateur de frappe
+        const message = messageInput.value.trim();
+
+        if (!message) {
+            messageInput.focus();
+            return;
+        }
+
+        addMessage(message, true, '🧑‍💼');
+        messageInput.value = '';
+        currentParsedRequest = null;
+        validationPanel.classList.remove('is-visible');
         showTyping();
-        
+
         try {
-            // Envoyer au serveur
             const response = await fetch('{{ path('ai_assistant_parse') }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({ message: message })
+                body: JSON.stringify({ message })
             });
-            
+
             const data = await response.json();
-            hideTyping();
-            
-            if (data.success) {
-                currentParsedRequest = data;
-                displayAIResponse(data);
-            } else {
-                addMessage('❌ Désolé, je n\'ai pas compris. Pouvez-vous reformuler ?');
+
+            if (!response.ok || data.success === false) {
+                throw new Error(data.error || 'Une erreur est survenue');
             }
+
+            displayAIResponse(data);
         } catch (error) {
             hideTyping();
-            addMessage('❌ Une erreur est survenue. Veuillez réessayer.');
-            console.error(error);
+            addMessage('❌ ' + error.message, false, '⚠️');
         }
     }
 
     function displayAIResponse(data) {
-        let html = `<div class="suggestion-box">`;
-        html += data.suggestion.replace(/\n/g, '<br>');
-        
-        // Afficher les dates détectées
+        hideTyping();
+        currentParsedRequest = data;
+
+        if (data.error) {
+            addMessage('❌ ' + data.error, false, '⚠️');
+            return;
+        }
+
+        let response = 'J\'ai compris : **' + (data.suggestion || 'demande de congé') + '**';
+
         if (data.dates && data.dates.debut && data.dates.fin) {
-            html += `<br><br><strong>📅 Dates :</strong> `;
-            html += `<span class="date-highlight">${formatDate(data.dates.debut)}</span> `;
-            html += `au <span class="date-highlight">${formatDate(data.dates.fin)}</span>`;
-            html += ` (${data.nb_jours} jour${data.nb_jours > 1 ? 's' : ''})`;
+            response += ' du **' + formatDate(data.dates.debut) + '** au **' + formatDate(data.dates.fin) + '**';
         }
-        
-        html += `</div>`;
-        
-        // Boutons de confirmation si possible
+
+        if (data.nb_jours) {
+            response += ' (' + data.nb_jours + ' jour(s)).';
+        }
+
+        addMessage(response);
+
+        if (data.solde_message) {
+            addMessage('✅ ' + data.solde_message, false, '✅');
+        }
+
+        if (data.conflit_message) {
+            addMessage('⚠️ ' + data.conflit_message, false, '⚠️');
+        }
+
         if (data.can_create) {
-            html += `
-                <div class="confirmation-buttons">
-                    <button onclick="createRequest()" class="btn btn-success">
-                        <i class="fas fa-check"></i> ✅ Confirmer et créer la demande
-                    </button>
-                    <button onclick="modifyRequest()" class="btn btn-outline-secondary ms-2">
-                        <i class="fas fa-edit"></i> Modifier
-                    </button>
-                </div>
-            `;
-        } else {
-            html += `
-                <div class="mt-3">
-                    <button onclick="modifyRequest()" class="btn btn-outline-primary">
-                        <i class="fas fa-redo"></i> Essayer avec d'autres dates
-                    </button>
-                </div>
-            `;
+            addMessage('📝 Je peux créer cette demande pour vous. Confirmez-vous ?', false, '📝');
+            setValidationSummary(data);
+            validationPanel.classList.add('is-visible');
+        } else if (data.error) {
+            addMessage('❌ ' + data.error, false, '⚠️');
         }
-        
-        addMessage(html, false);
+
+        scrollToBottom();
     }
 
     function formatDate(dateString) {
+        if (!dateString) {
+            return '-';
+        }
+
         const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR');
+        if (Number.isNaN(date.getTime())) {
+            return dateString;
+        }
+
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
     }
 
     async function createRequest() {
-        if (!currentParsedRequest) return;
-        
+        if (!currentParsedRequest) {
+            addMessage('⚠️ Je n’ai pas encore de demande à créer. Décrivez votre congé d’abord.', false, '⚠️');
+            return;
+        }
+
         showTyping();
-        
+
         try {
             const response = await fetch('{{ path('ai_assistant_create') }}', {
                 method: 'POST',
@@ -286,47 +790,43 @@
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({ 
-                    parsed_request: currentParsedRequest 
+                body: JSON.stringify({
+                    parsed_request: currentParsedRequest
                 })
             });
-            
+
             const data = await response.json();
             hideTyping();
-            
-            if (data.success) {
-                addMessage(`
-                    <div class="alert alert-success">
-                        <strong>🎉 Demande créée avec succès !</strong><br>
-                        ${data.message}<br><br>
-                        <a href="${data.redirect_url}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-list"></i> Voir mes congés
-                        </a>
-                    </div>
-                `, false);
-            } else {
-                addMessage(`❌ Erreur : ${data.error}`);
+
+            if (!response.ok || data.success === false) {
+                throw new Error(data.error || 'Une erreur est survenue lors de la création');
+            }
+
+            addMessage('✅ ' + (data.message || 'Demande créée avec succès !'), false, '✅');
+            validationPanel.classList.remove('is-visible');
+            currentParsedRequest = null;
+
+            if (data.redirect_url) {
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1200);
             }
         } catch (error) {
             hideTyping();
-            addMessage('❌ Une erreur est survenue lors de la création.');
+            addMessage('❌ ' + error.message, false, '⚠️');
         }
     }
 
     function modifyRequest() {
-        addMessage(`
-            <div class="suggestion-box">
-                <strong>📝 D'accord, modifions votre demande.</strong><br>
-                Décrivez vos nouvelles dates ou préférences :
-            </div>
-        `, false);
-        document.getElementById('messageInput').focus();
+        currentParsedRequest = null;
+        validationPanel.classList.remove('is-visible');
+        addMessage('📝 D’accord, modifions votre demande. Décrivez vos nouvelles dates ou préférences.', false, '📝');
+        messageInput.focus();
     }
 
-    // Focus sur l'input au chargement
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('messageInput').focus();
+    document.addEventListener('DOMContentLoaded', function () {
+        messageInput.focus();
+        scrollToBottom();
     });
 </script>
-{% endblock %}
 {% endblock %}

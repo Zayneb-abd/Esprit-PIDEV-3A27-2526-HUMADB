@@ -96,9 +96,14 @@
                                                 {{ item.candidature.user ? item.candidature.user.email : '-' }}
                                             </div>
                                         </div>
-                                        <span class="badge text-bg-{{ item.score >= 75 ? 'success' : (item.score >= 50 ? 'warning' : 'secondary') }}">
-                                            Match {{ item.score }}%
-                                        </span>
+                                        <div class="d-flex flex-column gap-2 align-items-end">
+                                            {% if loop.first %}
+                                                <span class="badge text-bg-dark">Meilleur CV</span>
+                                            {% endif %}
+                                            <span class="badge text-bg-{{ item.score >= 75 ? 'success' : (item.score >= 50 ? 'warning' : 'secondary') }}">
+                                                Match {{ item.score }}%
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div class="small mb-2">
@@ -108,10 +113,14 @@
 
                                     <div class="small mb-2">
                                         <strong>Mode d'analyse:</strong>
-                                        {% if item.analysis_mode == 'external_ai' %}
+                                        {% if item.analysis_mode == 'python_ml_external_ai' %}
+                                            ML Python + IA externe
+                                        {% elseif item.analysis_mode == 'external_ai' %}
                                             IA externe
-                                        {% elseif item.analysis_mode == 'local_fallback' %}
-                                            IA externe indisponible, fallback local
+                                        {% elseif item.analysis_mode == 'python_ml' %}
+                                            ML Python
+                                        {% elseif item.analysis_mode == 'python_ml_fallback' %}
+                                            ML Python, IA externe indisponible
                                         {% else %}
                                             Analyse locale
                                         {% endif %}
