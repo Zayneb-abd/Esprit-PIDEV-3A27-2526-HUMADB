@@ -1,7 +1,7 @@
 security:
     password_hashers:
         App\Entity\User:
-            algorithm: auto
+            algorithm: bcrypt
             migrate_from:
                 - plaintext
 
