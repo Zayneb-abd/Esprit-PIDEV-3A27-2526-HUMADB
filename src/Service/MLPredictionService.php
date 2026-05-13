@@ -27,6 +27,17 @@ class MLPredictionService
      */
     public function predictCongeProbability(int $userId): array
     {
+        // Pour l'instant, utiliser directement le fallback car shell_exec ne fonctionne pas dans le contexte web
+        $fallback = $this->getSimplePrediction($userId);
+        
+        return [
+            'success' => true,
+            'ml_prediction' => false,
+            'data' => $fallback,
+            'method' => 'fallback_php'
+        ];
+        
+        /* Code original désactivé - shell_exec ne fonctionne pas dans le contexte web sur Windows
         // Vérifier que le script existe
         if (!file_exists($this->mlScriptPath)) {
             return [
@@ -54,6 +65,7 @@ class MLPredictionService
                 'data' => $this->getSimplePrediction($userId)
             ];
         }
+        */
         
         // Nettoyer la sortie (enlever BOM UTF-8 si présent)
         $output = preg_replace('/^\xEF\xBB\xBF/', '', $output);
